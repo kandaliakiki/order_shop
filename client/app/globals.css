@@ -59,6 +59,19 @@
   }
 }
 
+.search_input {
+  @apply max-lg:w-fit lg:w-full rounded-md border border-gray-200 bg-white py-2  pl-5 lg:pr-12 text-base shadow-lg font-medium focus:outline-none focus:ring-0;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
 @layer base {
   * {
     @apply border-border;

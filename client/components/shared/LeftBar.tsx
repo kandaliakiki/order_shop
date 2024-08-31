@@ -13,7 +13,7 @@ const LeftBar: React.FC = () => {
 
   return (
     <div
-      className={`fixed left-0 top-0 w-64 h-screen pt-2 bg-white transition-transform duration-300 ${
+      className={`fixed z-10 left-0 top-0 w-64 h-screen pt-2 bg-white transition-transform duration-300 ${
         isOpen ? "translate-x-0" : "-translate-x-[12.5rem]"
       }`}
     >
