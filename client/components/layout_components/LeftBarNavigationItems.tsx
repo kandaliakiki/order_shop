@@ -27,7 +27,9 @@ const LeftBarNavigationItems: React.FC<LeftBarNavigationItemsProps> = ({
     <Link
       href={route}
       onClick={() => setIsOpen(false)}
-      className="flex items-center px-2 py-1 gap-1 "
+      className={`flex items-center mb-2 px-2 py-3 gap-1 rounded-lg ${
+        isOpen ? "mx-2" : ""
+      } ${isActive ? "bg-blue-100" : ""}`}
     >
       <div
         className={`transition-transform duration-300 ${
@@ -42,7 +44,7 @@ const LeftBarNavigationItems: React.FC<LeftBarNavigationItemsProps> = ({
         />
       </div>
       <h1
-        className={`font-dmsans text-lg tracking-tighter flex-1 ${
+        className={`font-dmsans text-xl tracking-tighter flex-1 ${
           isOpen ? "block" : "hidden"
         }`}
       >
