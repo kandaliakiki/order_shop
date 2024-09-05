@@ -1,4 +1,6 @@
+import RevenueSection from "@/components/dashboard_component/RevenueSection";
 import SalesDateRangePicker from "@/components/dashboard_component/SalesDateRangePicker";
+import SummaryChart from "@/components/dashboard_component/SummaryChart";
 import SummarySales from "@/components/dashboard_component/SummarySales";
 import Image from "next/image";
 import React from "react";
@@ -16,6 +18,9 @@ export default function Home() {
         <SalesDateRangePicker />
       </div>
       <SummarySales />
+      <div className="bg-gray-200  rounded-lg  p-5 mt-5 w-full flex justify-between h-[73vh]">
+        <RevenueSection />
+      </div>
     </div>
   );
 }

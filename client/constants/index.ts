@@ -997,3 +997,78 @@ export const ordersList: Order[] = [
     ],
   },
 ];
+
+export const dataChart = [
+  {
+    name: "Jan",
+    revenue: 12000,
+    order: 275, // 125 + 150
+    customer: 125,
+  },
+  {
+    name: "Feb",
+    revenue: 13000,
+    order: 255, // 135 + 120
+    customer: 135,
+  },
+  {
+    name: "Mar",
+    revenue: 12500,
+    order: 310, // 130 + 180
+    customer: 130,
+  },
+  {
+    name: "Apr",
+    revenue: 14000,
+    order: 255, // 145 + 110
+    customer: 145,
+  },
+  {
+    name: "May",
+    revenue: 13500,
+    order: 310, // 140 + 170
+    customer: 140,
+  },
+  {
+    name: "Jun",
+    revenue: 15000,
+    order: 285, // 155 + 130
+    customer: 155,
+  },
+  {
+    name: "Jul",
+    revenue: 14500,
+    order: 310, // 150 + 160
+    customer: 150,
+  },
+  {
+    name: "Aug",
+    revenue: 16000,
+    order: 305, // 165 + 140
+    customer: 165,
+  },
+  {
+    name: "Sep",
+    revenue: 15500,
+    order: 350, // 160 + 190
+    customer: 160,
+  },
+  {
+    name: "Oct",
+    revenue: 17000,
+    order: 275, // 175 + 100
+    customer: 175,
+  },
+  {
+    name: "Nov",
+    revenue: 16500,
+    order: 370, // 170 + 200
+    customer: 170,
+  },
+  {
+    name: "Dec",
+    revenue: 18000,
+    order: 315, // 185 + 130
+    customer: 185,
+  },
+];
