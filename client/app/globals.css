@@ -84,3 +84,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+.th-border::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  border-top: 1px solid #e5e7eb;
+}
+
+.th-border::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  border-bottom: 1px solid #e5e7eb;
+}

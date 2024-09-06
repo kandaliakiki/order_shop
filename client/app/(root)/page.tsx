@@ -1,3 +1,4 @@
+import RecentOrdersSection from "@/components/dashboard_component/RecentOrdersSection";
 import RevenueSection from "@/components/dashboard_component/RevenueSection";
 import SalesDateRangePicker from "@/components/dashboard_component/SalesDateRangePicker";
 import SummaryChart from "@/components/dashboard_component/SummaryChart";
@@ -18,8 +19,9 @@ export default function Home() {
         <SalesDateRangePicker />
       </div>
       <SummarySales />
-      <div className="bg-gray-200  rounded-lg  p-5 mt-5 w-full flex justify-between h-[73vh]">
+      <div className="bg-gray-200  rounded-lg  p-5 mt-5 w-full flex  gap-3 justify-between h-[73vh]">
         <RevenueSection />
+        <RecentOrdersSection></RecentOrdersSection>
       </div>
     </div>
   );

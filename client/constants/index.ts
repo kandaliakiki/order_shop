@@ -1072,3 +1072,126 @@ export const dataChart = [
     customer: 185,
   },
 ];
+
+export type OrderStatus = "Paid" | "Pending" | "Unpaid";
+
+export interface OrderTableData {
+  id: string;
+  customer: string;
+  product: string;
+  amount: string;
+  vendor: string;
+  status: OrderStatus;
+  rating: string;
+}
+
+export const ordersTableData: OrderTableData[] = [
+  {
+    id: "#VZ2112",
+    customer: "Alex Smith",
+    product: "Clothes",
+    amount: "$109.00",
+    vendor: "Zoetic Fashion",
+    status: "Paid",
+    rating: "5.0 (61 votes)",
+  },
+  {
+    id: "#VZ2111",
+    customer: "Jansh Brown",
+    product: "Kitchen Storage",
+    amount: "$149.00",
+    vendor: "Micro Design",
+    status: "Pending",
+    rating: "4.5 (61 votes)",
+  },
+  {
+    id: "#VZ2109",
+    customer: "Ayaan Bowen",
+    product: "Bike Accessories",
+    amount: "$215.00",
+    vendor: "Nesta Technologies",
+    status: "Paid",
+    rating: "4.9 (89 votes)",
+  },
+  {
+    id: "#VZ2108",
+    customer: "Prezy Mark",
+    product: "Furniture",
+    amount: "$199.00",
+    vendor: "Syntyce Solutions",
+    status: "Unpaid",
+    rating: "4.3 (47 votes)",
+  },
+  {
+    id: "#VZ2107",
+    customer: "Vihan Hudda",
+    product: "Bags and Wallets",
+    amount: "$330.00",
+    vendor: "iTest Factory",
+    status: "Paid",
+    rating: "4.7 (61 votes)",
+  },
+  {
+    id: "#VZ2106",
+    customer: "Liam Johnson",
+    product: "Electronics",
+    amount: "$450.00",
+    vendor: "Tech World",
+    status: "Pending",
+    rating: "4.8 (72 votes)",
+  },
+  {
+    id: "#VZ2105",
+    customer: "Emma Wilson",
+    product: "Books",
+    amount: "$75.00",
+    vendor: "Book Haven",
+    status: "Paid",
+    rating: "4.9 (54 votes)",
+  },
+  {
+    id: "#VZ2104",
+    customer: "Olivia Brown",
+    product: "Toys",
+    amount: "$120.00",
+    vendor: "Toy Kingdom",
+    status: "Unpaid",
+    rating: "4.6 (38 votes)",
+  },
+  {
+    id: "#VZ2103",
+    customer: "Noah Davis",
+    product: "Sports Equipment",
+    amount: "$300.00",
+    vendor: "Sporty Goods",
+    status: "Paid",
+    rating: "4.7 (45 votes)",
+  },
+  {
+    id: "#VZ2102",
+    customer: "Ava Martinez",
+    product: "Beauty Products",
+    amount: "$95.00",
+    vendor: "Beauty Bliss",
+    status: "Pending",
+    rating: "4.5 (50 votes)",
+  },
+  {
+    id: "#VZ2101",
+    customer: "Sophia Garcia",
+    product: "Home Decor",
+    amount: "$180.00",
+    vendor: "Decor Delight",
+    status: "Unpaid",
+    rating: "4.4 (40 votes)",
+  },
+  {
+    id: "#VZ2100",
+    customer: "Mason Rodriguez",
+    product: "Gardening Tools",
+    amount: "$220.00",
+    vendor: "Garden Pro",
+    status: "Paid",
+    rating: "4.8 (60 votes)",
+  },
+];
