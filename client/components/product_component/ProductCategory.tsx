@@ -10,6 +10,11 @@ const ProductCategory = () => {
       <div className="flex flex-col justify-center mt-5 px-5  h-full ">
         <h1 className="text-2xl font-bold mb-5">Product Category</h1>
         <div className="overflow-y-scroll h-screen scrollbar-hide mb-24">
+          <CategoryCard
+            count={2}
+            imageUrl=""
+            name="All Categories"
+          ></CategoryCard>
           {bakeryCategories.map((category, index) => (
             <CategoryCard
               key={index}
