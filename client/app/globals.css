@@ -102,3 +102,17 @@
   width: 100%;
   border-bottom: 1px solid #e5e7eb;
 }
+
+.no-focus {
+  @apply focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0 !important;
+}
+
+@layer utilities {
+  .account-form_image-input {
+    @apply cursor-pointer border-none bg-transparent outline-none file:text-blue !important;
+  }
+
+  .account-form_image-label {
+    @apply cursor-pointer flex h-16 w-16 items-center justify-center rounded-full bg-neutral-300 !important;
+  }
+}

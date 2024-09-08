@@ -3,6 +3,7 @@ import ProductListControls from "./ProductListControls";
 import Image from "next/image";
 import ProductCard from "./ProductCard";
 import { bakeryIngredients } from "@/constants";
+import ProductAddModalButton from "./ProductAddModalButton";
 
 const ProductList = () => {
   return (
@@ -14,15 +15,7 @@ const ProductList = () => {
         </div>
 
         <div className="grid grid-cols-6 gap-5  ">
-          <div className="rounded-lg aspect-[3/4] outline-dashed outline-teal-600 outline-4  flex flex-col items-center justify-center">
-            <Image
-              alt="add new product button"
-              src="/assets/add-product.svg"
-              height={48}
-              width={48}
-            ></Image>
-            <p className="text-xl">Add New Product</p>
-          </div>
+          <ProductAddModalButton></ProductAddModalButton>
           {bakeryIngredients.map((ingredient) => (
             <ProductCard
               key={ingredient.name}
