@@ -53,7 +53,7 @@ const ProductAddModalButton = () => {
             Please provide the necessary details to add a new product.
           </Description>
 
-          <AddProductForm></AddProductForm>
+          <AddProductForm setIsOpen={setIsOpen}></AddProductForm>
         </DialogPanel>
       </Dialog>
     </>

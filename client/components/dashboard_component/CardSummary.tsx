@@ -11,7 +11,7 @@ interface CardComponentProps {
 }
 
 const colorThemes: { [key: string]: string } = {
-  blue: "bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400",
+  blue: "bg-gradient-to-r from-sky-400 via-sky-300 to-sky-200",
   red: "bg-gradient-to-r from-red-600 via-red-500 to-red-400",
   yellow: "bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-400",
   green: "bg-gradient-to-r from-green-600 via-green-500 to-green-400",
@@ -42,7 +42,7 @@ const CardSummary: React.FC<CardComponentProps> = ({
 
   return (
     <div
-      className={`relative ${gradientClass} rounded-lg p-5 w-1/4 py-7 shadow-lg border border-neutral-200 overflow-hidden`}
+      className={`relative ${gradientClass} rounded-lg p-5 w-1/4  py-7 shadow-lg border border-neutral-200 overflow-hidden`}
     >
       <div className="absolute inset-0">
         <Image
@@ -54,7 +54,7 @@ const CardSummary: React.FC<CardComponentProps> = ({
       </div>
       <div className="relative flex justify-between items-center">
         <div className="tracking-normal text-white">
-          <p className="uppercase text-white  mb-5 text-lg">{title}</p>
+          <p className="uppercase text-white   mb-5 text-lg">{title}</p>
           <h1
             className="text-5xl font-bold text-white"
             style={{ textShadow: `0 0 3px ${colorTheme}` }}

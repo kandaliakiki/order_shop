@@ -1,12 +1,9 @@
 import mongoose from "mongoose";
 
 export interface ProductData {
-  productId: string;
   name: string;
-  description: string;
   price: number;
   category: string;
-  stock: number;
   // Add any other fields defined in your product schema
 }
 

@@ -25,15 +25,20 @@ import {
   SelectValue,
 } from "../ui/select";
 import Image from "next/image";
+import { isBase64Image } from "@/lib/utils";
 
 const formSchema = z.object({
   name: z.string().min(3).max(30),
-  price: z.number().min(0),
+  price: z.coerce.number(),
   category: z.string().min(3).max(30),
-  imageUrl: z.string().optional(),
+  imageUrl: z.string().url().min(1),
 });
 
-const AddProductForm = () => {
+const AddProductForm = ({
+  setIsOpen,
+}: {
+  setIsOpen: (isOpen: boolean) => void;
+}) => {
   const [files, setFiles] = useState<File[]>([]);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -45,12 +50,40 @@ const AddProductForm = () => {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const createProduct = async (productData: z.infer<typeof formSchema>) => {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT; // Your backend URL
+
     try {
-      console.log(values);
+      const response = await fetch(`${backendUrl}/api/createProduct`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(productData), // Send the product data
+      });
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const data = await response.json();
+      console.log("Product created:", data);
+      // Handle success (e.g., show a success message, redirect, etc.)
     } catch (error) {
-      console.error(error);
+      console.error("Failed to create product:", error);
+      // Handle error (e.g., show an error message)
     }
+  };
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const blob = values.imageUrl;
+    const hasImageChanged = isBase64Image(blob);
+
+    if (hasImageChanged) {
+      await createProduct(values);
+    }
+
+    setIsOpen(false);
   };
 
   const handleImage = (
@@ -123,8 +156,8 @@ const AddProductForm = () => {
               <FormLabel>Category</FormLabel>
               <FormControl>
                 <Select onValueChange={field.onChange}>
-                  <SelectTrigger className="w-[280px]  no-focus">
-                    <SelectValue placeholder="Select a Status" />
+                  <SelectTrigger className="w-[280px] no-focus ">
+                    <SelectValue placeholder="Select a Category" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
@@ -152,16 +185,16 @@ const AddProductForm = () => {
                 {field.value ? (
                   <Image
                     src={field.value}
-                    alt="profile photo"
-                    width={96}
-                    height={96}
+                    alt="product photo"
+                    width={100}
+                    height={100}
                     priority
-                    className="rounded-full object-contain"
+                    className="rounded-full object-cover aspect-square"
                   ></Image>
                 ) : (
                   <Image
                     src="/assets/profile.svg"
-                    alt="profile photo"
+                    alt="product photo"
                     width={24}
                     height={24}
                     className="object-contain"

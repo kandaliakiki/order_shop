@@ -4,6 +4,7 @@ import Image from "next/image";
 import ProductCard from "./ProductCard";
 import { bakeryIngredients } from "@/constants";
 import ProductAddModalButton from "./ProductAddModalButton";
+import FetchedProduct from "./FetchedProduct";
 
 const ProductList = () => {
   return (
@@ -16,15 +17,7 @@ const ProductList = () => {
 
         <div className="grid grid-cols-6 gap-5  ">
           <ProductAddModalButton></ProductAddModalButton>
-          {bakeryIngredients.map((ingredient) => (
-            <ProductCard
-              key={ingredient.name}
-              category={ingredient.category}
-              name={ingredient.name}
-              price={ingredient.price}
-              imgURL={ingredient.imgURL}
-            />
-          ))}
+          <FetchedProduct></FetchedProduct>
         </div>
       </div>
     </div>

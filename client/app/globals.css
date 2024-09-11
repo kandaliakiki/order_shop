@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+.no-focus {
+  @apply focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0 focus:ring-0 focus:ring-transparent focus:ring-offset-0  !important;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -101,10 +105,6 @@
   bottom: 0;
   width: 100%;
   border-bottom: 1px solid #e5e7eb;
-}
-
-.no-focus {
-  @apply focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0 !important;
 }
 
 @layer utilities {
