@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import ProductListControls from "./ProductListControls";
 import Image from "next/image";
@@ -5,6 +7,7 @@ import ProductCard from "./ProductCard";
 import { bakeryIngredients } from "@/constants";
 import ProductAddModalButton from "./ProductAddModalButton";
 import FetchedProduct from "./FetchedProduct";
+import { ProductProvider } from "./ProductContext";
 
 const ProductList = () => {
   return (
@@ -15,10 +18,12 @@ const ProductList = () => {
           <ProductListControls />
         </div>
 
-        <div className="grid grid-cols-6 gap-5  ">
-          <ProductAddModalButton></ProductAddModalButton>
-          <FetchedProduct></FetchedProduct>
-        </div>
+        <ProductProvider>
+          <div className="grid grid-cols-6 gap-5  ">
+            <ProductAddModalButton></ProductAddModalButton>
+            <FetchedProduct></FetchedProduct>
+          </div>
+        </ProductProvider>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import React from "react";
 import ProductCard from "./ProductCard";
+import { useProducts } from "./ProductContext"; // Import the context hook
 
 interface Product {
   name: string;
@@ -11,40 +12,19 @@ interface Product {
 }
 
 const FetchedProduct = () => {
-  const [products, setProducts] = React.useState<Product[]>([]); // Updated to use Product type
+  const { products } = useProducts(); // Use the context to get products
 
-  React.useEffect(() => {
-    const fetchProducts = async () => {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT; // Your backend URL
-      try {
-        const response = await fetch(`${backendUrl}/products`);
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        const data = await response.json();
-        setProducts(data);
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
-      }
-    };
-
-    fetchProducts();
-  }, []);
   return (
     <>
-      {products.map(
-        (
-          product: Product // Specify the type for 'product'
-        ) => (
-          <ProductCard
-            key={product.name}
-            category={product.category}
-            name={product.name}
-            price={product.price}
-            imageUrl={product.imageUrl}
-          />
-        )
-      )}
+      {products.map((product: Product) => (
+        <ProductCard
+          key={product.name}
+          category={product.category}
+          name={product.name}
+          price={product.price}
+          imageUrl={product.imageUrl}
+        />
+      ))}
     </>
   );
 };

@@ -26,6 +26,8 @@ import {
 } from "../ui/select";
 import Image from "next/image";
 import { isBase64Image } from "@/lib/utils";
+import { MoonLoader } from "react-spinners";
+import { useProducts } from "./ProductContext";
 
 const formSchema = z.object({
   name: z.string().min(3).max(30),
@@ -39,7 +41,9 @@ const AddProductForm = ({
 }: {
   setIsOpen: (isOpen: boolean) => void;
 }) => {
-  const [files, setFiles] = useState<File[]>([]);
+  const [loading, setLoading] = useState(false); // Add loading state
+  const { fetchProducts } = useProducts(); // Get the fetch function from context
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -76,14 +80,17 @@ const AddProductForm = ({
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setLoading(true); // Set loading to true
     const blob = values.imageUrl;
     const hasImageChanged = isBase64Image(blob);
 
     if (hasImageChanged) {
       await createProduct(values);
+      await fetchProducts();
     }
 
     setIsOpen(false);
+    setLoading(false); // Reset loading state
   };
 
   const handleImage = (
@@ -95,8 +102,6 @@ const AddProductForm = ({
 
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-
-      setFiles(Array.from(e.target.files));
 
       if (!file.type.includes("image")) return;
 
@@ -216,7 +221,9 @@ const AddProductForm = ({
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+        <Button type="submit" disabled={loading} className="bg-sky-950 w-20">
+          {loading ? <MoonLoader size={20} color="#fff" /> : "Submit"}
+        </Button>
       </form>
     </Form>
   );
