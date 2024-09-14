@@ -1,7 +1,5 @@
-"use client";
-
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { ChangeEvent, useState } from "react";
+import React, { ChangeEvent, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -27,7 +25,7 @@ import {
 import Image from "next/image";
 import { isBase64Image } from "@/lib/utils";
 import { MoonLoader } from "react-spinners";
-import { useProducts } from "./ProductContext";
+import { Product, useProducts } from "./ProductContext";
 
 const formSchema = z.object({
   name: z.string().min(3).max(30),
@@ -38,21 +36,43 @@ const formSchema = z.object({
 
 const AddProductForm = ({
   setIsOpen,
+  productId,
 }: {
   setIsOpen: (isOpen: boolean) => void;
+  productId?: string;
 }) => {
   const [loading, setLoading] = useState(false); // Add loading state
-  const { fetchProducts } = useProducts(); // Get the fetch function from context
+  const [product, setProduct] = useState<Product | null>(null); // State for product
+  const { fetchProducts, fetchProductById } = useProducts(); // Get the fetch function from context
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      price: 0,
-      category: "",
-      imageUrl: "",
+      name: product?.name || "",
+      price: product?.price || 0,
+      category: product?.category || "",
+      imageUrl: product?.imageUrl || "",
     },
   });
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (productId) {
+        const fetchedProduct = await fetchProductById(productId); // Call fetchProductById
+        setProduct(fetchedProduct); // Set the product state
+        if (fetchedProduct) {
+          form.reset({
+            // Reset form with fetched product data
+            name: fetchedProduct.name,
+            price: fetchedProduct.price,
+            category: fetchedProduct.category,
+            imageUrl: fetchedProduct.imageUrl,
+          });
+        }
+      }
+    };
+    fetchProduct();
+  }, [productId]); // Dependency on productId
 
   const createProduct = async (productData: z.infer<typeof formSchema>) => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT; // Your backend URL
@@ -79,15 +99,46 @@ const AddProductForm = ({
     }
   };
 
+  const updateProduct = async (
+    productData: z.infer<typeof formSchema>,
+    productId: string
+  ) => {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT; // Your backend URL
+
+    try {
+      const response = await fetch(
+        `${backendUrl}/api/updateProduct/${productId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(productData), // Send the product data
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const data = await response.json();
+      console.log("Product updated:", data);
+      // Handle success (e.g., show a success message, redirect, etc.)
+    } catch (error) {
+      console.error("Failed to update product:", error);
+      // Handle error (e.g., show an error message)
+    }
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoading(true); // Set loading to true
-    const blob = values.imageUrl;
-    const hasImageChanged = isBase64Image(blob);
 
-    if (hasImageChanged) {
+    if (!productId) {
       await createProduct(values);
-      await fetchProducts();
+    } else {
+      await updateProduct(values, productId);
     }
+    await fetchProducts();
 
     setIsOpen(false);
     setLoading(false); // Reset loading state

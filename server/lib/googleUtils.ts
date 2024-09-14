@@ -38,6 +38,11 @@ export function getOAuth2Client(): OAuth2Client {
   return oAuth2Client;
 }
 
+export function isBase64Image(imageData: string) {
+  const base64Regex = /^data:image\/(png|jpe?g|gif|webp);base64,/;
+  return base64Regex.test(imageData);
+}
+
 function getAccessToken(oAuth2Client: OAuth2Client) {
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: "offline",
@@ -99,4 +104,22 @@ export const uploadToGoogleDrive = async (
   });
 
   return response.data.id; // Return the file ID
+};
+
+// Function to delete an image from Google Drive
+export const deleteImageFromDrive = async (url: string, oAuth2Client: any) => {
+  // Extract the file ID from the URL
+  const fileId = url.split("id=")[1];
+
+  // Create a Google Drive service instance
+  const drive = google.drive({ version: "v3", auth: oAuth2Client });
+
+  try {
+    // Delete the file
+    await drive.files.delete({ fileId });
+    console.log("File deleted successfully.");
+  } catch (error) {
+    console.error("Error deleting file:", error);
+    throw new Error("Failed to delete file from Google Drive");
+  }
 };

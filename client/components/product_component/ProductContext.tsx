@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-interface Product {
+export interface Product {
+  _id: string; // Changed id to _id
   name: string;
   price: number;
   category: string;
@@ -10,6 +11,8 @@ interface Product {
 interface ProductContextType {
   products: Product[];
   fetchProducts: () => Promise<void>; // Added fetchProducts to the context type
+  deleteProduct: (id: string) => Promise<void>;
+  fetchProductById: (id: string) => Promise<Product | null>;
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
@@ -26,10 +29,43 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
-      const data = await response.json();
-      setProducts(data);
+      const data: Product[] = await response.json(); // Now data can be directly assigned
+      setProducts(data); // No need for mapping
     } catch (error) {
       console.error("Failed to fetch products:", error);
+    }
+  };
+
+  const deleteProduct = async (id: string) => {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
+    try {
+      const response = await fetch(`${backendUrl}/api/deleteProduct/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete product");
+      }
+      // Optionally, you can update the state to remove the deleted product
+      setProducts((prevProducts) =>
+        prevProducts.filter((product) => product._id !== id)
+      );
+    } catch (error) {
+      console.error("Error deleting product:", error);
+    }
+  };
+
+  const fetchProductById = async (id: string): Promise<Product | null> => {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
+    try {
+      const response = await fetch(`${backendUrl}/api/product/${id}`);
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const product: Product = await response.json();
+      return product; // Return the fetched product
+    } catch (error) {
+      console.error("Failed to fetch product by ID:", error);
+      return null; // Return null in case of error
     }
   };
 
@@ -38,7 +74,9 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   return (
-    <ProductContext.Provider value={{ products, fetchProducts }}>
+    <ProductContext.Provider
+      value={{ products, fetchProducts, deleteProduct, fetchProductById }}
+    >
       {children}
     </ProductContext.Provider>
   );

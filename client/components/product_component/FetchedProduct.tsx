@@ -1,15 +1,6 @@
-"use client";
-
 import React from "react";
 import ProductCard from "./ProductCard";
-import { useProducts } from "./ProductContext"; // Import the context hook
-
-interface Product {
-  name: string;
-  price: number;
-  category: string;
-  imageUrl: string; // Optional since it has a default value
-}
+import { Product, useProducts } from "./ProductContext"; // Import the context hook
 
 const FetchedProduct = () => {
   const { products } = useProducts(); // Use the context to get products
@@ -19,6 +10,7 @@ const FetchedProduct = () => {
       {products.map((product: Product) => (
         <ProductCard
           key={product.name}
+          _id={product._id}
           category={product.category}
           name={product.name}
           price={product.price}

@@ -1,15 +1,11 @@
 import Image from "next/image";
 import React from "react";
 import { Checkbox } from "../ui/checkbox";
+import { Product } from "./ProductContext";
+import ProductCardDropdown from "./ProductCardDropdown";
 
-interface ProductCardProps {
-  category: string;
-  name: string;
-  price: number;
-  imageUrl: string;
-}
-
-const ProductCard: React.FC<ProductCardProps> = ({
+const ProductCard: React.FC<Product> = ({
+  _id,
   category,
   name,
   price,
@@ -17,16 +13,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   return (
     <div className="p-3  aspect-[3/4] rounded-xl border-2 bg-white border-gray-300 shadow-lg flex flex-col items-start ">
-      <div className="flex justify-between w-full">
+      <div className="flex justify-between w-full items-center mb-2">
         <Checkbox className="h-5 w-5  border-gray-500"></Checkbox>
-        <div className="rounded-md border border-gray-500">
-          <Image
-            alt="more icon"
-            src="/assets/more.svg"
-            width={20}
-            height={20}
-          ></Image>
-        </div>
+        <ProductCardDropdown _id={_id} />
       </div>
       <Image
         alt="product image"
