@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "../ui/button";
-import AddProductForm from "./AddProductForm";
+import ProductForm from "./ProductForm";
 
 const UpdateDropdownModal = ({
   _id,
@@ -33,26 +33,10 @@ const UpdateDropdownModal = ({
               Please provide the updated details to modify the existing product.
             </DialogDescription>
           </DialogHeader>
-          <AddProductForm
+          <ProductForm
             setIsOpen={setIsOpenUpdateModal}
             productId={_id}
-          ></AddProductForm>
-          {/* <DialogFooter className="sm:justify-start">
-            <Button
-              variant="destructive"
-              onClick={() => {
-                setIsOpenUpdateModal(false);
-              }}
-            >
-              Yes, Delete
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsOpenDeleteModal(false)}
-            >
-              No, Cancel
-            </Button>
-          </DialogFooter> */}
+          ></ProductForm>
         </DialogContent>
       </Dialog>
     </>

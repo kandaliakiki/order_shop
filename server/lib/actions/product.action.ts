@@ -40,10 +40,23 @@ export const fetchProducts = async () => {
 };
 
 // Function to delete a product by ID
-export const deleteProduct = async (id: string) => {
+export const deleteProduct = async (
+  id: string,
+  oAuth2Client: OAuth2Client // Specify the type here
+) => {
   await connectToDB();
 
   try {
+    const existingProduct = await Product.findById(id);
+    if (!existingProduct) {
+      throw new Error("Product not found");
+    }
+
+    // Delete the image from Google Drive
+    if (existingProduct.imageUrl) {
+      await deleteImageFromDrive(existingProduct.imageUrl, oAuth2Client); // Ensure oAuth2Client is available
+    }
+
     const result = await Product.findByIdAndDelete(id);
     if (!result) {
       throw new Error("Product not found");

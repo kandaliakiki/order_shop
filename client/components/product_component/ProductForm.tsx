@@ -34,7 +34,7 @@ const formSchema = z.object({
   imageUrl: z.string().url().min(1),
 });
 
-const AddProductForm = ({
+const ProductForm = ({
   setIsOpen,
   productId,
 }: {
@@ -280,4 +280,4 @@ const AddProductForm = ({
   );
 };
 
-export default AddProductForm;
+export default ProductForm;

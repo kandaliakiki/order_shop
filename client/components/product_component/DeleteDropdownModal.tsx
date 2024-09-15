@@ -1,4 +1,5 @@
 import { useProducts } from "./ProductContext";
+import { MoonLoader } from "react-spinners"; // Import MoonLoader
 
 import {
   Dialog,
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "../ui/button";
+import { useState } from "react";
 
 const DeleteDropdownModal = ({
   _id,
@@ -22,6 +24,16 @@ const DeleteDropdownModal = ({
   setIsOpenDeleteModal: (isOpen: boolean) => void;
 }) => {
   const { deleteProduct } = useProducts();
+  const [loading, setLoading] = useState(false); // Add loading state
+
+  // New function to handle deletion
+  const handleDelete = async () => {
+    setLoading(true); // Set loading to true
+    await deleteProduct(_id);
+    setIsOpenDeleteModal(false);
+    setLoading(false); // Reset loading state
+  };
+
   return (
     <>
       <Dialog open={isOpenDeleteModal} onOpenChange={setIsOpenDeleteModal}>
@@ -39,12 +51,10 @@ const DeleteDropdownModal = ({
           <DialogFooter className="sm:justify-start">
             <Button
               variant="destructive"
-              onClick={() => {
-                deleteProduct(_id);
-                setIsOpenDeleteModal(false);
-              }}
+              onClick={handleDelete} // Updated to use new function
+              disabled={loading} // Disable button while loading
             >
-              Yes, Delete
+              {loading ? <MoonLoader size={20} color="#fff" /> : "Yes, Delete"}
             </Button>
             <Button
               variant="outline"

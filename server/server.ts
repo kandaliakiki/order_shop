@@ -69,7 +69,7 @@ app.delete("/api/deleteProduct/:id", async (req: Request, res: Response) => {
 
   try {
     // Assuming you have a deleteProduct function in your actions
-    await deleteProduct(id); // Implement this function in your product actions
+    await deleteProduct(id, oAuth2Client); // Implement this function in your product actions
     res.status(204).send(); // No content to send back
   } catch (error) {
     console.error("Error deleting product:", error);
