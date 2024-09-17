@@ -12,6 +12,8 @@ import {
 import { ProductData } from "./lib/models/product.model";
 import { getOAuth2Client } from "./lib/googleUtils";
 import { OAuth2Client } from "google-auth-library"; // Import OAuth2Client
+import { createCategory, fetchCategories } from "./lib/actions/category.action";
+import { CategoryData } from "./lib/models/category.model";
 
 // Specify the path to your .env.local file
 dotenv.config({ path: ".env.local" });
@@ -121,7 +123,41 @@ app.put("/api/updateProduct/:id", async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint to create a new category
+app.post("/api/createCategory", async (req: Request, res: Response) => {
+  const { name, imageUrl } = req.body;
+
+  if (!name || !imageUrl) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
+
+  try {
+    const categoryData: CategoryData = { name };
+    const newCategory = await createCategory(
+      categoryData,
+      imageUrl,
+      oAuth2Client
+    ); // Pass imageUrl instead of file
+    res.status(201).json(newCategory);
+  } catch (error) {
+    console.error("Error creating product:", error);
+    res.status(500).json({ error: "Failed to create product" });
+  }
+});
+
+// Endpoint to fetch all categories
+app.get("/api/categories", async (req: Request, res: Response) => {
+  try {
+    const categories = await fetchCategories();
+    res.status(200).json(categories);
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({ error: "Failed to fetch categories" });
+  }
+});
+
 // Start server
 app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+  const ip = require("ip").address(); // Import the 'ip' module to get the local IP address
+  console.log(`Server is running on http://${ip}:${port}`); // Use the local IP address instead of localhost
 });

@@ -5,15 +5,20 @@ interface CategoryCardProps {
   name: string;
   imageUrl: string;
   count: number;
+  _id: string; // Added _id to the props
 }
 
 const CategoryCard: React.FC<CategoryCardProps> = ({
   name,
   imageUrl,
   count,
+  _id, // Added _id to the destructured props
 }) => {
   return (
-    <div className="relative flex items-center border border-gray-300 shadow-sm rounded-lg p-2 py-3 mb-2 bg-white">
+    <div
+      className="relative flex items-center border border-gray-300 shadow-sm rounded-lg p-2 py-3 mb-2 bg-white"
+      key={_id}
+    >
       <Image
         src="/assets/bakeries.svg"
         alt="cateogry icon"
