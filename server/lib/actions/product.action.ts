@@ -31,7 +31,7 @@ export const fetchProducts = async () => {
   await connectToDB();
 
   try {
-    const products = await Product.find({});
+    const products = await Product.find({}).populate("category", "name"); // Populate category with name
     return products;
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -72,7 +72,7 @@ export const fetchProductById = async (id: string) => {
   await connectToDB();
 
   try {
-    const product = await Product.findById(id);
+    const product = await Product.findById(id).populate("category", "name"); // Populate category with name
     if (!product) {
       throw new Error("Product not found");
     }
@@ -114,4 +114,20 @@ export const updateProduct = async (
 
   await existingProduct.save();
   return existingProduct;
+};
+
+// Function to fetch products by category ID
+export const fetchProductsByCategoryId = async (categoryId: string) => {
+  await connectToDB();
+
+  try {
+    const products = await Product.find({ category: categoryId }).populate(
+      "category",
+      "name"
+    ); // Populate category with name
+    return products;
+  } catch (error) {
+    console.error("Error fetching products by category ID:", error);
+    throw error;
+  }
 };

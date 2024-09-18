@@ -26,6 +26,7 @@ import Image from "next/image";
 import { isBase64Image } from "@/lib/utils";
 import { MoonLoader } from "react-spinners";
 import { Product, useProducts } from "./ProductContext";
+import CategorySelectItems from "./CategorySelectItems";
 
 const formSchema = z.object({
   name: z.string().min(3).max(30),
@@ -50,7 +51,7 @@ const ProductForm = ({
     defaultValues: {
       name: product?.name || "",
       price: product?.price || 0,
-      category: product?.category || "",
+      category: product?.category.name || "",
       imageUrl: product?.imageUrl || "",
     },
   });
@@ -65,7 +66,7 @@ const ProductForm = ({
             // Reset form with fetched product data
             name: fetchedProduct.name,
             price: fetchedProduct.price,
-            category: fetchedProduct.category,
+            category: fetchedProduct.category.name,
             imageUrl: fetchedProduct.imageUrl,
           });
         }
@@ -218,11 +219,7 @@ const ProductForm = ({
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Select Category</SelectLabel>
-                      {
-                        <SelectItem {...field} value="All Items">
-                          All Items
-                        </SelectItem>
-                      }
+                      <CategorySelectItems {...field} />
                     </SelectGroup>
                   </SelectContent>
                 </Select>

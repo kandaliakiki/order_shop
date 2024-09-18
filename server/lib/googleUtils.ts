@@ -29,6 +29,14 @@ export function getOAuth2Client(): OAuth2Client {
   try {
     const token = fs.readFileSync(TOKEN_PATH, "utf8");
     oAuth2Client.setCredentials(JSON.parse(token));
+    // Check if the access token is expired and refresh it
+    if (oAuth2Client.credentials && oAuth2Client.credentials.expiry_date) {
+      const isExpired = oAuth2Client.credentials.expiry_date <= Date.now();
+      if (isExpired) {
+        // Call refreshAccessToken without await
+        refreshAccessToken(oAuth2Client).catch(console.error);
+      }
+    }
   } catch (err) {
     console.error("Token not found, please authorize the app.");
     // Optionally, you can call getAccessToken here if needed
@@ -36,6 +44,23 @@ export function getOAuth2Client(): OAuth2Client {
   }
 
   return oAuth2Client;
+}
+
+// Function to refresh the access token
+export async function refreshAccessToken(oAuth2Client: OAuth2Client) {
+  try {
+    const { credentials } = await oAuth2Client.refreshAccessToken();
+    if (credentials) {
+      // Check if token is defined
+      oAuth2Client.setCredentials(credentials); // Parse token to match Credentials type
+      // Save the new tokens to the file
+      fs.writeFileSync(TOKEN_PATH, JSON.stringify(credentials)); // Save token as string directly
+    } else {
+      throw new Error("Failed to retrieve access token.");
+    }
+  } catch (error) {
+    console.error("Error refreshing access token:", error);
+  }
 }
 
 export function isBase64Image(imageData: string) {

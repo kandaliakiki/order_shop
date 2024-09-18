@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { Category } from "./CategoryContext";
 
 export interface Product {
+  selectedCategory: string | null;
   _id: string; // Changed id to _id
   name: string;
   price: number;
-  category: string;
+  category: Category;
   imageUrl: string;
 }
 
@@ -13,6 +15,7 @@ interface ProductContextType {
   fetchProducts: () => Promise<void>; // Added fetchProducts to the context type
   deleteProduct: (id: string) => Promise<void>;
   fetchProductById: (id: string) => Promise<Product | null>;
+  fetchProductsByCategoryId: (categoryId: string) => Promise<Product[]>;
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
@@ -69,13 +72,52 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const fetchProductsByCategoryId = async (categoryId: string) => {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
+    try {
+      const response = await fetch(
+        `${backendUrl}/api/products/category/${categoryId}`
+      );
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const products: Product[] = await response.json();
+      setProducts(products);
+      return products;
+    } catch (error) {
+      console.error("Failed to fetch products by category ID:", error);
+      return []; // Return an empty array in case of error
+    }
+  };
+
   useEffect(() => {
-    fetchProducts(); // Fetch products on initial load
+    const fetchInitialProducts = async () => {
+      const selectedCategory = localStorage.getItem(
+        "selectedCategory"
+      ) as string;
+      if (selectedCategory === "") {
+        await fetchProducts();
+      } else {
+        await fetchProductsByCategoryId(selectedCategory);
+      }
+    };
+    window.addEventListener("updateSelectedCategory", () => {
+      fetchInitialProducts();
+      // ...
+    });
+
+    fetchInitialProducts();
   }, []);
 
   return (
     <ProductContext.Provider
-      value={{ products, fetchProducts, deleteProduct, fetchProductById }}
+      value={{
+        products,
+        fetchProducts,
+        deleteProduct,
+        fetchProductById,
+        fetchProductsByCategoryId,
+      }}
     >
       {children}
     </ProductContext.Provider>

@@ -8,6 +8,7 @@ import {
   fetchProductById,
   fetchProducts,
   updateProduct, // Import the new function
+  fetchProductsByCategoryId, // Import the new function
 } from "./lib/actions/product.action";
 import { ProductData } from "./lib/models/product.model";
 import { getOAuth2Client } from "./lib/googleUtils";
@@ -155,6 +156,26 @@ app.get("/api/categories", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to fetch categories" });
   }
 });
+
+// Endpoint to fetch products by category ID
+app.get(
+  "/api/products/category/:categoryId",
+  async (req: Request, res: Response) => {
+    const { categoryId } = req.params;
+
+    if (!categoryId) {
+      return res.status(400).json({ error: "Category ID is required" });
+    }
+
+    try {
+      const products = await fetchProductsByCategoryId(categoryId);
+      res.status(200).json(products);
+    } catch (error) {
+      console.error("Error fetching products by category ID:", error);
+      res.status(500).json({ error: "Failed to fetch products" });
+    }
+  }
+);
 
 // Start server
 app.listen(port, () => {

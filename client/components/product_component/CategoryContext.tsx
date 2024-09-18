@@ -15,6 +15,27 @@ const CategoryContext = createContext<CategoryContextType | undefined>(
   undefined
 );
 
+export const setCategoryId = (categoryId: string) => {
+  localStorage.setItem("selectedCategory", categoryId);
+  window.dispatchEvent(new Event("updateSelectedCategory"));
+};
+
+export const fetchCategories = async (): Promise<Category[]> => {
+  // Moved function outside of provider
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
+  try {
+    const response = await fetch(`${backendUrl}/api/categories`);
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+    const data: Category[] = await response.json();
+    return data; // Return the fetched categories
+  } catch (error) {
+    console.error("Failed to fetch categories:", error);
+    return []; // Return an empty array on error
+  }
+};
+
 export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -36,6 +57,8 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     fetchCategories(); // Fetch categories on initial load
+    localStorage.setItem("selectedCategory", "");
+    window.dispatchEvent(new Event("updateSelectedCategory"));
   }, []);
 
   return (

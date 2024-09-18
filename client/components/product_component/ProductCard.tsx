@@ -24,7 +24,7 @@ const ProductCard: React.FC<Product> = ({
         width={160}
         className="self-center  h-1/2"
       ></Image>
-      <p className=" text-gray-500 mt-5 ">{category}</p>
+      <p className=" text-gray-500 mt-5 ">{category.name}</p>
       <p className="text-lg">{name}</p>
       <p className="text-xl mt-5 font-bold">${price}</p>
     </div>

@@ -8,6 +8,7 @@ import { bakeryIngredients } from "@/constants";
 import ProductAddModalButton from "./ProductAddModalButton";
 import FetchedProduct from "./FetchedProduct";
 import { ProductProvider } from "./ProductContext";
+import { CategoryProvider } from "./CategoryContext";
 
 const ProductList = () => {
   return (
@@ -18,12 +19,14 @@ const ProductList = () => {
           <ProductListControls />
         </div>
 
-        <ProductProvider>
-          <div className="grid grid-cols-6 gap-5  ">
-            <ProductAddModalButton></ProductAddModalButton>
-            <FetchedProduct></FetchedProduct>
-          </div>
-        </ProductProvider>
+        <CategoryProvider>
+          <ProductProvider>
+            <div className="grid grid-cols-6 gap-5  ">
+              <ProductAddModalButton></ProductAddModalButton>
+              <FetchedProduct></FetchedProduct>
+            </div>
+          </ProductProvider>
+        </CategoryProvider>
       </div>
     </div>
   );
