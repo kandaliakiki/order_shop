@@ -131,3 +131,17 @@ export const fetchProductsByCategoryId = async (categoryId: string) => {
     throw error;
   }
 };
+
+// Function to count products by category ID
+export const countProductsByCategoryId = async (categoryId: string) => {
+  await connectToDB();
+
+  try {
+    const query = categoryId === "allItems" ? {} : { category: categoryId }; // If categoryId is "allItems", count all items
+    const productCount = await Product.countDocuments(query); // Count documents based on the query
+    return productCount;
+  } catch (error) {
+    console.error("Error counting products by category ID:", error);
+    throw error;
+  }
+};

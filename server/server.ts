@@ -9,6 +9,7 @@ import {
   fetchProducts,
   updateProduct, // Import the new function
   fetchProductsByCategoryId, // Import the new function
+  countProductsByCategoryId, // Import the new function
 } from "./lib/actions/product.action";
 import { ProductData } from "./lib/models/product.model";
 import { getOAuth2Client } from "./lib/googleUtils";
@@ -173,6 +174,26 @@ app.get(
     } catch (error) {
       console.error("Error fetching products by category ID:", error);
       res.status(500).json({ error: "Failed to fetch products" });
+    }
+  }
+);
+
+// Endpoint to count products by category ID
+app.get(
+  "/api/products/count/:categoryId",
+  async (req: Request, res: Response) => {
+    const { categoryId } = req.params;
+
+    if (!categoryId) {
+      return res.status(400).json({ error: "Category ID is required" });
+    }
+
+    try {
+      const productCount = await countProductsByCategoryId(categoryId);
+      res.status(200).json({ count: productCount });
+    } catch (error) {
+      console.error("Error counting products by category ID:", error);
+      res.status(500).json({ error: "Failed to count products" });
     }
   }
 );

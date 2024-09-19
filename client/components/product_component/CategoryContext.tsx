@@ -9,6 +9,7 @@ export interface Category {
 interface CategoryContextType {
   categories: Category[];
   fetchCategories: () => Promise<void>;
+  getProductCountByCategoryId: (categoryId: string) => Promise<number>;
 }
 
 const CategoryContext = createContext<CategoryContextType | undefined>(
@@ -55,6 +56,25 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const getProductCountByCategoryId = async (
+    categoryId: string
+  ): Promise<number> => {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
+    try {
+      const response = await fetch(
+        `${backendUrl}/api/products/count/${categoryId}`
+      );
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const data = await response.json();
+      return data.count;
+    } catch (error) {
+      console.error("Error fetching product count by category ID:", error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     fetchCategories(); // Fetch categories on initial load
     localStorage.setItem("selectedCategory", "");
@@ -62,7 +82,9 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   return (
-    <CategoryContext.Provider value={{ categories, fetchCategories }}>
+    <CategoryContext.Provider
+      value={{ categories, fetchCategories, getProductCountByCategoryId }}
+    >
       {children}
     </CategoryContext.Provider>
   );

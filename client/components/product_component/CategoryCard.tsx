@@ -5,20 +5,31 @@ import { setCategoryId } from "./CategoryContext";
 interface CategoryCardProps {
   name: string;
   imageUrl: string;
-  count: number;
   _id: string; // Added _id to the props
   selectedCategory: string | null;
   setSelectedCategory: React.Dispatch<React.SetStateAction<string | null>>;
+  getProductCountByCategoryId: (id: string) => Promise<number>; // Add this prop
 }
 
 const CategoryCard: React.FC<CategoryCardProps> = ({
   name,
   imageUrl,
-  count,
   _id, // Added _id to the destructured props
   selectedCategory,
   setSelectedCategory,
+  getProductCountByCategoryId, // Destructure the new prop
 }) => {
+  const [count, setCount] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      const productCount = await getProductCountByCategoryId(_id);
+      setCount(productCount);
+    };
+
+    fetchCount();
+  }, [getProductCountByCategoryId]);
+
   return (
     <div
       className={`relative flex items-center border border-gray-300 shadow-sm rounded-lg p-2 py-3 mb-2  cursor-pointer ${
