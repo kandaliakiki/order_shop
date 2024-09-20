@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { Category } from "./CategoryContext";
 
 export interface Product {
-  selectedCategory: string | null;
   _id: string; // Changed id to _id
   name: string;
   price: number;
@@ -95,6 +94,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
       const selectedCategory = localStorage.getItem(
         "selectedCategory"
       ) as string;
+      setProducts([]);
       if (selectedCategory === "") {
         await fetchProducts();
       } else {

@@ -11,8 +11,12 @@ const CategoryList = () => {
     if (storedCategory) {
       setSelectedCategory(storedCategory);
     }
-    window.addEventListener("updateSelectedCategory", () => {
+    window.addEventListener("clearSelectedCategory", () => {
       setSelectedCategory("");
+      // ...
+    });
+    window.addEventListener("updateSelectedCategory", () => {
+      setSelectedCategory(localStorage.getItem("selectedCategory"));
       // ...
     });
   }, []);
@@ -20,7 +24,7 @@ const CategoryList = () => {
   return (
     <div className="overflow-y-scroll h-screen scrollbar-hide mb-24">
       <CategoryCard
-        _id="allItems"
+        _id=""
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
         imageUrl=""

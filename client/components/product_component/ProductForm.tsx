@@ -27,6 +27,7 @@ import { isBase64Image } from "@/lib/utils";
 import { MoonLoader } from "react-spinners";
 import { Product, useProducts } from "./ProductContext";
 import CategorySelectItems from "./CategorySelectItems";
+import { setCategoryId } from "./CategoryContext";
 
 const formSchema = z.object({
   name: z.string().min(3).max(30),
@@ -44,7 +45,8 @@ const ProductForm = ({
 }) => {
   const [loading, setLoading] = useState(false); // Add loading state
   const [product, setProduct] = useState<Product | null>(null); // State for product
-  const { fetchProducts, fetchProductById } = useProducts(); // Get the fetch function from context
+  const { fetchProducts, fetchProductById, fetchProductsByCategoryId } =
+    useProducts(); // Get the fetch function from context
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -92,6 +94,8 @@ const ProductForm = ({
       }
 
       const data = await response.json();
+      window.dispatchEvent(new Event("addedProduct"));
+      setCategoryId(productData.category);
       console.log("Product created:", data);
       // Handle success (e.g., show a success message, redirect, etc.)
     } catch (error) {
@@ -139,7 +143,14 @@ const ProductForm = ({
     } else {
       await updateProduct(values, productId);
     }
-    await fetchProducts();
+
+    const selectedCategory = localStorage.getItem("selectedCategory");
+
+    if (selectedCategory === null || selectedCategory === "") {
+      await fetchProducts();
+    } else {
+      await fetchProductsByCategoryId(selectedCategory);
+    }
 
     setIsOpen(false);
     setLoading(false); // Reset loading state

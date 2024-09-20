@@ -62,7 +62,9 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
     try {
       const response = await fetch(
-        `${backendUrl}/api/products/count/${categoryId}`
+        categoryId
+          ? `${backendUrl}/api/products/count/${categoryId}`
+          : `${backendUrl}/api/products/count`
       );
       if (!response.ok) {
         throw new Error("Network response was not ok");
@@ -78,7 +80,11 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     fetchCategories(); // Fetch categories on initial load
     localStorage.setItem("selectedCategory", "");
-    window.dispatchEvent(new Event("updateSelectedCategory"));
+    window.dispatchEvent(new Event("clearSelectedCategory"));
+    window.addEventListener("addedProduct", () => {
+      fetchCategories();
+      // ...
+    });
   }, []);
 
   return (
