@@ -161,3 +161,33 @@ export const countAllProducts = async () => {
     throw error;
   }
 };
+
+// Function to delete multiple products by IDs
+export const deleteMultipleProducts = async (
+  ids: string[],
+  oAuth2Client: OAuth2Client // Specify the type here
+) => {
+  await connectToDB();
+
+  try {
+    const deletePromises = ids.map(async (id) => {
+      const existingProduct = await Product.findById(id);
+      if (!existingProduct) {
+        throw new Error(`Product with ID ${id} not found`);
+      }
+
+      // Delete the image from Google Drive
+      if (existingProduct.imageUrl) {
+        await deleteImageFromDrive(existingProduct.imageUrl, oAuth2Client);
+      }
+
+      await Product.findByIdAndDelete(id);
+    });
+
+    await Promise.all(deletePromises);
+    return { message: "Products deleted successfully" };
+  } catch (error) {
+    console.error("Error deleting multiple products:", error);
+    throw error;
+  }
+};

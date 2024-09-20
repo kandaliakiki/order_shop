@@ -94,7 +94,7 @@ const ProductForm = ({
       }
 
       const data = await response.json();
-      window.dispatchEvent(new Event("addedProduct"));
+      window.dispatchEvent(new Event("addedOrDeletedProduct"));
       setCategoryId(productData.category);
       console.log("Product created:", data);
       // Handle success (e.g., show a success message, redirect, etc.)

@@ -81,7 +81,7 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
     fetchCategories(); // Fetch categories on initial load
     localStorage.setItem("selectedCategory", "");
     window.dispatchEvent(new Event("clearSelectedCategory"));
-    window.addEventListener("addedProduct", () => {
+    window.addEventListener("addedOrDeletedProduct", () => {
       fetchCategories();
       // ...
     });

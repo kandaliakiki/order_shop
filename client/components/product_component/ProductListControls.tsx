@@ -1,9 +1,27 @@
 import Image from "next/image";
-import React from "react";
+import React, { useState } from "react";
+import { Button } from "../ui/button";
+import { useProducts } from "./ProductContext";
+import DeleteMultipleModal from "./DeleteMultipleModal";
 
 const ProductListControls = () => {
+  const { selectedProducts } = useProducts();
+  const [isOpenDeleteModal, setIsOpenDeleteModal] = useState(false);
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-3 items-center h-5 ">
+      {selectedProducts.length > 0 && (
+        <Button
+          variant="destructive"
+          onClick={() => setIsOpenDeleteModal(true)}
+        >
+          Delete Products
+        </Button>
+      )}
+      <DeleteMultipleModal
+        isOpenDeleteModal={isOpenDeleteModal}
+        setIsOpenDeleteModal={setIsOpenDeleteModal}
+      />
+
       <div className="flex w-20 bg-white rounded-md h-7">
         <div className="rounded-tl-md rounded-bl-md  w-1/2  border-2 border-teal-600 flex justify-center items-center">
           <Image

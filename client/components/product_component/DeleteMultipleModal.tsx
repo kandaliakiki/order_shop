@@ -14,23 +14,23 @@ import { AlertTriangle } from "lucide-react";
 import { Button } from "../ui/button";
 import { useState } from "react";
 
-const DeleteDropdownModal = ({
-  _id,
+const DeleteMultipleModal = ({
   isOpenDeleteModal,
   setIsOpenDeleteModal,
 }: {
-  _id: string;
   isOpenDeleteModal: boolean;
   setIsOpenDeleteModal: (isOpen: boolean) => void;
 }) => {
-  const { deleteProduct } = useProducts();
+  const { selectedProducts, deleteMultipleProducts, setSelectedProducts } =
+    useProducts();
   const [loading, setLoading] = useState(false); // Add loading state
 
   // New function to handle deletion
   const handleDelete = async () => {
     setLoading(true); // Set loading to true
-    await deleteProduct(_id);
+    await deleteMultipleProducts(selectedProducts);
     window.dispatchEvent(new Event("addedOrDeletedProduct"));
+    setSelectedProducts([]);
     setIsOpenDeleteModal(false);
     setLoading(false); // Reset loading state
   };
@@ -45,8 +45,9 @@ const DeleteDropdownModal = ({
               Confirm Deletion
             </DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this item? This action cannot be
-              undone.
+              Are you sure you want to delete{" "}
+              <strong className="text-black">{selectedProducts.length}</strong>{" "}
+              selected items? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-start">
@@ -70,4 +71,4 @@ const DeleteDropdownModal = ({
   );
 };
 
-export default DeleteDropdownModal;
+export default DeleteMultipleModal;

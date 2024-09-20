@@ -11,10 +11,13 @@ export interface Product {
 
 interface ProductContextType {
   products: Product[];
-  fetchProducts: () => Promise<void>; // Added fetchProducts to the context type
+  fetchProducts: () => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
+  deleteMultipleProducts: (ids: string[]) => Promise<void>; // Add this line
   fetchProductById: (id: string) => Promise<Product | null>;
   fetchProductsByCategoryId: (categoryId: string) => Promise<Product[]>;
+  selectedProducts: string[];
+  setSelectedProducts: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
@@ -23,6 +26,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
   const fetchProducts = async () => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
@@ -31,8 +35,8 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
-      const data: Product[] = await response.json(); // Now data can be directly assigned
-      setProducts(data); // No need for mapping
+      const data: Product[] = await response.json();
+      setProducts(data);
     } catch (error) {
       console.error("Failed to fetch products:", error);
     }
@@ -56,6 +60,28 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const deleteMultipleProducts = async (ids: string[]) => {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
+    try {
+      const response = await fetch(`${backendUrl}/api/deleteMultipleProducts`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ids }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete multiple products");
+      }
+      // Optionally, you can update the state to remove the deleted products
+      setProducts((prevProducts) =>
+        prevProducts.filter((product) => !ids.includes(product._id))
+      );
+    } catch (error) {
+      console.error("Error deleting multiple products:", error);
+    }
+  };
+
   const fetchProductById = async (id: string): Promise<Product | null> => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
     try {
@@ -64,10 +90,10 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
         throw new Error("Network response was not ok");
       }
       const product: Product = await response.json();
-      return product; // Return the fetched product
+      return product;
     } catch (error) {
       console.error("Failed to fetch product by ID:", error);
-      return null; // Return null in case of error
+      return null;
     }
   };
 
@@ -85,7 +111,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
       return products;
     } catch (error) {
       console.error("Failed to fetch products by category ID:", error);
-      return []; // Return an empty array in case of error
+      return [];
     }
   };
 
@@ -115,8 +141,11 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
         products,
         fetchProducts,
         deleteProduct,
+        deleteMultipleProducts,
         fetchProductById,
         fetchProductsByCategoryId,
+        selectedProducts,
+        setSelectedProducts,
       }}
     >
       {children}

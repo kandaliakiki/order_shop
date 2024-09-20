@@ -11,6 +11,7 @@ import {
   fetchProductsByCategoryId, // Import the new function
   countProductsByCategoryId,
   countAllProducts, // Import the new function
+  deleteMultipleProducts, // Import the new function
 } from "./lib/actions/product.action";
 import { ProductData } from "./lib/models/product.model";
 import { getOAuth2Client } from "./lib/googleUtils";
@@ -209,6 +210,28 @@ app.get("/api/products/count", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to count products" });
   }
 });
+
+// Endpoint to delete multiple products
+app.delete(
+  "/api/deleteMultipleProducts",
+  async (req: Request, res: Response) => {
+    const { ids } = req.body; // Expect an array of IDs in the request body
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res
+        .status(400)
+        .json({ error: "An array of product IDs is required" });
+    }
+
+    try {
+      const result = await deleteMultipleProducts(ids, oAuth2Client);
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Error deleting multiple products:", error);
+      res.status(500).json({ error: "Failed to delete multiple products" });
+    }
+  }
+);
 
 // Start server
 app.listen(port, () => {
