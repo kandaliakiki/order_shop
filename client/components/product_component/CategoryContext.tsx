@@ -10,6 +10,7 @@ interface CategoryContextType {
   categories: Category[];
   fetchCategories: () => Promise<void>;
   getProductCountByCategoryId: (categoryId: string) => Promise<number>;
+  fetchCategoryById: (id: string) => Promise<Category | null>;
 }
 
 const CategoryContext = createContext<CategoryContextType | undefined>(
@@ -19,22 +20,6 @@ const CategoryContext = createContext<CategoryContextType | undefined>(
 export const setCategoryId = (categoryId: string) => {
   localStorage.setItem("selectedCategory", categoryId);
   window.dispatchEvent(new Event("updateSelectedCategory"));
-};
-
-export const fetchCategories = async (): Promise<Category[]> => {
-  // Moved function outside of provider
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
-  try {
-    const response = await fetch(`${backendUrl}/api/categories`);
-    if (!response.ok) {
-      throw new Error("Network response was not ok");
-    }
-    const data: Category[] = await response.json();
-    return data; // Return the fetched categories
-  } catch (error) {
-    console.error("Failed to fetch categories:", error);
-    return []; // Return an empty array on error
-  }
 };
 
 export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -77,6 +62,21 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const fetchCategoryById = async (id: string): Promise<Category | null> => {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
+    try {
+      const response = await fetch(`${backendUrl}/api/category/${id}`);
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const category: Category = await response.json();
+      return category;
+    } catch (error) {
+      console.error("Failed to fetch category by ID:", error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     fetchCategories(); // Fetch categories on initial load
     localStorage.setItem("selectedCategory", "");
@@ -89,7 +89,12 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <CategoryContext.Provider
-      value={{ categories, fetchCategories, getProductCountByCategoryId }}
+      value={{
+        categories,
+        fetchCategories,
+        getProductCountByCategoryId,
+        fetchCategoryById,
+      }}
     >
       {children}
     </CategoryContext.Provider>

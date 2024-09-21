@@ -27,7 +27,7 @@ import { isBase64Image } from "@/lib/utils";
 import { MoonLoader } from "react-spinners";
 import { Product, useProducts } from "./ProductContext";
 import CategorySelectItems from "./CategorySelectItems";
-import { setCategoryId } from "./CategoryContext";
+import { setCategoryId, useCategories } from "./CategoryContext";
 
 const formSchema = z.object({
   name: z.string().min(3).max(30),
@@ -48,12 +48,13 @@ const ProductForm = ({
   const { fetchProducts, fetchProductById, fetchProductsByCategoryId } =
     useProducts(); // Get the fetch function from context
 
+  const { fetchCategories, fetchCategoryById } = useCategories();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: product?.name || "",
       price: product?.price || 0,
-      category: product?.category.name || "",
+      category: product?.category._id || "",
       imageUrl: product?.imageUrl || "",
     },
   });
@@ -68,7 +69,7 @@ const ProductForm = ({
             // Reset form with fetched product data
             name: fetchedProduct.name,
             price: fetchedProduct.price,
-            category: fetchedProduct.category.name,
+            category: fetchedProduct.category._id,
             imageUrl: fetchedProduct.imageUrl,
           });
         }
@@ -76,6 +77,28 @@ const ProductForm = ({
     };
     fetchProduct();
   }, [productId]); // Dependency on productId
+
+  useEffect(() => {
+    const selectedCategory = localStorage.getItem("selectedCategory");
+    const fetchSelectedCategory = async () => {
+      if (selectedCategory && !productId) {
+        const category = await fetchCategoryById(selectedCategory);
+        if (category) {
+          form.setValue("category", category._id);
+        }
+        if (category) {
+          form.reset({
+            // Reset form with fetched product data
+            name: product?.name || "",
+            price: product?.price || 0,
+            category: category._id,
+            imageUrl: product?.imageUrl || "",
+          });
+        }
+      }
+    };
+    fetchSelectedCategory();
+  }, []);
 
   const createProduct = async (productData: z.infer<typeof formSchema>) => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT; // Your backend URL
@@ -223,7 +246,7 @@ const ProductForm = ({
             <FormItem>
               <FormLabel>Category</FormLabel>
               <FormControl>
-                <Select onValueChange={field.onChange}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <SelectTrigger className="w-[280px] no-focus ">
                     <SelectValue placeholder="Select a Category" />
                   </SelectTrigger>

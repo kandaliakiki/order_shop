@@ -23,3 +23,8 @@ export const createCategory = async (
 export const fetchCategories = async () => {
   return await Category.find(); // Return the list of categories
 };
+
+// Function to fetch a category by ID
+export const fetchCategoryById = async (id: string) => {
+  return await Category.findById(id); // Return the category with the given ID
+};
