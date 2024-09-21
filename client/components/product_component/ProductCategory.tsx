@@ -6,7 +6,7 @@ import CategoryList from "./CategoryList";
 import CategoryAddModalButton from "./CategoryAddModalButton";
 import { CategoryProvider } from "./CategoryContext";
 
-const ProductCategory = () => {
+const ProductCategorySection = () => {
   return (
     <CategoryProvider>
       <div className="relative w-1/4 h-screen bg-gray-200 -ml-6 overflow-hidden ">
@@ -22,4 +22,4 @@ const ProductCategory = () => {
   );
 };
 
-export default ProductCategory;
+export default ProductCategorySection;
