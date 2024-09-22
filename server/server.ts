@@ -12,6 +12,7 @@ import {
   countProductsByCategoryId,
   countAllProducts, // Import the new function
   deleteMultipleProducts, // Import the new function
+  filterProductsByNameOrCategory, // Import the new function
 } from "./lib/actions/product.action";
 import { ProductData } from "./lib/models/product.model";
 import { getOAuth2Client } from "./lib/googleUtils";
@@ -254,6 +255,26 @@ app.get("/api/category/:id", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching category by ID:", error);
     res.status(500).json({ error: "Failed to fetch category" });
+  }
+});
+
+// Endpoint to filter products by name or category name and optionally by category ID
+app.get("/api/filterProducts", async (req: Request, res: Response) => {
+  const { textToSearch, categoryId } = req.query;
+
+  if (!textToSearch) {
+    return res.status(400).json({ error: "Text to search is required" });
+  }
+
+  try {
+    const products = await filterProductsByNameOrCategory(
+      textToSearch as string,
+      categoryId as string
+    );
+    res.status(200).json(products);
+  } catch (error) {
+    console.error("Error filtering products:", error);
+    res.status(500).json({ error: "Failed to filter products" });
   }
 });
 

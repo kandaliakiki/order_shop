@@ -1,14 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import ProductAddModalButton from "./ProductAddModalButton";
+import { useProducts } from "./ProductContext";
 
 const ProductHeader = () => {
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(e.target.value);
-  };
+  const { handleSearchChange, searchText } = useProducts();
+
   return (
     <div className="flex items-center gap-2 p-1 ">
       <form
@@ -22,6 +22,7 @@ const ProductHeader = () => {
           height={20}
         ></Image>
         <input
+          value={searchText}
           type="text"
           placeholder="Search Products"
           className="focus:outline-none focus:ring-0"

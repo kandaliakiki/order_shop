@@ -16,8 +16,14 @@ interface ProductContextType {
   deleteMultipleProducts: (ids: string[]) => Promise<void>; // Add this line
   fetchProductById: (id: string) => Promise<Product | null>;
   fetchProductsByCategoryId: (categoryId: string) => Promise<Product[]>;
+  filterProducts: (
+    textToSearch: string,
+    categoryId?: string
+  ) => Promise<Product[]>; // Add this line
   selectedProducts: string[];
   setSelectedProducts: React.Dispatch<React.SetStateAction<string[]>>;
+  handleSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  searchText: string;
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
@@ -27,6 +33,8 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [searchText, setSearchText] = useState("");
+  const [textToSearch, setTextToSearch] = useState("");
 
   const fetchProducts = async () => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
@@ -115,6 +123,37 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchText(e.target.value);
+  };
+
+  const filterProducts = async (
+    textToSearch: string,
+    categoryId?: string
+  ): Promise<Product[]> => {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
+    try {
+      const queryParams = new URLSearchParams({ textToSearch });
+      if (categoryId && categoryId.trim() !== "") {
+        queryParams.append("categoryId", categoryId);
+      }
+
+      const response = await fetch(
+        `${backendUrl}/api/filterProducts?${queryParams.toString()}`
+      );
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      setProducts([]);
+      const products: Product[] = await response.json();
+      setProducts(products);
+      return products;
+    } catch (error) {
+      console.error("Failed to filter products:", error);
+      return [];
+    }
+  };
+
   useEffect(() => {
     const fetchInitialProducts = async () => {
       const selectedCategory = localStorage.getItem(
@@ -129,11 +168,27 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
     };
     window.addEventListener("updateSelectedCategory", () => {
       fetchInitialProducts();
-      // ...
+      setTextToSearch("");
     });
 
     fetchInitialProducts();
   }, []);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setTextToSearch(searchText), 500);
+
+    return () => clearTimeout(timeout);
+  }, [searchText]);
+
+  useEffect(() => {
+    if (textToSearch) {
+      const currentCategoryId =
+        localStorage.getItem("selectedCategory") || undefined;
+      filterProducts(textToSearch, currentCategoryId);
+    } else {
+      window.dispatchEvent(new Event("updateSelectedCategory"));
+    }
+  }, [textToSearch]);
 
   return (
     <ProductContext.Provider
@@ -144,8 +199,11 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
         deleteMultipleProducts,
         fetchProductById,
         fetchProductsByCategoryId,
+        filterProducts, // Add this line
         selectedProducts,
         setSelectedProducts,
+        handleSearchChange,
+        searchText,
       }}
     >
       {children}

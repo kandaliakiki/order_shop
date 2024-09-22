@@ -8,6 +8,7 @@ import {
   isBase64Image,
   uploadToGoogleDrive,
 } from "../googleUtils";
+import mongoose from "mongoose"; // Ensure mongoose is imported
 
 // Function to create a product
 export const createProduct = async (
@@ -188,6 +189,69 @@ export const deleteMultipleProducts = async (
     return { message: "Products deleted successfully" };
   } catch (error) {
     console.error("Error deleting multiple products:", error);
+    throw error;
+  }
+};
+
+export const filterProductsByNameOrCategory = async (
+  textToSearch: string,
+  categoryId?: string
+) => {
+  await connectToDB();
+
+  try {
+    const regex = new RegExp(`.*${textToSearch}.*`, "i");
+    const matchConditions: any = {};
+
+    // Add text search condition
+    if (textToSearch) {
+      matchConditions.$or = [
+        { name: { $regex: regex } },
+        { "categoryDetails.name": { $regex: regex } },
+      ];
+    }
+
+    // Add categoryId condition if provided
+    if (categoryId) {
+      matchConditions["categoryDetails._id"] = new mongoose.Types.ObjectId(
+        categoryId
+      );
+    }
+
+    const products = await Product.aggregate([
+      {
+        $lookup: {
+          from: "categories", // The name of the category collection
+          localField: "category",
+          foreignField: "_id",
+          as: "categoryDetails",
+        },
+      },
+      {
+        $unwind: "$categoryDetails",
+      },
+      {
+        $match: matchConditions,
+      },
+      {
+        $addFields: {
+          category: "$categoryDetails",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          price: 1,
+          imageUrl: 1,
+          category: 1,
+        },
+      },
+    ]);
+
+    return products;
+  } catch (error) {
+    console.error("Error filtering products:", error);
     throw error;
   }
 };
