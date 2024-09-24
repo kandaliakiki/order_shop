@@ -9,7 +9,11 @@ export const createCategory = async (
   oAuth2Client: OAuth2Client
 ) => {
   // Upload image to Google Drive
-  const imageId = await uploadToGoogleDrive(base64Image, oAuth2Client);
+  const imageId = await uploadToGoogleDrive(
+    base64Image,
+    oAuth2Client,
+    "category"
+  );
 
   // Construct the image URL
   const imageUrl = `https://drive.google.com/uc?export=view&id=${imageId}`;

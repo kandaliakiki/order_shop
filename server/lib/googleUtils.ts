@@ -94,12 +94,13 @@ function getAccessToken(oAuth2Client: OAuth2Client) {
 // Function to upload image to Google Drive
 export const uploadToGoogleDrive = async (
   base64Image: string,
-  oAuth2Client: OAuth2Client
+  oAuth2Client: OAuth2Client,
+  type: string
 ) => {
   const drive = google.drive({ version: "v3", auth: oAuth2Client });
   const buffer = Buffer.from(base64Image.split(",")[1], "base64"); // Decode base64 image
   const fileMetadata = {
-    name: "product_image.png",
+    name: `${type}_image.png`,
     parents: [process.env.GOOGLE_DRIVE_FOLDER_ID].filter(Boolean) as string[], // Ensure no undefined values
   };
   const media = {

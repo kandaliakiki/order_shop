@@ -17,7 +17,11 @@ export const createProduct = async (
   oAuth2Client: OAuth2Client // Specify the type here
 ) => {
   // Upload image to Google Drive
-  const imageId = await uploadToGoogleDrive(base64Image, oAuth2Client);
+  const imageId = await uploadToGoogleDrive(
+    base64Image,
+    oAuth2Client,
+    "product"
+  );
 
   // Construct the image URL
   const imageUrl = `https://drive.google.com/uc?export=view&id=${imageId}`;
@@ -109,7 +113,11 @@ export const updateProduct = async (
   if (oldImageUrl && isUserUploadNewImage) {
     await deleteImageFromDrive(oldImageUrl, oAuth2Client); // Call the delete function
     // Upload the new image and update the imageUrl
-    const imageId = await uploadToGoogleDrive(imageUrl, oAuth2Client);
+    const imageId = await uploadToGoogleDrive(
+      imageUrl,
+      oAuth2Client,
+      "product"
+    );
     existingProduct.imageUrl = `https://drive.google.com/uc?export=view&id=${imageId}`;
   }
 
