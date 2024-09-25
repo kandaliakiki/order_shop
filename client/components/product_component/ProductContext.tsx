@@ -3,6 +3,7 @@ import { Category } from "./CategoryContext";
 
 export interface Product {
   _id: string; // Changed id to _id
+  productId: string;
   name: string;
   price: number;
   category: Category;
@@ -24,6 +25,8 @@ interface ProductContextType {
   setSelectedProducts: React.Dispatch<React.SetStateAction<string[]>>;
   handleSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   searchText: string;
+  isGridView: boolean;
+  setIsGridView: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
@@ -35,6 +38,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [searchText, setSearchText] = useState("");
   const [textToSearch, setTextToSearch] = useState("");
+  const [isGridView, setIsGridView] = useState(false);
 
   const fetchProducts = async () => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
@@ -204,6 +208,8 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
         setSelectedProducts,
         handleSearchChange,
         searchText,
+        isGridView,
+        setIsGridView,
       }}
     >
       {children}

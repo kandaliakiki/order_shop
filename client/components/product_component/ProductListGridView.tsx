@@ -1,7 +1,7 @@
 import React from "react";
 import ProductAddModalButton from "./ProductAddModalButton";
 import Image from "next/image";
-import FetchedProduct from "./FetchedProduct";
+import FetchedProductCard from "./FetchedProductCard";
 
 const ProductListGridView = () => {
   return (
@@ -17,7 +17,7 @@ const ProductListGridView = () => {
           <p className="text-xl">Add New Product</p>
         </div>
       </ProductAddModalButton>
-      <FetchedProduct></FetchedProduct>
+      <FetchedProductCard></FetchedProductCard>
     </div>
   );
 };

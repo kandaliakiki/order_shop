@@ -52,25 +52,6 @@ const CategoryForm = ({
     },
   });
 
-  //   useEffect(() => {
-  //     const fetchProduct = async () => {
-  //       if (categoryId) {
-  //         const fetchedProduct = await fetchProductById(categoryId); // Call fetchProductById
-  //         setCategory(fetchedProduct); // Set the product state
-  //         if (fetchedProduct) {
-  //           form.reset({
-  //             // Reset form with fetched product data
-  //             name: fetchedProduct.name,
-  //             price: fetchedProduct.price,
-  //             category: fetchedProduct.category,
-  //             imageUrl: fetchedProduct.imageUrl,
-  //           });
-  //         }
-  //       }
-  //     };
-  //     fetchProduct();
-  //   }, [categoryId]); // Dependency on categoryId
-
   const createCategory = async (categoryData: z.infer<typeof formSchema>) => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT; // Your backend URL
 

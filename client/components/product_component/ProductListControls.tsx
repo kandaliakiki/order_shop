@@ -5,7 +5,7 @@ import { useProducts } from "./ProductContext";
 import DeleteMultipleModal from "./DeleteMultipleModal";
 
 const ProductListControls = () => {
-  const { selectedProducts } = useProducts();
+  const { selectedProducts, isGridView, setIsGridView } = useProducts();
   const [isOpenDeleteModal, setIsOpenDeleteModal] = useState(false);
   return (
     <div className="flex gap-3 items-center h-5 ">
@@ -23,17 +23,27 @@ const ProductListControls = () => {
       />
 
       <div className="flex w-20 bg-white rounded-md h-7">
-        <div className="rounded-tl-md rounded-bl-md  w-1/2  border-2 border-teal-600 flex justify-center items-center">
+        <div
+          onClick={() => setIsGridView(true)}
+          className={`rounded-tl-md rounded-bl-md  w-1/2  border-2 ${
+            isGridView ? "border-teal-600" : "border-gray-300 border-r-0"
+          } flex justify-center items-center cursor-pointer`}
+        >
           <Image
-            src="/assets/menu-active.svg"
+            src={isGridView ? "/assets/grid-active.svg" : "/assets/grid.svg"}
             alt="menu icon"
             width={23}
             height={23}
           />
         </div>
-        <div className="rounded-tr-md rounded-br-md  w-1/2  border-l-0 border-2 border-gray-300 flex justify-center items-center">
+        <div
+          onClick={() => setIsGridView(false)}
+          className={`rounded-tr-md rounded-br-md  w-1/2   border-2 ${
+            !isGridView ? "border-teal-600" : "border-gray-300 border-l-0"
+          } flex justify-center items-center cursor-pointer`}
+        >
           <Image
-            src="/assets/list.svg"
+            src={!isGridView ? "/assets/list-active.svg" : "/assets/list.svg"}
             alt="list icon"
             width={22}
             height={22}

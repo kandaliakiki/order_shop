@@ -5,6 +5,7 @@ import { Product, useProducts } from "./ProductContext";
 import ProductCardDropdown from "./ProductCardDropdown";
 
 const ProductCard: React.FC<Product> = ({
+  productId,
   _id,
   category,
   name,
