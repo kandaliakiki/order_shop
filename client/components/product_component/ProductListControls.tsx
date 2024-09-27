@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Button } from "../ui/button";
 import { useProducts } from "./ProductContext";
 import DeleteMultipleModal from "./DeleteMultipleModal";
+import ProductFilterDropdown from "./ProductFilterDropdown";
 
 const ProductListControls = () => {
   const { selectedProducts, isGridView, setIsGridView } = useProducts();
@@ -50,15 +51,7 @@ const ProductListControls = () => {
           />
         </div>
       </div>
-      <div className="flex w-24 bg-white rounded-md h-7 items-center justify-center gap-1 border-2 border-gray-300">
-        <Image
-          src="/assets/filter.svg"
-          alt="filter icon"
-          width={20}
-          height={20}
-        />
-        <p className="">Filter</p>
-      </div>
+      <ProductFilterDropdown />
     </div>
   );
 };

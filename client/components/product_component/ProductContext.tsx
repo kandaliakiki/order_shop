@@ -27,6 +27,10 @@ interface ProductContextType {
   searchText: string;
   isGridView: boolean;
   setIsGridView: React.Dispatch<React.SetStateAction<boolean>>;
+  maxPrice: number;
+  setMaxPrice: React.Dispatch<React.SetStateAction<number>>;
+  isApplied: boolean;
+  setIsApplied: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
@@ -39,6 +43,8 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
   const [searchText, setSearchText] = useState("");
   const [textToSearch, setTextToSearch] = useState("");
   const [isGridView, setIsGridView] = useState(false);
+  const [maxPrice, setMaxPrice] = useState(0);
+  const [isApplied, setIsApplied] = useState(false);
 
   const fetchProducts = async () => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
@@ -133,13 +139,17 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const filterProducts = async (
     textToSearch: string,
-    categoryId?: string
+    categoryId?: string,
+    maxPrice?: number // Add this parameter
   ): Promise<Product[]> => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
     try {
       const queryParams = new URLSearchParams({ textToSearch });
       if (categoryId && categoryId.trim() !== "") {
         queryParams.append("categoryId", categoryId);
+      }
+      if (maxPrice !== undefined) {
+        queryParams.append("maxPrice", maxPrice.toString());
       }
 
       const response = await fetch(
@@ -173,6 +183,8 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
     window.addEventListener("updateSelectedCategory", () => {
       fetchInitialProducts();
       setTextToSearch("");
+      setSearchText("");
+      setIsApplied(false);
     });
 
     fetchInitialProducts();
@@ -185,14 +197,14 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [searchText]);
 
   useEffect(() => {
-    if (textToSearch) {
+    if (textToSearch || maxPrice > 0) {
       const currentCategoryId =
         localStorage.getItem("selectedCategory") || undefined;
-      filterProducts(textToSearch, currentCategoryId);
+      filterProducts(textToSearch, currentCategoryId, maxPrice);
     } else {
       window.dispatchEvent(new Event("updateSelectedCategory"));
     }
-  }, [textToSearch]);
+  }, [textToSearch, maxPrice]);
 
   return (
     <ProductContext.Provider
@@ -210,6 +222,10 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
         searchText,
         isGridView,
         setIsGridView,
+        maxPrice,
+        setMaxPrice,
+        isApplied,
+        setIsApplied,
       }}
     >
       {children}

@@ -116,3 +116,51 @@
     @apply cursor-pointer flex h-16 w-16 items-center justify-center rounded-full bg-neutral-300 !important;
   }
 }
+
+.custom-slider {
+  /* --value: 50%; */
+  height: 2px; /* Adjust the height */
+  padding: 3px;
+  background: linear-gradient(
+    to right,
+    #0d9488 0%,
+    /* Change to teal-600 */ #0d9488 var(--value),
+    /* Change to teal-600 */ #cfcece var(--value),
+    #cfcece 100%
+  );
+  -webkit-appearance: none;
+  appearance: none;
+  accent-color: #0d9488;
+}
+
+.custom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px; /* Adjust thumb width */
+  height: 20px; /* Adjust thumb height */
+  background: #0d9488; /* Adjust thumb color */
+  cursor: pointer;
+  outline: 1px solid #d4d4d4;
+
+  border-radius: 50%; /* Make thumb circle */
+  --tw-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color),
+    0 4px 6px -4px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
+.custom-slider::-moz-range-thumb {
+  width: 20px; /* Adjust thumb width */
+  height: 20px; /* Adjust thumb height */
+  background: #ffffff; /* Adjust thumb color */
+  cursor: pointer;
+  border-radius: 50%; /* Make thumb circle */
+  --tw-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color),
+    0 4px 6px -4px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}

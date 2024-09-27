@@ -201,9 +201,10 @@ export const deleteMultipleProducts = async (
   }
 };
 
-export const filterProductsByNameOrCategory = async (
+export const filterProductsByParams = async (
   textToSearch: string,
-  categoryId?: string
+  categoryId?: string,
+  maxPrice?: number
 ) => {
   await connectToDB();
 
@@ -224,6 +225,11 @@ export const filterProductsByNameOrCategory = async (
       matchConditions["categoryDetails._id"] = new mongoose.Types.ObjectId(
         categoryId
       );
+    }
+
+    // Add maxPrice condition if provided and greater than 0
+    if (maxPrice && maxPrice > 0) {
+      matchConditions.price = { $lt: maxPrice };
     }
 
     const products = await Product.aggregate([
@@ -249,6 +255,7 @@ export const filterProductsByNameOrCategory = async (
       {
         $project: {
           _id: 1,
+          productId: 1,
           name: 1,
           price: 1,
           imageUrl: 1,

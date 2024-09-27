@@ -25,7 +25,7 @@ const FetchedProductRows = () => {
           </td>
           <td className="py-4 px-4 border-b">{product.name}</td>
           <td className="py-4 px-4 border-b">{product.category.name}</td>
-          <td className="py-4 px-4 border-b">{product.price}</td>
+          <td className="py-4 px-4 border-b font-bold">${product.price}</td>
         </tr>
       ))}
     </>
