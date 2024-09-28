@@ -229,7 +229,7 @@ export const filterProductsByParams = async (
 
     // Add maxPrice condition if provided and greater than 0
     if (maxPrice && maxPrice > 0) {
-      matchConditions.price = { $lt: maxPrice };
+      matchConditions.price = { $lte: maxPrice };
     }
 
     const products = await Product.aggregate([

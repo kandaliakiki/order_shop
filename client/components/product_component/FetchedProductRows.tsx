@@ -3,6 +3,7 @@ import { Product, useProducts } from "./ProductContext";
 import { Checkbox } from "../ui/checkbox";
 import Image from "next/image";
 import ProductTableCheckbox from "./ProductTableCheckbox";
+import EditButtonProductTable from "./EditButtonProductTable";
 
 const FetchedProductRows = () => {
   const { products } = useProducts(); // Use the context to get products
@@ -26,6 +27,9 @@ const FetchedProductRows = () => {
           <td className="py-4 px-4 border-b">{product.name}</td>
           <td className="py-4 px-4 border-b">{product.category.name}</td>
           <td className="py-4 px-4 border-b font-bold">${product.price}</td>
+          <td className="py-4 px-4 border-b">
+            <EditButtonProductTable _id={product._id} />
+          </td>
         </tr>
       ))}
     </>

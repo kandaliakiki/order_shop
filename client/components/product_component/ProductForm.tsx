@@ -150,6 +150,7 @@ const ProductForm = ({
       }
 
       const data = await response.json();
+      window.dispatchEvent(new Event("addedOrDeletedProduct"));
       console.log("Product updated:", data);
       // Handle success (e.g., show a success message, redirect, etc.)
     } catch (error) {

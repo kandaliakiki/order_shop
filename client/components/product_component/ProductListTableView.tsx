@@ -13,6 +13,7 @@ const ProductListTableView = () => {
             <th className="py-4 px-4 th-border">Name</th>
             <th className="py-4 px-4 th-border">Category</th>
             <th className="py-4 px-4 th-border">Price</th>
+            <th className="py-4 px-4 th-border "></th>
           </tr>
         </thead>
         <tbody>
