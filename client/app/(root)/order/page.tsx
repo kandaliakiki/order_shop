@@ -1,9 +1,13 @@
+"use client";
+
 import OrderHeader from "@/components/order_component/OrderHeader";
 import OrderList from "@/components/order_component/OrderList";
 import { orderStatusList } from "@/constants";
-import React from "react";
+import React, { useState } from "react";
 
 const page = () => {
+  const [currentStatus, setCurrentStatus] = useState(orderStatusList[0]);
+
   return (
     <div className="p-5 ">
       <div className="flex justify-between items-center ">
@@ -11,19 +15,19 @@ const page = () => {
         <OrderHeader></OrderHeader>
       </div>
       <div className="flex gap-2 mt-3">
-        <div className="border-2 border-neutral-300 text-white rounded-xl p-2 px-6 bg-blue-600 ">
-          <p>All</p>
-        </div>
         {orderStatusList.map((status) => (
           <div
             key={status}
-            className="border-2 border-neutral-300 text-neutral-500 rounded-xl p-2 px-6 "
+            className={`border-2 border-neutral-300 text-neutral-500 hover:cursor-pointer rounded-xl p-2 px-6 ${
+              currentStatus === status ? "bg-sky-700 text-white" : ""
+            }`}
+            onClick={() => setCurrentStatus(status)}
           >
             <p>{status}</p>
           </div>
         ))}
       </div>
-      <OrderList></OrderList>
+      <OrderList currentStatus={currentStatus}></OrderList>
     </div>
   );
 };

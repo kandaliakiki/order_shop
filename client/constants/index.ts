@@ -7,7 +7,7 @@ export interface OrderItem {
 export interface Order {
   name: string;
   phone: string;
-  status: "New Order" | "On Process" | "Complete" | "Cancelled";
+  status: "New Order" | "On Process" | "Completed" | "Cancelled";
   time: string;
   items: OrderItem[];
 }
@@ -888,7 +888,7 @@ export const ordersList: Order[] = [
   {
     name: "Jacob Jones",
     phone: "+19876543212",
-    status: "Complete",
+    status: "Completed",
     time: "01:00 PM, 08 Feb, 2024",
     items: [
       { name: "Lasagna", quantity: 1, price: 15 },
@@ -899,7 +899,7 @@ export const ordersList: Order[] = [
   {
     name: "Jim Halpert",
     phone: "+19876543216",
-    status: "Complete",
+    status: "Completed",
     time: "05:00 PM, 08 Feb, 2024",
     items: [
       { name: "Meat Lovers Pizza", quantity: 1, price: 14 },
@@ -910,7 +910,7 @@ export const ordersList: Order[] = [
   {
     name: "Stanley Hudson",
     phone: "+19876543220",
-    status: "Complete",
+    status: "Completed",
     time: "09:00 PM, 08 Feb, 2024",
     items: [
       { name: "Buffalo Chicken Pizza", quantity: 1, price: 14 },
@@ -921,7 +921,7 @@ export const ordersList: Order[] = [
   {
     name: "Ryan Howard",
     phone: "+19876543224",
-    status: "Complete",
+    status: "Completed",
     time: "01:00 AM, 09 Feb, 2024",
     items: [
       { name: "Lasagna", quantity: 1, price: 15 },
@@ -932,7 +932,7 @@ export const ordersList: Order[] = [
   {
     name: "Darryl Philbin",
     phone: "+19876543228",
-    status: "Complete",
+    status: "Completed",
     time: "05:00 AM, 09 Feb, 2024",
     items: [
       { name: "Hawaiian Pizza", quantity: 1, price: 13 },

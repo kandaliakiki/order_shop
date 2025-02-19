@@ -14,9 +14,9 @@ interface OrderCardProps {
 
 const OrderCard: React.FC<OrderCardProps> = ({ order }) => {
   const statusClasses = {
-    "New Order": "bg-blue-100 text-blue-800",
+    "New Order": "bg-sky-100 text-sky-800",
     "On Process": "bg-orange-100 text-orange-800",
-    Complete: "bg-green-100 text-green-800",
+    Completed: "bg-green-100 text-green-800",
     Cancelled: "bg-red-100 text-red-800",
   };
   return (
