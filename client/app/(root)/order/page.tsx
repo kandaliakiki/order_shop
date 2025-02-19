@@ -3,10 +3,30 @@
 import OrderHeader from "@/components/order_component/OrderHeader";
 import OrderList from "@/components/order_component/OrderList";
 import { orderStatusList } from "@/constants";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const page = () => {
   const [currentStatus, setCurrentStatus] = useState(orderStatusList[0]);
+  const [orderList, setOrderList] = useState([]); // State for order list
+
+  useEffect(() => {
+    // Fetch orders from the API endpoint
+    const fetchOrders = async () => {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT; // Use environment variable for backend URL
+      try {
+        const response = await fetch(`${backendUrl}/api/orders`);
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        const data = await response.json();
+        setOrderList(data); // Set the fetched orders to state
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      }
+    };
+
+    fetchOrders(); // Call the function to fetch orders
+  }, []); // Empty dependency array ensures this runs once on mount
 
   return (
     <div className="p-5 ">
@@ -27,7 +47,7 @@ const page = () => {
           </div>
         ))}
       </div>
-      <OrderList currentStatus={currentStatus}></OrderList>
+      <OrderList currentStatus={currentStatus} orders={orderList}></OrderList>
     </div>
   );
 };

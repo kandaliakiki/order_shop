@@ -23,6 +23,7 @@ import {
   fetchCategoryById,
 } from "./lib/actions/category.action"; // Import the new function
 import { CategoryData } from "./lib/models/category.model";
+import { fetchOrders } from "./lib/actions/order.action"; // Import the function
 
 // Specify the path to your .env.local file
 dotenv.config({ path: ".env.local" });
@@ -272,6 +273,17 @@ app.get("/api/filterProducts", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error filtering products:", error);
     res.status(500).json({ error: "Failed to filter products" });
+  }
+});
+
+// Endpoint to fetch all orders
+app.get("/api/orders", async (req: Request, res: Response) => {
+  try {
+    const orders = await fetchOrders();
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({ error: "Failed to fetch orders" });
   }
 });
 

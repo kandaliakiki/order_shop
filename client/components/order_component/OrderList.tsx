@@ -1,13 +1,20 @@
 import Image from "next/image";
 import React from "react";
 import ProductListControls from "../product_component/ProductListControls";
-import { bakeryIngredients, ordersList } from "@/constants";
+import { bakeryIngredients } from "@/constants";
 import ProductCard from "../product_component/ProductCard";
 import OrderCard from "./OrderCard";
+import { Order } from "@/constants";
 
-const OrderList = ({ currentStatus }: { currentStatus: string }) => {
+const OrderList = ({
+  currentStatus,
+  orders,
+}: {
+  currentStatus: string;
+  orders: Order[];
+}) => {
   // Filter orders based on the currentStatus
-  const filteredOrders = ordersList.filter((order) => {
+  const filteredOrders = orders.filter((order) => {
     if (currentStatus === "All") return true; // Show all orders if status is "All"
     return order.status === currentStatus; // Filter orders by status
   });
