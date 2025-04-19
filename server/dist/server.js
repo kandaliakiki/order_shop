@@ -49,7 +49,7 @@ app.post("/api/createProduct", (req, res) => __awaiter(void 0, void 0, void 0, f
     }
 }));
 // Endpoint to fetch all products
-app.get("/products", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.get("/api/products", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const products = yield (0, product_action_1.fetchProducts)();
         res.status(200).json(products);
