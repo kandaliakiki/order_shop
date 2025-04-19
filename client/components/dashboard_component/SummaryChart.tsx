@@ -17,11 +17,11 @@ import {
 
 const SummaryChart = () => {
   return (
-    <div className=" font-dmsans w-full h-[550px] ">
+    <div className=" font-dmsans w-[1000px] h-[500px]">
       <ResponsiveContainer>
         <ComposedChart
-          width={500}
-          height={400}
+          width={1000}
+          height={500}
           data={dataChart}
           margin={{
             top: 20,
