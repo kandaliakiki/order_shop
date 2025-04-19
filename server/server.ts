@@ -62,7 +62,7 @@ app.post("/api/createProduct", async (req: Request, res: Response) => {
 });
 
 // Endpoint to fetch all products
-app.get("/products", async (req, res) => {
+app.get("/api/products", async (req, res) => {
   try {
     const products = await fetchProducts();
     res.status(200).json(products);

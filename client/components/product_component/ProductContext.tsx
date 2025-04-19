@@ -49,7 +49,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
   const fetchProducts = async () => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
     try {
-      const response = await fetch(`${backendUrl}/products`);
+      const response = await fetch(`${backendUrl}/api/products`);
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
