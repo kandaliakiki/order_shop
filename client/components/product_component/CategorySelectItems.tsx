@@ -21,7 +21,7 @@ const CategorySelectItems = ({ ...props }) => {
         (
           category: Category // Specify type for category
         ) => (
-          <SelectItem {...props} value={category._id}>
+          <SelectItem {...props} value={category._id} key={category._id}>
             {category.name}
           </SelectItem>
         )

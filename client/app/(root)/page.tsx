@@ -13,7 +13,7 @@ export default function Home() {
         <div>
           <h1 className="text-3xl font-bold">Hi , Kandaliakiki</h1>
           <p className="text-neutral-500">
-            Here's what happening with your business
+            Here&apos;s what happening with your business
           </p>
         </div>
         <SalesDateRangePicker />

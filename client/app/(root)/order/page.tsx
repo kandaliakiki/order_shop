@@ -5,7 +5,7 @@ import OrderList from "@/components/order_component/OrderList";
 import { orderStatusList } from "@/constants";
 import React, { useState, useEffect } from "react";
 
-const page = () => {
+const Page = () => {
   const [currentStatus, setCurrentStatus] = useState(orderStatusList[0]);
   const [orderList, setOrderList] = useState([]); // State for order list
 
@@ -52,4 +52,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;
