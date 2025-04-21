@@ -29,6 +29,8 @@ app.use(express_1.default.json({ limit: "10mb" }));
 // Middleware
 app.use(express_1.default.json());
 app.use((0, cors_1.default)());
+app.use(express_1.default.json({ limit: "10mb" }));
+app.use(express_1.default.urlencoded({ limit: "10mb", extended: true }));
 (0, mongoose_1.connectToDB)();
 // Initialize Google Drive API client at server start
 const oAuth2Client = (0, googleUtils_1.getOAuth2Client)(); // Use the new function
