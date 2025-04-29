@@ -83,6 +83,12 @@ Order Shop is a fully functional e-commerce application with two user roles: cus
 
 ## Screenshots & Usage Guide
 
+### 🔹 Dashboard
+
+<div align="center">
+  <img src="readme-assets/dashboard.png" width="1200"/>
+  <p><em>Dashboard</em></p>
+</div>
 
 ### 🔹 View and Add Category
  Steps to view and add a category to the system.
