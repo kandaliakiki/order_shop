@@ -75,6 +75,7 @@ function isBase64Image(imageData) {
 exports.isBase64Image = isBase64Image;
 function getAccessToken(oAuth2Client) {
     const authUrl = oAuth2Client.generateAuthUrl({
+        prompt: "consent",
         access_type: "offline",
         scope: SCOPES,
     });
