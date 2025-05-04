@@ -23,7 +23,7 @@ const ProductCard: React.FC<Product> = ({
   };
 
   return (
-    <div className="p-3  aspect-[3/4] rounded-xl border-2 bg-white border-gray-300 shadow-lg flex flex-col items-start ">
+    <div className="p-3 w-52 h-72   rounded-xl border-2 bg-white border-gray-300 shadow-lg flex flex-col items-start ">
       <div className="flex justify-between w-full items-center mb-2">
         <Checkbox
           className="h-5 w-5 border-gray-500"

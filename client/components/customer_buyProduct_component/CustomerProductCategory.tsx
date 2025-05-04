@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
+import { CategoryProvider } from "../product_component/CategoryContext";
+import CategoryAddModalButton from "../product_component/CategoryAddModalButton";
+import CategoryList from "../product_component/CategoryList";
 
-import CategoryList from "./CategoryList";
-import CategoryAddModalButton from "./CategoryAddModalButton";
-import { CategoryProvider } from "./CategoryContext";
 
 const ProductCategorySection = () => {
   return (
@@ -12,11 +12,9 @@ const ProductCategorySection = () => {
       <div className="relative w-1/4 h-screen bg-gray-200 -ml-6 overflow-hidden ">
         <div className="flex flex-col justify-center mt-5 px-5  h-full ">
           <h1 className="text-2xl font-bold mb-5">Product Category</h1>
-          <CategoryList isAdmin={true} />
+          <CategoryList isAdmin={false} />
         </div>
-        <div className="absolute bottom-0 w-full bg-white border border-gray-200 h-20 rounded-md shadow-lg flex justify-center items-center">
-          <CategoryAddModalButton />
-        </div>
+   
       </div>
     </CategoryProvider>
   );
