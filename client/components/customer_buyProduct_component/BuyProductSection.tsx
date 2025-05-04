@@ -7,6 +7,7 @@ import CustomerProductCategory from "./CustomerProductCategory";
 import CustomerProductSection from "./CustomerProductSection";
 import { RestaurantOrderingInterface } from "./restaurant-ordering-interface";
 import CartItemSection from "./CartItemSection";
+import { CartProvider } from "./CartContext";
 
 const BuyProductSection = () => {
   return (
@@ -17,9 +18,11 @@ const BuyProductSection = () => {
     // </div>
 
     <div className="flex  ">
-      <CustomerProductCategory></CustomerProductCategory>
-      <CustomerProductSection></CustomerProductSection>
-      <CartItemSection></CartItemSection>
+      <CartProvider>
+        <CustomerProductCategory></CustomerProductCategory>
+        <CustomerProductSection></CustomerProductSection>
+        <CartItemSection></CartItemSection>
+      </CartProvider>
     </div>
   );
 };

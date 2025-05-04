@@ -4,6 +4,7 @@ import { Checkbox } from "../ui/checkbox";
 import { Product, useProducts } from "../product_component/ProductContext";
 import ProductCardDropdown from "../product_component/ProductCardDropdown";
 import { Minus, Plus, Trash2 } from "lucide-react";
+import { useCart } from "./CartContext";
 
 const ProductCard: React.FC<Product> = ({
   productId,
@@ -13,27 +14,10 @@ const ProductCard: React.FC<Product> = ({
   price,
   imageUrl,
 }) => {
-  const { selectedProducts, setSelectedProducts } = useProducts();
+  const { addToCart, cartItems, addOne, decreaseOne } = useCart();
 
-  // Mock state for quantity in cart
-  const [quantityInCart, setQuantityInCart] = useState(0);
-
-  // Mock functions to simulate adding and removing items
-  const addToCart = () => {
-    setQuantityInCart(quantityInCart + 1);
-  };
-
-  const decreaseQuantity = () => {
-    setQuantityInCart(quantityInCart > 0 ? quantityInCart - 1 : 0);
-  };
-
-  const handleCheckboxChange = () => {
-    if (selectedProducts.includes(_id)) {
-      setSelectedProducts(selectedProducts.filter((id) => id !== _id));
-    } else {
-      setSelectedProducts([...selectedProducts, _id]);
-    }
-  };
+  const quantityInCart =
+    cartItems.find((item) => item.productId === productId)?.quantity || 0;
 
   return (
     <div className="w-52 h-72 xl:w-60 xl:h-80 rounded-xl overflow-hidden border-2 bg-white border-gray-300 shadow-lg flex flex-col items-start">
@@ -47,7 +31,7 @@ const ProductCard: React.FC<Product> = ({
         <div className="absolute bottom-3 right-3">
           {quantityInCart === 0 ? (
             <button
-              onClick={addToCart}
+              onClick={() => addToCart({ productId, name, price, quantity: 1 })}
               className="w-8 h-8 bg-teal-600 border-2 border-slate-400 rounded-full flex items-center justify-center shadow-md hover:bg-teal-700 transition-colors"
               aria-label={`Add ${name} to cart`}
             >
@@ -56,7 +40,7 @@ const ProductCard: React.FC<Product> = ({
           ) : (
             <div className="flex items-center bg-teal-600 border-2 border-slate-400 rounded-full h-8 px-1 shadow-md">
               <button
-                onClick={decreaseQuantity}
+                onClick={() => decreaseOne(productId)}
                 className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-teal-700 transition-colors"
                 aria-label={`Decrease quantity of ${name}`}
               >
@@ -72,7 +56,7 @@ const ProductCard: React.FC<Product> = ({
               </span>
 
               <button
-                onClick={addToCart}
+                onClick={() => addOne(productId)}
                 className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-teal-700 transition-colors"
                 aria-label={`Increase quantity of ${name}`}
               >

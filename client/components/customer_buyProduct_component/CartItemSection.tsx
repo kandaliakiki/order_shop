@@ -1,37 +1,22 @@
 "use client";
 
-import { ChevronRight, PlusCircle, ShoppingCart } from "lucide-react";
+import {
+  ChevronRight,
+  Minus,
+  Plus,
+  PlusCircle,
+  ShoppingCart,
+} from "lucide-react";
 import React, { useState } from "react";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { useCart } from "./CartContext";
 
 const CartItemSection = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const { cartItems, addOne, decreaseOne, updateQuantity } = useCart();
 
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Double Burger",
-      quantity: 2,
-      price: 10.99,
-      extras: ["Extra Sauce"],
-    },
-    {
-      id: 2,
-      name: "Special Black Burger",
-      quantity: 1,
-      price: 7.39,
-      extras: ["Without Cheese"],
-    },
-    {
-      id: 3,
-      name: "Spicy Burger",
-      quantity: 1,
-      price: 5.99,
-      extras: ["Extra Sauce"],
-    },
-  ]);
   const openCart = () => {
     setIsCartOpen(true);
   };
@@ -88,7 +73,7 @@ const CartItemSection = () => {
           <div className="flex-1 overflow-y-auto">
             {cartItems.map((item) => (
               <div
-                key={item.id}
+                key={item.productId}
                 className="flex gap-3 mb-4 pb-4 border-b border-zinc-700"
               >
                 <div className="w-16 h-16 bg-zinc-700 rounded-lg overflow-hidden">
@@ -104,22 +89,37 @@ const CartItemSection = () => {
                 </div>
                 <div className="flex-1">
                   <div className="flex justify-between">
-                    <h3 className="font-medium">
-                      {item.name} ({item.quantity}x)
-                    </h3>
+                    <h3 className="font-medium">{item.name}</h3>
                     <span className="font-bold">
                       ${(item.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
-                  {item.extras.map((extra, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center text-sm text-zinc-400 mt-1"
+
+                  <div className="flex items-center mt-2">
+                    <button
+                      onClick={() => decreaseOne(item.productId)}
+                      className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors"
+                      aria-label={`Decrease quantity of ${item.name}`}
                     >
-                      <PlusCircle className="w-3 h-3 mr-1" />
-                      <span>{extra}</span>
-                    </div>
-                  ))}
+                      <Minus className="w-3 h-3 text-white" />
+                    </button>
+                    <input
+                      type="number"
+                      value={item.quantity}
+                      onChange={(e) =>
+                        updateQuantity(item.productId, parseInt(e.target.value))
+                      }
+                      className="w-12 text-center mx-2 bg-zinc-800 text-white"
+                      min="1"
+                    />
+                    <button
+                      onClick={() => addOne(item.productId)}
+                      className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-md hover:bg-green-600 transition-colors"
+                      aria-label={`Increase quantity of ${item.name}`}
+                    >
+                      <Plus className="w-3 h-3 text-white" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
