@@ -7,7 +7,7 @@ import {
   deleteImageFromDrive,
   isBase64Image,
   uploadToGoogleDrive,
-} from "../googleUtils";
+} from "../utils/googleUtils";
 import mongoose from "mongoose"; // Ensure mongoose is imported
 
 // Function to create a product

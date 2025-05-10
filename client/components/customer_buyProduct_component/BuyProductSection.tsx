@@ -11,12 +11,6 @@ import { CartProvider } from "./CartContext";
 
 const BuyProductSection = () => {
   return (
-    // <div>
-    //   <ProductProvider>
-    //     <BuyProductForm></BuyProductForm>
-    //   </ProductProvider>
-    // </div>
-
     <div className="flex  ">
       <CartProvider>
         <CustomerProductCategory></CustomerProductCategory>

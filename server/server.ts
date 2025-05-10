@@ -15,7 +15,7 @@ import {
   filterProductsByParams, // Import the new function
 } from "./lib/actions/product.action";
 import { ProductData } from "./lib/models/product.model";
-import { getOAuth2Client } from "./lib/googleUtils";
+import { getOAuth2Client } from "./lib/utils/googleUtils";
 import { OAuth2Client } from "google-auth-library"; // Import OAuth2Client
 import {
   createCategory,
@@ -23,7 +23,17 @@ import {
   fetchCategoryById,
 } from "./lib/actions/category.action"; // Import the new function
 import { CategoryData } from "./lib/models/category.model";
-import { fetchOrders } from "./lib/actions/order.action"; // Import the function
+import {
+  calculateTotalItemsSold,
+  countTotalOrders,
+  createOrder,
+  fetchOrders,
+  fetchOverallRevenue,
+  searchOrdersByCustomerName,
+  updateOrderStatus,
+} from "./lib/actions/order.action"; // Import the function
+import { OrderData } from "./lib/models/order.model";
+import { seedOrders } from "./lib/utils/seedOrdersUtils";
 
 // Specify the path to your .env.local file
 dotenv.config({ path: ".env.local" });
@@ -42,6 +52,13 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 connectToDB();
+
+// UNCOMMENT FOR SEEDING DATA
+// connectToDB().then(() => {
+//   seedOrders().catch((error) => {
+//     console.error("Error seeding database:", error);
+//   });
+// });
 
 // Initialize Google Drive API client at server start
 const oAuth2Client: OAuth2Client = getOAuth2Client(); // Use the new function
@@ -281,14 +298,107 @@ app.get("/api/filterProducts", async (req: Request, res: Response) => {
 
 // Endpoint to fetch all orders
 app.get("/api/orders", async (req: Request, res: Response) => {
+  const limit = parseInt(req.query.limit as string) || 0; // Default to 0 if not specified
+
   try {
-    const orders = await fetchOrders();
+    const orders = await fetchOrders(limit);
     res.status(200).json(orders);
   } catch (error) {
     console.error("Error fetching orders:", error);
     res.status(500).json({ error: "Failed to fetch orders" });
   }
 });
+
+// Endpoint to create a new order
+app.post("/api/createOrder", async (req: Request, res: Response) => {
+  const {
+    customerName,
+    phoneNumber,
+    items,
+    subtotal,
+    tax,
+    total,
+    status,
+    createdAt,
+  } = req.body;
+
+  if (!customerName || !phoneNumber || !items || !subtotal || !tax || !total) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
+
+  try {
+    const orderData: OrderData = {
+      customerName,
+      phoneNumber,
+      items,
+      subtotal,
+      tax,
+      total,
+      status,
+      createdAt,
+    };
+    const newOrder = await createOrder(orderData);
+    res.status(201).json(newOrder);
+  } catch (error) {
+    console.error("Error creating order:", error);
+    res.status(500).json({ error: "Failed to create order" });
+  }
+});
+
+// Endpoint to update the status of an order
+app.put("/api/updateOrder/:orderId", async (req: Request, res: Response) => {
+  const { orderId } = req.params;
+  const { newStatus } = req.body;
+
+  if (!newStatus) {
+    return res.status(400).json({ error: "New status is required" });
+  }
+
+  try {
+    const updatedOrder = await updateOrderStatus(orderId, newStatus);
+    res.status(200).json(updatedOrder);
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    res.status(500).json({ error: "Failed to update order status" });
+  }
+});
+
+// Endpoint to search orders by customer name
+app.get("/api/searchOrders", async (req: Request, res: Response) => {
+  const { customerName } = req.query;
+  try {
+    const orders = await searchOrdersByCustomerName(customerName as string);
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error("Error searching orders:", error);
+    res.status(500).json({ error: "Failed to search orders" });
+  }
+});
+
+// Endpoint to fetch dashboard metrics
+app.get("/api/dashboardMetrics", async (req: Request, res: Response) => {
+  try {
+    const overallRevenue = await fetchOverallRevenue();
+    const totalOrders = await countTotalOrders();
+    const totalItemsSold = await calculateTotalItemsSold();
+    const profit = overallRevenue * 0.3;
+
+    res.status(200).json({
+      overallRevenue: formatNumberWithCommas(overallRevenue),
+      totalOrders: formatNumberWithCommas(totalOrders),
+      totalItemsSold: formatNumberWithCommas(totalItemsSold),
+      profit: formatNumberWithCommas(profit),
+    });
+  } catch (error) {
+    console.error("Error fetching dashboard metrics:", error);
+    res.status(500).json({ error: "Failed to fetch dashboard metrics" });
+  }
+});
+
+// Utility function to format numbers with commas
+function formatNumberWithCommas(number: number): string {
+  return number.toLocaleString();
+}
 
 // Start server
 app.listen(port, () => {

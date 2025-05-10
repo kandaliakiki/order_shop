@@ -1,6 +1,4 @@
 import React from "react";
-import ProductAddModalButton from "../product_component/ProductAddModalButton";
-import Image from "next/image";
 import CustomerFetchedProductCard from "./CustomerFetchedProductCard";
 
 const ProductListGridView = () => {

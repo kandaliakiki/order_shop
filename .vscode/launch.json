@@ -6,11 +6,12 @@
   "configurations": [
     {
       "name": "Attach to Chrome",
-      "urlFilter": "http://localhost:3000/*",
-      "port": 9222,
-      "request": "attach",
       "type": "chrome",
-      "webRoot": "${workspaceFolder}/client"
+      "request": "attach",
+      "port": 9222,
+      "urlFilter": "http://localhost:3000/*",
+      "webRoot": "${workspaceFolder}/client",
+      "trace": true
     },
 
     {

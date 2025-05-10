@@ -1,7 +1,7 @@
 import Image from "next/image";
 import React from "react";
 import ProductListControls from "../product_component/ProductListControls";
-import { bakeryIngredients } from "@/constants";
+import { bakeryIngredients, OrderStatus } from "@/constants";
 import ProductCard from "../product_component/ProductCard";
 import OrderCard from "./OrderCard";
 import { Order } from "@/constants";
@@ -9,9 +9,11 @@ import { Order } from "@/constants";
 const OrderList = ({
   currentStatus,
   orders,
+  onStatusChange,
 }: {
   currentStatus: string;
   orders: Order[];
+  onStatusChange: (orderId: string, newStatus: OrderStatus) => Promise<void>;
 }) => {
   // Filter orders based on the currentStatus
   const filteredOrders = orders.filter((order) => {
@@ -24,7 +26,11 @@ const OrderList = ({
       <div className="bg-gray-200 rounded-lg px-10 pt-3 mt-5 h-full pb-5 overflow-y-scroll scrollbar-hide">
         <div className="grid grid-cols-6 gap-5">
           {filteredOrders.map((order, index) => (
-            <OrderCard key={index} order={order} />
+            <OrderCard
+              key={index}
+              order={order}
+              onStatusChange={onStatusChange}
+            />
           ))}
         </div>
       </div>

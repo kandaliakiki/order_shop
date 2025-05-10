@@ -14,10 +14,19 @@ const ProductCard: React.FC<Product> = ({
   price,
   imageUrl,
 }) => {
-  const { addToCart, cartItems, addOne, decreaseOne } = useCart();
+  const { addToCart, cartItems, addOne, decreaseOne, removeFromCart } =
+    useCart();
 
   const quantityInCart =
     cartItems.find((item) => item.productId === productId)?.quantity || 0;
+
+  const decreaseOneOrRemove = (productId: string) => {
+    if (quantityInCart === 1) {
+      removeFromCart(productId);
+    } else {
+      decreaseOne(productId);
+    }
+  };
 
   return (
     <div className="w-52 h-72 xl:w-60 xl:h-80 rounded-xl overflow-hidden border-2 bg-white border-gray-300 shadow-lg flex flex-col items-start">
@@ -26,12 +35,15 @@ const ProductCard: React.FC<Product> = ({
           alt="product image"
           src={imageUrl}
           fill
-          className="object-cover "
+          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+          className="object-cover w-auto h-auto"
         />
         <div className="absolute bottom-3 right-3">
           {quantityInCart === 0 ? (
             <button
-              onClick={() => addToCart({ productId, name, price, quantity: 1 })}
+              onClick={() =>
+                addToCart({ productId, name, price, imageUrl, quantity: 1 })
+              }
               className="w-8 h-8 bg-teal-600 border-2 border-slate-400 rounded-full flex items-center justify-center shadow-md hover:bg-teal-700 transition-colors"
               aria-label={`Add ${name} to cart`}
             >
@@ -40,7 +52,7 @@ const ProductCard: React.FC<Product> = ({
           ) : (
             <div className="flex items-center bg-teal-600 border-2 border-slate-400 rounded-full h-8 px-1 shadow-md">
               <button
-                onClick={() => decreaseOne(productId)}
+                onClick={() => decreaseOneOrRemove(productId)}
                 className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-teal-700 transition-colors"
                 aria-label={`Decrease quantity of ${name}`}
               >

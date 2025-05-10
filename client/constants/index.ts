@@ -4,13 +4,34 @@ export interface OrderItem {
   price: number;
 }
 
+export type OrderStatus = Order["status"];
+
 export interface Order {
-  name: string;
-  phone: string;
-  status: "New Order" | "On Process" | "Completed" | "Cancelled";
-  time: string;
+  orderId: string;
+  customerName: string;
+  phoneNumber: string;
   items: OrderItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  status: "New Order" | "On Process" | "Completed" | "Cancelled";
+  createdAt: string;
 }
+
+export const getStatusColor = (status: string) => {
+  switch (status) {
+    case "New Order":
+      return "bg-sky-100 text-sky-800";
+    case "On Process":
+      return "bg-orange-100 text-orange-800";
+    case "Completed":
+      return "bg-green-100 text-green-800";
+    case "Cancelled":
+      return "bg-red-100 text-red-800";
+    default:
+      return "";
+  }
+};
 
 export const navigationBarLinks = [
   {
@@ -852,7 +873,7 @@ export const dataChart = [
   },
 ];
 
-export type OrderStatus = "Paid" | "Pending" | "Unpaid";
+export type OrderStatusDashboard = "Paid" | "Pending" | "Unpaid";
 
 export interface OrderTableData {
   id: string;
@@ -860,7 +881,7 @@ export interface OrderTableData {
   product: string;
   amount: string;
   vendor: string;
-  status: OrderStatus;
+  status: OrderStatusDashboard;
   rating: string;
 }
 

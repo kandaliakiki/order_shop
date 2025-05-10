@@ -2,10 +2,9 @@
 
 import React from "react";
 import { CategoryProvider } from "../product_component/CategoryContext";
-import ProductHeader from "../product_component/ProductHeader";
 import { ProductProvider } from "../product_component/ProductContext";
-import ProductList from "../product_component/ProductList";
 import CustomerProductList from "./CustomerProductList";
+import CustomerProductHeader from "./CustomerProductHeader";
 
 const ProductSection = () => {
   return (
@@ -13,8 +12,8 @@ const ProductSection = () => {
       <ProductProvider>
         <div className="  px-5 flex flex-col w-full  ">
           <div className="flex justify-between items-center mt-5">
-            <h1 className="text-3xl  ">Manage Products</h1>
-            <ProductHeader></ProductHeader>
+            <h1 className="text-3xl  ">Choose Products</h1>
+            <CustomerProductHeader></CustomerProductHeader>
           </div>
           <CustomerProductList></CustomerProductList>
         </div>

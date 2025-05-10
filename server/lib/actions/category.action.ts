@@ -1,4 +1,4 @@
-import { uploadToGoogleDrive } from "../googleUtils";
+import { uploadToGoogleDrive } from "../utils/googleUtils";
 import Category, { CategoryData } from "../models/category.model"; // Import your Category model
 import { OAuth2Client } from "google-auth-library"; // Import OAuth2Client
 
