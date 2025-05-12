@@ -20,7 +20,7 @@ const LeftBar_Logo: React.FC<LeftBarLogoProps> = ({ setIsOpen, isOpen }) => {
           My Shop
         </h1>
         <div
-          className={`transition-transform  duration-300 ${
+          className={`transition-transform cursor-pointer duration-300 ${
             isOpen
               ? "scale-100 translate-x-0"
               : "scale-125 -translate-x-[0.3rem]"

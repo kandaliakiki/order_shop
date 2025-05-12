@@ -296,12 +296,18 @@ app.get("/api/filterProducts", async (req: Request, res: Response) => {
   }
 });
 
-// Endpoint to fetch all orders
+// Endpoint to fetch orders with optional date range
 app.get("/api/orders", async (req: Request, res: Response) => {
-  const limit = parseInt(req.query.limit as string) || 0; // Default to 0 if not specified
-
   try {
-    const orders = await fetchOrders(limit);
+    const { from, to, limit } = req.query;
+
+    // Ensure from and to are defined
+    const dateRange = {
+      from: from ? new Date(from as string) : new Date(0),
+      to: to ? new Date(to as string) : new Date(),
+    };
+
+    const orders = await fetchOrders(Number(limit) || 0, dateRange);
     res.status(200).json(orders);
   } catch (error) {
     console.error("Error fetching orders:", error);
@@ -365,9 +371,18 @@ app.put("/api/updateOrder/:orderId", async (req: Request, res: Response) => {
 
 // Endpoint to search orders by customer name
 app.get("/api/searchOrders", async (req: Request, res: Response) => {
-  const { customerName } = req.query;
+  const { customerName, from, to } = req.query;
+
   try {
-    const orders = await searchOrdersByCustomerName(customerName as string);
+    const dateRange = {
+      from: from ? new Date(from as string) : new Date(0), // Default to epoch start if undefined
+      to: to ? new Date(to as string) : new Date(), // Default to current date if undefined
+    };
+
+    const orders = await searchOrdersByCustomerName(
+      customerName as string,
+      dateRange
+    );
     res.status(200).json(orders);
   } catch (error) {
     console.error("Error searching orders:", error);
@@ -378,27 +393,31 @@ app.get("/api/searchOrders", async (req: Request, res: Response) => {
 // Endpoint to fetch dashboard metrics
 app.get("/api/dashboardMetrics", async (req: Request, res: Response) => {
   try {
-    const overallRevenue = await fetchOverallRevenue();
-    const totalOrders = await countTotalOrders();
-    const totalItemsSold = await calculateTotalItemsSold();
+    const { from, to } = req.query;
+
+    // Ensure from and to are defined
+    const dateRange = {
+      from: from ? new Date(from as string) : new Date(0),
+      to: to ? new Date(to as string) : new Date(),
+    };
+
+    const overallRevenue = await fetchOverallRevenue(dateRange);
+    const totalOrders = await countTotalOrders(dateRange);
+    const totalItemsSold = await calculateTotalItemsSold(dateRange);
+
     const profit = overallRevenue * 0.3;
 
     res.status(200).json({
-      overallRevenue: formatNumberWithCommas(overallRevenue),
-      totalOrders: formatNumberWithCommas(totalOrders),
-      totalItemsSold: formatNumberWithCommas(totalItemsSold),
-      profit: formatNumberWithCommas(profit),
+      overallRevenue: overallRevenue.toLocaleString(),
+      totalOrders: totalOrders.toLocaleString(),
+      totalItemsSold: totalItemsSold.toLocaleString(),
+      profit: profit.toLocaleString(),
     });
   } catch (error) {
     console.error("Error fetching dashboard metrics:", error);
     res.status(500).json({ error: "Failed to fetch dashboard metrics" });
   }
 });
-
-// Utility function to format numbers with commas
-function formatNumberWithCommas(number: number): string {
-  return number.toLocaleString();
-}
 
 // Start server
 app.listen(port, () => {

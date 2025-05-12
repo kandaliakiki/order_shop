@@ -1,47 +1,45 @@
-import Image from "next/image";
+"use client";
+
 import React from "react";
 import CardSummary from "./CardSummary";
+import { useDashboardContext } from "@/components/dashboard_component/DashboardContext";
 
-const SummarySales = async () => {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
-  const response = await fetch(`${backendUrl}/api/dashboardMetrics`, {
-    cache: "no-store",
-  });
-  const { overallRevenue, totalOrders, totalItemsSold, profit } =
-    await response.json();
+const SummarySales = () => {
+  const { metrics } = useDashboardContext();
+
   return (
     <div className="relative flex mt-3 gap-5">
       <CardSummary
-        colorTheme="blue" // First card set to blue
+        colorTheme="blue"
         backgroundImageSrc="/assets/backgroundcard-blue.svg"
         title="Overall Revenue"
-        value={`$${overallRevenue}`} // Add $ to revenue
+        value={`$${metrics.overallRevenue}`}
         iconSrc="/assets/dollar.svg"
         iconBackgroundColor="green"
       />
       <CardSummary
-        colorTheme="red" // Second card set to red
+        colorTheme="red"
         backgroundImageSrc="/assets/backgroundcard-red.svg"
         title="Orders"
-        value={totalOrders}
+        value={metrics.totalOrders}
         iconSrc="/assets/bag.svg"
-        iconBackgroundColor="purple" // Changed to white for better contrast
+        iconBackgroundColor="purple"
       />
       <CardSummary
-        colorTheme="orange" // Third card set to yellow
+        colorTheme="orange"
         backgroundImageSrc="/assets/backgroundcard-yellow.svg"
-        title="Customers"
-        value={totalItemsSold}
+        title="Items Sold"
+        value={metrics.totalItemsSold}
         iconSrc="/assets/customer.svg"
-        iconBackgroundColor="black" // Changed to black for better contrast
+        iconBackgroundColor="black"
       />
       <CardSummary
-        colorTheme="green" // Fourth card set to green
+        colorTheme="green"
         backgroundImageSrc="/assets/backgroundcard-green.svg"
         title="Profit"
-        value={`$${profit}`} // Add $ to profit
+        value={`$${metrics.profit}`}
         iconSrc="/assets/profit.svg"
-        iconBackgroundColor="yellow" // Changed to white for better contrast
+        iconBackgroundColor="yellow"
       />
     </div>
   );

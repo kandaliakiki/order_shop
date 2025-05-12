@@ -36,7 +36,7 @@ const OrderHeader: React.FC<OrderHeaderProps> = ({ onSearch }) => {
         />
         <input
           type="text"
-          placeholder="Search Orders"
+          placeholder="Search Customer Name"
           className="focus:outline-none focus:ring-0"
           onChange={handleSearchChange}
         />
