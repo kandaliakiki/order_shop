@@ -8,9 +8,9 @@ export default function RootLayout({
 }>) {
   return (
     <div className="overflow-auto">
-      <main className="flex flex-col  min-h-screen bg-neutral-100 px-4  font-dmsans font-medium tracking-tight min-w-[2000px] ">
+      <main className="flex flex-col  min-h-screen bg-neutral-100 px-4  font-dmsans font-medium tracking-tight min-w-[1500px] ">
         <LeftBar />
-        <div className="ml-16  ">{children}</div>
+        <div className="ml-16 flex flex-col flex-1">{children}</div>
       </main>
     </div>
   );

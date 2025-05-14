@@ -21,7 +21,7 @@ export default function Home() {
           <SalesDateRangePicker />
         </div>
         <SummarySales />
-        <div className="  rounded-lg  p-5 mt-5 w-full flex  gap-3 justify-between  h-[700px]">
+        <div className="  rounded-lg  p-5  w-full flex  gap-3 justify-between  h-[680px]">
           <ProductPerformanceSection />
           <RecentOrdersSection></RecentOrdersSection>
         </div>
