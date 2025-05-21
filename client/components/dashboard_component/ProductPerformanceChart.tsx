@@ -43,8 +43,14 @@ const ProductPerformanceChart = () => {
 
   return (
     <ResponsiveContainer width="100%" height={400}>
-      <BarChart data={productData}>
-        <XAxis dataKey="name" angle={-45} textAnchor="end" />
+      <BarChart data={productData} margin={{ bottom: 10 }}>
+        <XAxis
+          dataKey="name"
+          angle={-10}
+          textAnchor="middle"
+          dy={10}
+          className="text-sm"
+        />
         <YAxis />
         <Tooltip />
         <Bar dataKey="quantity" fill={chartColor} />

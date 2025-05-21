@@ -29,7 +29,7 @@ const ProductCard: React.FC<Product> = ({
   };
 
   return (
-    <div className="w-52 h-72 xl:w-60 xl:h-80 rounded-xl overflow-hidden border-2 bg-white border-gray-300 shadow-lg flex flex-col items-start">
+    <div className="w-60 h-80 rounded-xl overflow-hidden border-2 bg-white border-gray-300 shadow-lg flex flex-col items-start">
       <div className="w-full h-40 relative">
         <Image
           alt="product image"

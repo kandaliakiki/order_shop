@@ -5,9 +5,9 @@ import FetchedProductCard from "./FetchedProductCard";
 
 const ProductListGridView = () => {
   return (
-    <div className="grid grid-cols-5 gap-5 w-full  min-w-[1100px]">
+    <div className="grid grid-cols-6 gap-5 w-full  min-w-[1400px]">
       <ProductAddModalButton>
-        <div className="rounded-lg w-52 h-72 outline-dashed outline-teal-600 outline-4  flex flex-col items-center justify-center cursor-pointer">
+        <div className="rounded-lg w-56 h-72 outline-dashed outline-teal-600 outline-4  flex flex-col items-center justify-center cursor-pointer">
           <Image
             alt="add new product button"
             src="/assets/add-product.svg"

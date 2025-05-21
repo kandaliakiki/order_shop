@@ -122,7 +122,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onStatusChange }) => {
       </div>
       <div className="flex justify-between w-full items-center mt-2 group">
         <div
-          className={`px-4 font-semibold py-1 rounded-full flex items-center  ${getStatusColor(
+          className={`px-4 font-semibold  py-1 rounded-full flex items-center  ${getStatusColor(
             order.status
           )}`}
         >

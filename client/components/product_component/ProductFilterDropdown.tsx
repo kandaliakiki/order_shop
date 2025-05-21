@@ -94,7 +94,9 @@ const ProductFilterDropdown = () => {
                     min="0"
                     max="10"
                     value={sliderValue}
-                    onChange={(e) => setSliderValue(Number(e.target.value))}
+                    onChange={(e) =>
+                      setSliderValue(Math.round(Number(e.target.value)))
+                    }
                     className="w-full custom-slider"
                     ref={setSliderElement}
                   />

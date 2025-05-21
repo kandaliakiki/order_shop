@@ -23,8 +23,8 @@ const ProductCard: React.FC<Product> = ({
   };
 
   return (
-    <div className="p-3 w-52 h-72   rounded-xl border-2 bg-white border-gray-300 shadow-lg flex flex-col items-start ">
-      <div className="flex justify-between w-full items-center mb-2">
+    <div className="w-56 h-72  rounded-xl border-2 bg-white border-gray-300 shadow-lg flex flex-col items-start ">
+      <div className="px-3 py-2 flex justify-between w-full items-center ">
         <Checkbox
           className="h-5 w-5 border-gray-500"
           checked={selectedProducts.includes(_id)}
@@ -32,16 +32,19 @@ const ProductCard: React.FC<Product> = ({
         />
         <ProductCardDropdown _id={_id} />
       </div>
-      <Image
-        alt="product image"
-        src={imageUrl}
-        height={120}
-        width={160}
-        className="self-center  h-1/2"
-      ></Image>
-      <p className=" text-gray-500 mt-5 ">{category.name}</p>
-      <p className="text-lg">{name}</p>
-      <p className="text-xl mt-5 font-bold">${price}</p>
+      <div className="w-full h-56 relative bg-red-300">
+        <Image
+          alt="product image"
+          src={imageUrl}
+          fill
+          className="object-cover w-auto h-auto"
+        ></Image>
+      </div>
+      <div className="px-3 pb-3">
+        <p className=" text-gray-500 mt-1 ">{category.name}</p>
+        <p className="text-lg">{name}</p>
+        <p className="text-xl mt-5 font-bold">${price}</p>
+      </div>
     </div>
   );
 };

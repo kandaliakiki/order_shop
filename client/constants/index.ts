@@ -21,7 +21,7 @@ export interface Order {
 export const getStatusColor = (status: string) => {
   switch (status) {
     case "New Order":
-      return "bg-sky-100 text-sky-800";
+      return "bg-yellow-100 text-yellow-800 ";
     case "On Process":
       return "bg-orange-100 text-orange-800";
     case "Completed":

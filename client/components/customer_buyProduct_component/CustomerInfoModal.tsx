@@ -50,6 +50,7 @@ const CustomerInfoModal = ({
 
   const handleSubmit = async (data: { name: string; phoneNumber: string }) => {
     await onSubmit(data);
+    form.reset();
   };
 
   const orderSummary = () => (
