@@ -8,7 +8,7 @@ const SummarySales = () => {
   const { metrics } = useDashboardContext();
 
   return (
-    <div className="relative flex mt-3 gap-5">
+    <div className=" grid grid-cols-1 gap-4 px-2 lg:grid-cols-2 xl:grid-cols-4">
       <CardSummary
         colorTheme="blue"
         backgroundImageSrc="/assets/backgroundcard-blue.svg"

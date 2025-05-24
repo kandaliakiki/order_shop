@@ -9,7 +9,7 @@ const SalesDateRangePicker = () => {
   const { dateRange, setDateRange } = useDashboardContext();
 
   return (
-    <div className="flex bg-white rounded-lg h-10 items-center text-sm tracking-normal shadow-lg outline-neutral-300 cursor-pointer">
+    <div className="flex bg-white rounded-lg h-10 items-center text-sm tracking-normal md:shadow-lg outline-neutral-300 cursor-pointer">
       <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
     </div>
   );

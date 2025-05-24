@@ -82,7 +82,7 @@ const Page = () => {
   };
 
   return (
-    <div className="p-5 ">
+    <div className=" p-5 ">
       <div className="flex justify-between items-center ">
         <h1 className="text-3xl font-bold">Order List</h1>
         <OrderHeader onSearch={searchOrdersByCustomerName} />

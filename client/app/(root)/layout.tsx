@@ -1,5 +1,6 @@
 import LeftBar from "@/components/shared/LeftBar";
 import "../globals.css";
+import ResponsiveLayout from "@/components/layout_components/MobileTopBar";
 
 export default function RootLayout({
   children,
@@ -8,9 +9,10 @@ export default function RootLayout({
 }>) {
   return (
     <div className="overflow-auto">
-      <main className="flex flex-col  min-h-screen bg-neutral-100 px-4  font-dmsans font-medium tracking-tight min-w-[1500px] ">
+      <main className="flex flex-col  min-h-screen bg-neutral-100  font-dmsans font-medium tracking-tight  ">
         <LeftBar />
-        <div className="ml-16 flex flex-col flex-1">{children}</div>
+
+        <div className="sm:ml-16 flex flex-col flex-1">{children}</div>
       </main>
     </div>
   );

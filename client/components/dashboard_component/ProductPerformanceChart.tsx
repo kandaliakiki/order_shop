@@ -42,20 +42,24 @@ const ProductPerformanceChart = () => {
   }, [orders]);
 
   return (
-    <ResponsiveContainer width="100%" height={400}>
+    <div className="h-[400px] w-full">
+
+    <ResponsiveContainer width="100%" height="100%">
       <BarChart data={productData} margin={{ bottom: 10 }}>
         <XAxis
           dataKey="name"
           angle={-10}
           textAnchor="middle"
+          tick={{ fontSize: 12 }}
+          interval={0}
           dy={10}
-          className="text-sm"
         />
         <YAxis />
         <Tooltip />
         <Bar dataKey="quantity" fill={chartColor} />
       </BarChart>
     </ResponsiveContainer>
+    </div>
   );
 };
 

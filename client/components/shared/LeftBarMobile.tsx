@@ -1,20 +1,27 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import LeftBar_Logo from "../layout_components/LeftBar_Logo";
 import Image from "next/image";
 import LeftBarNavigationItems from "../layout_components/LeftBarNavigationItems";
 import { navigationBarLinks } from "@/constants";
 import { usePathname } from "next/navigation";
 
-const LeftBar: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const pathname = usePathname();
+interface LeftBarMobileProps {
+  isOpen: boolean;
+  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  pathname: string;
+}
 
+const LeftBarMobile: React.FC<LeftBarMobileProps> = ({
+  isOpen,
+  setIsOpen,
+  pathname,
+}) => {
   return (
     <div
-      className={`fixed z-10 left-0 top-0 w-64 h-screen pt-2 bg-white transition-transform duration-300 max-sm:hidden ${
-        isOpen ? "translate-x-0" : "-translate-x-[12.5rem]"
+      className={`fixed z-10 left-0 top-0 w-64 h-screen pt-2 bg-white transition-transform duration-300  ${
+        isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
       <LeftBar_Logo setIsOpen={setIsOpen} isOpen={isOpen} />
@@ -34,4 +41,4 @@ const LeftBar: React.FC = () => {
   );
 };
 
-export default LeftBar;
+export default LeftBarMobile;

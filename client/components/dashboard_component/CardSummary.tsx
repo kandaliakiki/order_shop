@@ -42,7 +42,7 @@ const CardSummary: React.FC<CardComponentProps> = ({
 
   return (
     <div
-      className={`relative ${gradientClass} rounded-lg p-5 w-1/4  py-7 shadow-lg border border-neutral-200 overflow-hidden`}
+      className={`relative ${gradientClass} rounded-lg p-5 w-full  py-7 shadow-lg border border-neutral-200 overflow-hidden`}
     >
       <div className="absolute inset-0">
         <Image
@@ -56,14 +56,14 @@ const CardSummary: React.FC<CardComponentProps> = ({
         <div className="tracking-normal text-white">
           <p className="uppercase text-white   mb-5 text-lg">{title}</p>
           <h1
-            className="text-5xl font-bold text-white"
+            className="text-2xl xl:text-4xl font-bold text-white"
             style={{ textShadow: `0 0 3px ${colorTheme}` }}
           >
             {value}
           </h1>
         </div>
         <div
-          className={`aspect-square p-4 rounded-md ${iconBgClass} opacity-80`}
+          className={`aspect-square p-4 rounded-md ${iconBgClass} opacity-80 min-w-16 min-h-16 flex items-center justify-center`}
         >
           <Image alt="icon" src={iconSrc} width={40} height={40} />
         </div>
