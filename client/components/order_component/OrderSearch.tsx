@@ -3,11 +3,11 @@
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
 
-interface OrderHeaderProps {
+interface OrderSearchProps {
   onSearch: (customerName: string) => void;
 }
 
-const OrderHeader: React.FC<OrderHeaderProps> = ({ onSearch }) => {
+const OrderSearch: React.FC<OrderSearchProps> = ({ onSearch }) => {
   const [searchInput, setSearchInput] = useState<string>("");
 
   useEffect(() => {
@@ -23,9 +23,9 @@ const OrderHeader: React.FC<OrderHeaderProps> = ({ onSearch }) => {
   };
 
   return (
-    <div className="flex items-center gap-2 p-1 w-1/4">
+    <div className="flex items-center gap-2 md:p-1 md:w-1/2 xl:w-1/4 max-md:w-full  ">
       <form
-        className="search_input_order flex flex-1 gap-3"
+        className="search_input_order flex  flex-1 gap-3 items-center"
         onSubmit={(e) => e.preventDefault()}
       >
         <Image
@@ -33,6 +33,7 @@ const OrderHeader: React.FC<OrderHeaderProps> = ({ onSearch }) => {
           alt="search logo"
           width={20}
           height={20}
+          className="max-md:w-4 max-md:h-4"
         />
         <input
           type="text"
@@ -45,4 +46,4 @@ const OrderHeader: React.FC<OrderHeaderProps> = ({ onSearch }) => {
   );
 };
 
-export default OrderHeader;
+export default OrderSearch;

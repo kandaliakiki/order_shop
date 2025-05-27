@@ -19,25 +19,33 @@ const LeftBarMobile: React.FC<LeftBarMobileProps> = ({
   pathname,
 }) => {
   return (
-    <div
-      className={`fixed z-10 left-0 top-0 w-64 h-screen pt-2 bg-white transition-transform duration-300  ${
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      }`}
-    >
-      <LeftBar_Logo setIsOpen={setIsOpen} isOpen={isOpen} />
-      {navigationBarLinks.map((link, index) => (
-        <LeftBarNavigationItems
-          key={index}
-          isOpen={isOpen}
-          setIsOpen={setIsOpen}
-          label={link.label}
-          imageUrl={link.imgURL}
-          imageUrlActive={link.imgURLActive}
-          route={link.route}
-          pathname={pathname}
-        />
-      ))}
-    </div>
+    <>
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-10"
+          onClick={() => setIsOpen(false)}
+        ></div>
+      )}
+      <div
+        className={`fixed z-20 left-0 top-0 w-64 h-screen pt-2 bg-white transition-transform duration-300 ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <LeftBar_Logo setIsOpen={setIsOpen} isOpen={isOpen} />
+        {navigationBarLinks.map((link, index) => (
+          <LeftBarNavigationItems
+            key={index}
+            isOpen={isOpen}
+            setIsOpen={setIsOpen}
+            label={link.label}
+            imageUrl={link.imgURL}
+            imageUrlActive={link.imgURLActive}
+            route={link.route}
+            pathname={pathname}
+          />
+        ))}
+      </div>
+    </>
   );
 };
 

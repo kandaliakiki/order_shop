@@ -47,18 +47,24 @@ const ProductPerformanceMetrics = () => {
   return (
     <div className="flex w-full justify-between mt-5 border-dashed border-2 border-gray-200 bg-slate-50 py-3">
       <div className="flex flex-col items-center justify-center w-full border-dashed border-r-2 border-gray-200">
-        <p className="text-xl">{totalProductsSold}</p>
-        <p className="text-neutral-400">Total Products Sold</p>
+        <p className="lg:text-xl text-lg">{totalProductsSold}</p>
+        <p className="text-neutral-400 lg:text-base text-sm text-center">
+          Total Products Sold
+        </p>
       </div>
       <div className="flex flex-col items-center justify-center w-full border-dashed border-r-2 border-gray-200">
-        <p className="text-xl">
+        <p className="lg:text-xl text-lg">
           {topProduct?.name} ({topProduct?.quantity})
         </p>
-        <p className="text-neutral-400">Top Product</p>
+        <p className="text-neutral-400 lg:text-base text-sm text-center">
+          Top Product
+        </p>
       </div>
       <div className="flex flex-col items-center justify-center w-full border-gray-200">
-        <p className="text-xl">{uniqueProductsCount}</p>
-        <p className="text-neutral-400">Unique Products Sold</p>
+        <p className="lg:text-xl text-lg">{uniqueProductsCount}</p>
+        <p className="text-neutral-400 lg:text-base text-sm text-center">
+          Unique Products Sold
+        </p>
       </div>
     </div>
   );

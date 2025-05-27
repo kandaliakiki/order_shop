@@ -68,7 +68,7 @@
 }
 
 .search_input_order {
-  @apply max-lg:w-fit lg:w-full rounded-xl border border-gray-200 bg-white py-2 h-14 pl-5 lg:pr-12 text-lg shadow-lg font-medium focus:outline-none focus:ring-0;
+  @apply max-lg:w-fit lg:w-full rounded-xl border border-gray-200 bg-white py-2 h-14 max-md:h-11 pl-5 lg:pr-12 max-md:text-sm text-lg md:shadow-lg font-medium focus:outline-none focus:ring-0;
 }
 
 .scrollbar-hide::-webkit-scrollbar {

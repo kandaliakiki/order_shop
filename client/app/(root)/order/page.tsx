@@ -1,6 +1,6 @@
 "use client";
 
-import OrderHeader from "@/components/order_component/OrderHeader";
+import OrderSearch from "@/components/order_component/OrderSearch";
 import OrderList from "@/components/order_component/OrderList";
 import { orderStatusList } from "@/constants";
 import React, { useState, useEffect } from "react";
@@ -8,6 +8,9 @@ import { Order, OrderStatus } from "@/constants";
 import { DateRangePicker } from "@/components/shared/DateRangePicker";
 import { DateRange } from "react-day-picker";
 import { subMonths } from "date-fns";
+import OrderHeaderDesktop from "@/components/order_component/OrderHeaderDesktop";
+import MobileHeader from "@/components/layout_components/MobileHeader";
+import OrderHeaderMobile from "@/components/order_component/OrderHeaderMobile";
 
 const Page = () => {
   const [currentStatus, setCurrentStatus] = useState(orderStatusList[0]);
@@ -82,27 +85,20 @@ const Page = () => {
   };
 
   return (
-    <div className=" p-5 ">
-      <div className="flex justify-between items-center ">
-        <h1 className="text-3xl font-bold">Order List</h1>
-        <OrderHeader onSearch={searchOrdersByCustomerName} />
-      </div>
-      <div className="flex w-full mt-3 justify-between items-center">
-        <div className="flex gap-2 ">
-          {orderStatusList.map((status) => (
-            <div
-              key={status}
-              className={`border-2 border-neutral-300 text-neutral-500 hover:cursor-pointer rounded-xl p-2 px-6 ${
-                currentStatus === status ? "bg-sky-700 text-white" : ""
-              }`}
-              onClick={() => setCurrentStatus(status)}
-            >
-              <p>{status}</p>
-            </div>
-          ))}
-        </div>
-        <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
-      </div>
+    <div className=" md:p-5 ">
+      <MobileHeader title="Order List" />
+      <OrderHeaderMobile
+        searchOrdersByCustomerName={searchOrdersByCustomerName}
+        dateRange={dateRange}
+        setDateRange={setDateRange}
+      />
+      <OrderHeaderDesktop
+        searchOrdersByCustomerName={searchOrdersByCustomerName}
+        currentStatus={currentStatus}
+        setCurrentStatus={setCurrentStatus}
+        dateRange={dateRange}
+        setDateRange={setDateRange}
+      />
       <OrderList
         currentStatus={currentStatus}
         orders={orders}

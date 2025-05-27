@@ -8,6 +8,8 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  CartesianGrid,
+  ComposedChart,
 } from "recharts";
 import { useDashboardContext } from "@/components/dashboard_component/DashboardContext";
 
@@ -41,24 +43,31 @@ const ProductPerformanceChart = () => {
     setProductData(data);
   }, [orders]);
 
-  return (
-    <div className="h-[400px] w-full">
+  const formatXAxisLabel = (name: string) => {
+    const words = name.split(" ");
+    return words.length > 2 ? words.slice(0, 2).join(" ") : name;
+  };
 
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={productData} margin={{ bottom: 10 }}>
-        <XAxis
-          dataKey="name"
-          angle={-10}
-          textAnchor="middle"
-          tick={{ fontSize: 12 }}
-          interval={0}
-          dy={10}
-        />
-        <YAxis />
-        <Tooltip />
-        <Bar dataKey="quantity" fill={chartColor} />
-      </BarChart>
-    </ResponsiveContainer>
+  return (
+    <div className="lg:h-[400px] h-[250px] w-full  overflow-auto">
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart data={productData} margin={{ bottom: 10 }}>
+          <XAxis
+            dataKey="name"
+            angle={-45}
+            textAnchor="end"
+            tick={{ fontSize: 12 }}
+            interval={0}
+            height={100}
+            width={20}
+            tickFormatter={formatXAxisLabel}
+          />
+          <YAxis tick={{ fontSize: 14 }} />
+          <CartesianGrid strokeDasharray="3 3" />
+          <Tooltip />
+          <Bar dataKey="quantity" fill={chartColor} />
+        </ComposedChart>
+      </ResponsiveContainer>
     </div>
   );
 };

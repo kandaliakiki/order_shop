@@ -9,13 +9,13 @@ import LeftBarMobile from "../shared/LeftBarMobile";
 interface MobileTopBarProps {
   title: string;
 }
-const MobileTopBar = ({ title }: MobileTopBarProps) => {
+const MobileHeader = ({ title }: MobileTopBarProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const pathname = usePathname();
 
   return (
     <>
-      <div className="flex h-14 items-center justify-between   bg-white px-2 mb-3 md:hidden">
+      <div className="flex h-14 items-center justify-between   bg-white px-2 mb-3 md:hidden border-b border-input">
         <div className="flex items-center ">
           <Button
             variant="ghost"
@@ -38,4 +38,4 @@ const MobileTopBar = ({ title }: MobileTopBarProps) => {
   );
 };
 
-export default MobileTopBar;
+export default MobileHeader;

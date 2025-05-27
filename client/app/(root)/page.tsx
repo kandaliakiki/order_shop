@@ -5,7 +5,7 @@ import ProductPerformanceSection from "@/components/dashboard_component/ProductP
 import SummarySales from "@/components/dashboard_component/SummarySales";
 
 import React from "react";
-import MobileHeader from "@/components/layout_components/MobileTopBar";
+import MobileHeader from "@/components/layout_components/MobileHeader";
 import DashboardHeaderDesktop from "@/components/dashboard_component/DashboardHeaderDesktop";
 import DashboardHeaderMobile from "@/components/dashboard_component/DashboardHeaderMobile";
 
@@ -17,7 +17,7 @@ export default function Home() {
         <DashboardHeaderDesktop />
         <DashboardHeaderMobile />
         <SummarySales />
-        <div className="  rounded-lg  p-5  w-full flex  gap-3 justify-between  h-[680px]">
+        <div className=" grid grid-cols-1 gap-4 lg:grid-cols-7 rounded-lg px-3 lg:px-5 py-3  w-full h-full lg:h-[680px]">
           <ProductPerformanceSection />
           <RecentOrdersSection></RecentOrdersSection>
         </div>

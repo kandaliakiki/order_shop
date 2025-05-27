@@ -25,10 +25,10 @@ const ChartColorControls = () => {
   const { chartColor, setChartColor } = useDashboardContext();
 
   return (
-    <div className="flex gap-1 text-sm h-full">
+    <div className="flex gap-1 text-sm   min-w-6">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className=" rounded-lg p-2 flex justify-center items-center bg-gray-200">
+          <button className=" rounded-lg p-2 flex justify-center items-center bg-gray-200 ">
             <Settings className="h-6 w-6" />
             <span className="sr-only">Chart settings</span>
           </button>
