@@ -91,6 +91,8 @@ const Page = () => {
         searchOrdersByCustomerName={searchOrdersByCustomerName}
         dateRange={dateRange}
         setDateRange={setDateRange}
+        currentStatus={currentStatus}
+        setCurrentStatus={setCurrentStatus}
       />
       <OrderHeaderDesktop
         searchOrdersByCustomerName={searchOrdersByCustomerName}

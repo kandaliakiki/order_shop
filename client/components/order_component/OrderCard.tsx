@@ -118,11 +118,14 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onStatusChange }) => {
     <div className="p-5 rounded-xl border-2 bg-white border-gray-300 shadow-lg flex flex-col items-start justify-start">
       <div>
         <p className="font-bold">{order.customerName}</p>
-        <p className="text-neutral-400">{order.phoneNumber}</p>
+        <p className="text-neutral-400 max-md:text-sm">{order.phoneNumber}</p>
       </div>
+      <Badge variant="outline" className="text-xs my-1">
+        {order.orderId}
+      </Badge>
       <div className="flex justify-between w-full items-center mt-2 group">
         <div
-          className={`px-4 font-semibold  py-1 rounded-full flex items-center  ${getStatusColor(
+          className={`px-4 font-semibold  py-1 rounded-full flex items-center whitespace-nowrap  ${getStatusColor(
             order.status
           )}`}
         >
