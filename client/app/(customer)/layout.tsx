@@ -8,8 +8,8 @@ export default function RootLayout({
 }>) {
   return (
     <>
-      <main className="flex flex-col overflow-auto h-screen bg-neutral-100 px-4  font-dmsans font-medium tracking-tight">
-        <div className="min-w-[1400px]">{children}</div>
+      <main className="flex flex-col overflow-auto h-screen bg-neutral-100 lg:px-4  font-dmsans font-medium tracking-tight">
+        <div>{children}</div>
       </main>
     </>
   );

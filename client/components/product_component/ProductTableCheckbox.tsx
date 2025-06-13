@@ -14,7 +14,7 @@ const ProductTableCheckbox = ({ _id }: { _id: string }) => {
   };
   return (
     <Checkbox
-      className="h-5 w-5 border-gray-500"
+      className="border-gray-300"
       checked={selectedProducts.includes(_id)}
       onCheckedChange={handleCheckboxChange}
     ></Checkbox>

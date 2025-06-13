@@ -1,13 +1,13 @@
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
-import { setCategoryId } from "./CategoryContext";
+import { setLocalStorageCategoryId } from "./CategoryContext";
 
 interface CategoryCardProps {
   name: string;
   imageUrl: string;
   _id: string; // Added _id to the props
-  selectedCategory: string | null;
-  setSelectedCategory: React.Dispatch<React.SetStateAction<string | null>>;
+  selectedCategory: string;
+  setSelectedCategory: React.Dispatch<React.SetStateAction<string>>;
   getProductCountByCategoryId: (id: string) => Promise<number>; // Add this prop
 }
 
@@ -39,7 +39,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
       }`}
       key={_id}
       onClick={() => {
-        setCategoryId(_id);
+        setLocalStorageCategoryId(_id);
         setSelectedCategory(_id);
       }}
     >

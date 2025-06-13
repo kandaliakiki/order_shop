@@ -5,6 +5,8 @@ import { Product, useProducts } from "../product_component/ProductContext";
 import ProductCardDropdown from "../product_component/ProductCardDropdown";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useCart } from "./CartContext";
+import { Card, CardContent } from "../ui/card";
+import { Button } from "../ui/button";
 
 const ProductCard: React.FC<Product> = ({
   productId,
@@ -29,15 +31,17 @@ const ProductCard: React.FC<Product> = ({
   };
 
   return (
-    <div className="w-60 h-80 rounded-xl overflow-hidden border-2 bg-white border-gray-300 shadow-lg flex flex-col items-start">
-      <div className="w-full h-40 relative">
-        <Image
-          alt="product image"
-          src={imageUrl}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
-          className="object-cover w-auto h-auto"
-        />
+    <Card key={productId} className="overflow-hidden">
+      <div className="relative">
+        <div className="aspect-square w-full overflow-hidden">
+          <Image
+            src={imageUrl}
+            alt={name}
+            width={300}
+            height={300}
+            className="h-full w-full object-cover"
+          />
+        </div>
         <div className="absolute bottom-3 right-3">
           {quantityInCart === 0 ? (
             <button
@@ -78,12 +82,12 @@ const ProductCard: React.FC<Product> = ({
           )}
         </div>
       </div>
-      <div className="p-3">
-        <p className="text-gray-500 mt-5">{category.name}</p>
-        <p className="text-lg">{name}</p>
-        <p className="text-xl mt-5 font-bold">${price}</p>
-      </div>
-    </div>
+      <CardContent className="p-3">
+        <div className="text-xs text-gray-500">{category.name}</div>
+        <div className="font-medium">{name}</div>
+        <div className="mt-1 text-lg font-bold">${price.toFixed(2)}</div>
+      </CardContent>
+    </Card>
   );
 };
 

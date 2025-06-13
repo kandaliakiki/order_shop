@@ -5,11 +5,12 @@ import React from "react";
 import CategoryList from "./CategoryList";
 import CategoryAddModalButton from "./CategoryAddModalButton";
 import { CategoryProvider } from "./CategoryContext";
+import CategoryGridMobile from "./CategoryGridMobile";
 
-const ProductCategorySection = () => {
+const ProductCategorySectionDesktop = () => {
   return (
     <CategoryProvider>
-      <div className="relative w-1/4 h-screen bg-gray-200 -ml-6 overflow-hidden ">
+      <div className="relative w-1/4 h-screen bg-gray-200 -ml-6 overflow-hidden max-lg:hidden ">
         <div className="flex flex-col justify-center mt-5 px-5  h-full ">
           <h1 className="text-2xl font-bold mb-5">Product Category</h1>
           <CategoryList isAdmin={true} />
@@ -22,4 +23,4 @@ const ProductCategorySection = () => {
   );
 };
 
-export default ProductCategorySection;
+export default ProductCategorySectionDesktop;

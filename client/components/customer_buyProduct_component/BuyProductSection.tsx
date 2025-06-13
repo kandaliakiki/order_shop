@@ -1,22 +1,22 @@
 "use client";
 
 import React from "react";
-import BuyProductForm from "./BuyProductForm";
-import { ProductProvider } from "../product_component/ProductContext";
-import CustomerProductCategory from "./CustomerProductCategory";
-import CustomerProductSection from "./CustomerProductSection";
-import CartItemSection from "./CartItemSection";
 import { CartProvider } from "./CartContext";
+import BuyProductSectionDesktop from "./BuyProductSectionDesktop";
+import BuyProductSectionMobile from "./BuyProductSectionMobile";
+import { CategoryProvider } from "../product_component/CategoryContext";
+import { ProductProvider } from "../product_component/ProductContext";
 
 const BuyProductSection = () => {
   return (
-    <div className="flex  ">
-      <CartProvider>
-        <CustomerProductCategory></CustomerProductCategory>
-        <CustomerProductSection></CustomerProductSection>
-        <CartItemSection></CartItemSection>
-      </CartProvider>
-    </div>
+    <CartProvider>
+      <CategoryProvider>
+        <ProductProvider>
+          <BuyProductSectionDesktop></BuyProductSectionDesktop>
+          <BuyProductSectionMobile></BuyProductSectionMobile>
+        </ProductProvider>
+      </CategoryProvider>
+    </CartProvider>
   );
 };
 

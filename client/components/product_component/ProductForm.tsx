@@ -27,7 +27,7 @@ import { isBase64Image } from "@/lib/utils";
 import { MoonLoader } from "react-spinners";
 import { Product, useProducts } from "./ProductContext";
 import CategorySelectItems from "./CategorySelectItems";
-import { setCategoryId, useCategories } from "./CategoryContext";
+import { setLocalStorageCategoryId, useCategories } from "./CategoryContext";
 
 const formSchema = z.object({
   name: z.string().min(3).max(30),
@@ -118,7 +118,7 @@ const ProductForm = ({
 
       const data = await response.json();
       window.dispatchEvent(new Event("addedOrDeletedProduct"));
-      setCategoryId(productData.category);
+      setLocalStorageCategoryId(productData.category);
       console.log("Product created:", data);
       // Handle success (e.g., show a success message, redirect, etc.)
     } catch (error) {

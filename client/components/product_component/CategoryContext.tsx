@@ -11,13 +11,22 @@ interface CategoryContextType {
   fetchCategories: () => Promise<void>;
   getProductCountByCategoryId: (categoryId: string) => Promise<number>;
   fetchCategoryById: (id: string) => Promise<Category | null>;
+  currentCategory: Category;
+  setCurrentCategory: (categoryId: string) => void;
+  ALL_CATEGORIES: Category;
 }
 
 const CategoryContext = createContext<CategoryContextType | undefined>(
   undefined
 );
 
-export const setCategoryId = (categoryId: string) => {
+export const ALL_CATEGORIES: Category = {
+  _id: "all",
+  imageUrl: "",
+  name: "All Categories",
+};
+
+export const setLocalStorageCategoryId = (categoryId: string) => {
   localStorage.setItem("selectedCategory", categoryId);
   window.dispatchEvent(new Event("updateSelectedCategory"));
 };
@@ -26,6 +35,8 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [currentCategory, setCurrentCategoryState] =
+    useState<Category>(ALL_CATEGORIES);
 
   const fetchCategories = async () => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
@@ -47,7 +58,7 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
     try {
       const response = await fetch(
-        categoryId
+        categoryId && categoryId !== "all"
           ? `${backendUrl}/api/products/count/${categoryId}`
           : `${backendUrl}/api/products/count`
       );
@@ -77,6 +88,19 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const setCurrentCategory = async (categoryId: string) => {
+    if (categoryId === "" || categoryId === "all") {
+      setCurrentCategoryState(ALL_CATEGORIES);
+    } else {
+      const category = await fetchCategoryById(categoryId);
+      if (category) {
+        setCurrentCategoryState(category);
+      }
+    }
+
+    setLocalStorageCategoryId(categoryId);
+  };
+
   useEffect(() => {
     fetchCategories(); // Fetch categories on initial load
     localStorage.setItem("selectedCategory", "");
@@ -94,6 +118,9 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
         fetchCategories,
         getProductCountByCategoryId,
         fetchCategoryById,
+        currentCategory,
+        setCurrentCategory,
+        ALL_CATEGORIES,
       }}
     >
       {children}

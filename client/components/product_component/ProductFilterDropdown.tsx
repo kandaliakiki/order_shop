@@ -57,7 +57,7 @@ const ProductFilterDropdown = () => {
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <div
-            className={`flex w-24 bg-white rounded-md h-7 items-center justify-center 
+            className={`flex md:w-24 max-md:p-2 bg-white rounded-md h-7 max-md:h-8 items-center justify-center 
         gap-1 border-2 cursor-pointer ${
           isApplied ? "text-teal-600 border-teal-600" : "border-gray-300"
         }`}
@@ -70,7 +70,7 @@ const ProductFilterDropdown = () => {
               width={20}
               height={20}
             />
-            <p className="">Filter</p>
+            <p className="max-md:hidden">Filter</p>
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent

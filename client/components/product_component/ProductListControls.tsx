@@ -4,6 +4,7 @@ import { Button } from "../ui/button";
 import { useProducts } from "./ProductContext";
 import DeleteMultipleModal from "./DeleteMultipleModal";
 import ProductFilterDropdown from "./ProductFilterDropdown";
+import { Trash2 } from "lucide-react";
 
 const ProductListControls = () => {
   const { selectedProducts, isGridView, setIsGridView } = useProducts();
@@ -14,8 +15,10 @@ const ProductListControls = () => {
         <Button
           variant="destructive"
           onClick={() => setIsOpenDeleteModal(true)}
+          className="flex items-center max-md:h-8 max-md:p-2"
         >
-          Delete Products
+          <span className="hidden md:inline">Delete Products</span>
+          <Trash2 className="h-4 w-4 md:h-5 md:w-5" />
         </Button>
       )}
       <DeleteMultipleModal
@@ -23,7 +26,7 @@ const ProductListControls = () => {
         setIsOpenDeleteModal={setIsOpenDeleteModal}
       />
 
-      <div className="flex w-20 bg-white rounded-md h-7">
+      <div className="flex w-20 max-md:w-16 bg-white rounded-md h-7 max-md:h-8">
         <div
           onClick={() => setIsGridView(true)}
           className={`rounded-tl-md rounded-bl-md  w-1/2  border-2 ${
@@ -35,6 +38,7 @@ const ProductListControls = () => {
             alt="menu icon"
             width={23}
             height={23}
+            className="max-md:w-5 max-md:h-5"
           />
         </div>
         <div
@@ -48,6 +52,7 @@ const ProductListControls = () => {
             alt="list icon"
             width={22}
             height={22}
+            className="max-md:w-5 max-md:h-5"
           />
         </div>
       </div>

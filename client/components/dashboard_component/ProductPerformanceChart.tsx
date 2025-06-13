@@ -65,7 +65,7 @@ const ProductPerformanceChart = () => {
           <YAxis tick={{ fontSize: 14 }} />
           <CartesianGrid strokeDasharray="3 3" />
           <Tooltip />
-          <Bar dataKey="quantity" fill={chartColor} />
+          <Bar dataKey="quantity" fill={chartColor} maxBarSize={40} />
         </ComposedChart>
       </ResponsiveContainer>
     </div>

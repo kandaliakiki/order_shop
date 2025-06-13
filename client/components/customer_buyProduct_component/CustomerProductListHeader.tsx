@@ -12,7 +12,7 @@ const ProductListHeader = () => {
     window.addEventListener("updateSelectedCategory", () => {
       // ...
       const selectedCategory = localStorage.getItem("selectedCategory");
-      if (selectedCategory) {
+      if (selectedCategory && selectedCategory.toLowerCase() !== "all") {
         fetchCategoryById(selectedCategory).then((category) => {
           if (category) {
             setCategoryName(category.name); // Assuming category has a 'name' property
@@ -25,8 +25,8 @@ const ProductListHeader = () => {
   }, []);
 
   return (
-    <div className="flex justify-between items-center py-7">
-      <h1 className="text-2xl">
+    <div className="flex justify-between items-center lg:py-7 max-lg:mb-4">
+      <h1 className="text-2xl max-lg:text-lg">
         {categoryName} ({products.length})
       </h1>
       <div className="flex gap-2 justify-between items-center">

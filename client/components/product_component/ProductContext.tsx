@@ -174,7 +174,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
         "selectedCategory"
       ) as string;
       setProducts([]);
-      if (selectedCategory === "") {
+      if (!selectedCategory || selectedCategory === "all") {
         await fetchProducts();
       } else {
         await fetchProductsByCategoryId(selectedCategory);

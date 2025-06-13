@@ -2,19 +2,20 @@ import React, { useState } from "react";
 import UpdateDropdownModal from "./UpdateDropdownModal";
 import { Button } from "../ui/button";
 import Image from "next/image";
+import { Edit } from "lucide-react";
 
 const EditButtonProductTable = ({ _id }: { _id: string }) => {
   const [isOpenUpdateModal, setIsOpenUpdateModal] = useState(false);
   return (
     <>
-      <Image
-        alt="edit"
-        src="/assets/edit-black.svg"
-        width={18}
-        height={18}
-        className="min-w-[24px] min-h-[24px] cursor-pointer"
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 max-md:ml-auto"
         onClick={() => setIsOpenUpdateModal(true)}
-      ></Image>{" "}
+      >
+        <Edit className="h-4 w-4" />
+      </Button>
       <UpdateDropdownModal
         _id={_id}
         isOpenUpdateModal={isOpenUpdateModal}

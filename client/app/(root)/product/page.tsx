@@ -1,5 +1,4 @@
-import ProductCategorySection from "@/components/product_component/ProductCategory";
-import ProductCategory from "@/components/product_component/ProductCategory";
+import ProductCategorySectionDesktop from "@/components/product_component/ProductCategorySectionDesktop";
 import ProductHeader from "@/components/product_component/ProductHeader";
 import ProductList from "@/components/product_component/ProductList";
 import ProductSection from "@/components/product_component/ProductSection";
@@ -7,8 +6,8 @@ import React from "react";
 
 const page = () => {
   return (
-    <div className="flex px-2 sm:px-4  ">
-      <ProductCategorySection></ProductCategorySection>
+    <div className="flex max-lg:flex-col  md:px-2   ">
+      <ProductCategorySectionDesktop></ProductCategorySectionDesktop>
       <ProductSection></ProductSection>
     </div>
   );

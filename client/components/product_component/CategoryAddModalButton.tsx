@@ -19,15 +19,15 @@ const CategoryAddModalButton = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-teal-600 w-3/4 text-base rounded-lg mb-2 hover:bg-teal-700">
+        <Button className="bg-teal-600 w-3/4 text-sm rounded-lg mb-2 max-md:h-9 hover:bg-teal-700">
           <Image
             src="/assets/add-square.svg"
             alt="add logo"
             width={24}
             height={24}
-            className="mr-2"
+            className="mr-2 max-md:w-5 max-md:h-7"
           ></Image>
-          Add New Category{" "}
+          Add Category
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

@@ -267,6 +267,10 @@ app.get("/api/category/:id", async (req: Request, res: Response) => {
     return res.status(400).json({ error: "Category ID is required" });
   }
 
+  if (id === "all") {
+    return res.status(200).json({});
+  }
+
   try {
     const category = await fetchCategoryById(id);
     if (!category) {

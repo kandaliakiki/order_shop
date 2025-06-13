@@ -20,6 +20,8 @@ import Image from "next/image";
 
 import DeleteDropdownModal from "./DeleteDropdownModal";
 import UpdateDropdownModal from "./UpdateDropdownModal";
+import { Button } from "../ui/button";
+import { MoreHorizontal } from "lucide-react";
 
 const ProductCardDropdown = ({ _id }: { _id: string }) => {
   const [isOpenDeleteModal, setIsOpenDeleteModal] = useState(false);
@@ -28,14 +30,13 @@ const ProductCardDropdown = ({ _id }: { _id: string }) => {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div className="rounded-md border border-gray-500 cursor-pointer">
-            <Image
-              alt="more icon"
-              src="/assets/more.svg"
-              width={20}
-              height={20}
-            ></Image>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 md:h-8 md:w-8 rounded-full bg-white shadow-md"
+          >
+            <MoreHorizontal className="h-4 w-4 md:h-5 md:w-5" />
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-32" side="bottom" align="end">
           <DropdownMenuLabel>More</DropdownMenuLabel>
