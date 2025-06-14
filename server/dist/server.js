@@ -20,7 +20,6 @@ const product_action_1 = require("./lib/actions/product.action");
 const googleUtils_1 = require("./lib/utils/googleUtils");
 const category_action_1 = require("./lib/actions/category.action"); // Import the new function
 const order_action_1 = require("./lib/actions/order.action"); // Import the function
-const seedOrdersUtils_1 = require("./lib/utils/seedOrdersUtils");
 // Specify the path to your .env.local file
 dotenv_1.default.config({ path: ".env.local" });
 const app = (0, express_1.default)();
@@ -34,11 +33,11 @@ app.use(express_1.default.json({ limit: "10mb" }));
 app.use(express_1.default.urlencoded({ limit: "10mb", extended: true }));
 (0, mongoose_1.connectToDB)();
 // UNCOMMENT FOR SEEDING DATA
-(0, mongoose_1.connectToDB)().then(() => {
-    (0, seedOrdersUtils_1.seedOrders)().catch((error) => {
-        console.error("Error seeding database:", error);
-    });
-});
+// connectToDB().then(() => {
+//   seedOrders().catch((error) => {
+//     console.error("Error seeding database:", error);
+//   });
+// });
 // Initialize Google Drive API client at server start
 const oAuth2Client = (0, googleUtils_1.getOAuth2Client)(); // Use the new function
 // Endpoint to add a new product

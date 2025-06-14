@@ -54,11 +54,11 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 connectToDB();
 
 // UNCOMMENT FOR SEEDING DATA
-connectToDB().then(() => {
-  seedOrders().catch((error) => {
-    console.error("Error seeding database:", error);
-  });
-});
+// connectToDB().then(() => {
+//   seedOrders().catch((error) => {
+//     console.error("Error seeding database:", error);
+//   });
+// });
 
 // Initialize Google Drive API client at server start
 const oAuth2Client: OAuth2Client = getOAuth2Client(); // Use the new function
