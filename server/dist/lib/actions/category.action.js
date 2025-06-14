@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetchCategoryById = exports.fetchCategories = exports.createCategory = void 0;
-const googleUtils_1 = require("../googleUtils");
+const googleUtils_1 = require("../utils/googleUtils");
 const category_model_1 = __importDefault(require("../models/category.model")); // Import your Category model
 // Function to create a new category
 const createCategory = (categoryData, base64Image, oAuth2Client) => __awaiter(void 0, void 0, void 0, function* () {

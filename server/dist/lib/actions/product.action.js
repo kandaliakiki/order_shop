@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.filterProductsByParams = exports.deleteMultipleProducts = exports.countAllProducts = exports.countProductsByCategoryId = exports.fetchProductsByCategoryId = exports.updateProduct = exports.fetchProductById = exports.deleteProduct = exports.fetchProducts = exports.createProduct = void 0;
 const mongoose_1 = require("../mongoose");
 const product_model_1 = __importDefault(require("../models/product.model"));
-const googleUtils_1 = require("../googleUtils");
+const googleUtils_1 = require("../utils/googleUtils");
 const mongoose_2 = __importDefault(require("mongoose")); // Ensure mongoose is imported
 // Function to create a product
 const createProduct = (productData, base64Image, oAuth2Client // Specify the type here
