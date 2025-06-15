@@ -3,7 +3,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import useCategorySelection from "./useCategorySelection";
 
-const CategoryGridMobile = () => {
+const CategoryGridMobile = ({ isAdmin }: { isAdmin: boolean }) => {
   const {
     selectedCategory,
     setSelectedCategory,
@@ -12,7 +12,7 @@ const CategoryGridMobile = () => {
     getProductCountByCategoryId,
     setCurrentCategory,
     ALL_CATEGORIES,
-  } = useCategorySelection(false);
+  } = useCategorySelection(isAdmin);
 
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>(
     {}

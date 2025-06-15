@@ -1,23 +1,15 @@
-"use client";
-
 import Image from "next/image";
-import React, { useState, useEffect } from "react";
+import React from "react";
 
 interface OrderSearchProps {
-  onSearch: (customerName: string) => void;
+  searchInput: string;
+  setSearchInput: React.Dispatch<React.SetStateAction<string>>;
 }
 
-const OrderSearch: React.FC<OrderSearchProps> = ({ onSearch }) => {
-  const [searchInput, setSearchInput] = useState<string>("");
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      onSearch(searchInput);
-    }, 500);
-
-    return () => clearTimeout(timeout);
-  }, [searchInput, onSearch]);
-
+const OrderSearch: React.FC<OrderSearchProps> = ({
+  searchInput,
+  setSearchInput,
+}) => {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
   };
@@ -39,6 +31,7 @@ const OrderSearch: React.FC<OrderSearchProps> = ({ onSearch }) => {
           type="text"
           placeholder="Search Customer Name"
           className="focus:outline-none focus:ring-0"
+          value={searchInput}
           onChange={handleSearchChange}
         />
       </form>

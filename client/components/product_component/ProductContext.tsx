@@ -145,7 +145,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
     try {
       const queryParams = new URLSearchParams({ textToSearch });
-      if (categoryId && categoryId.trim() !== "") {
+      if (categoryId && categoryId.trim() !== "" && categoryId !== "all") {
         queryParams.append("categoryId", categoryId);
       }
       if (maxPrice !== undefined) {

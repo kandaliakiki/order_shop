@@ -15,6 +15,7 @@ import OrderHeaderMobile from "@/components/order_component/OrderHeaderMobile";
 const Page = () => {
   const [currentStatus, setCurrentStatus] = useState(orderStatusList[0]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [searchInput, setSearchInput] = useState<string>("");
 
   const today = new Date();
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -23,8 +24,16 @@ const Page = () => {
   });
 
   useEffect(() => {
-    fetchOrders();
-  }, [dateRange, currentStatus]);
+    const timeout = setTimeout(() => {
+      if (searchInput) {
+        searchOrdersByCustomerName(searchInput);
+      } else {
+        fetchOrders();
+      }
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [searchInput, dateRange, currentStatus]);
 
   const fetchOrders = async () => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
@@ -88,14 +97,16 @@ const Page = () => {
     <div className=" md:p-5 ">
       <MobileHeader title="Order List" />
       <OrderHeaderMobile
-        searchOrdersByCustomerName={searchOrdersByCustomerName}
+        searchInput={searchInput}
+        setSearchInput={setSearchInput}
         dateRange={dateRange}
         setDateRange={setDateRange}
         currentStatus={currentStatus}
         setCurrentStatus={setCurrentStatus}
       />
       <OrderHeaderDesktop
-        searchOrdersByCustomerName={searchOrdersByCustomerName}
+        searchInput={searchInput}
+        setSearchInput={setSearchInput}
         currentStatus={currentStatus}
         setCurrentStatus={setCurrentStatus}
         dateRange={dateRange}

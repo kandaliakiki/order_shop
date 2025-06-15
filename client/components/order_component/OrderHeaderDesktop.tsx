@@ -1,18 +1,19 @@
 import React from "react";
 import OrderSearch from "./OrderSearch";
-import { orderStatusList } from "@/constants";
 import { DateRange } from "react-day-picker";
-import { DateRangePicker } from "@/components/shared/DateRangePicker";
+import { DateRangePicker } from "../shared/DateRangePicker";
 import OrderStatusCategoryDesktop from "./OrderStatusCategoryDesktop";
 
 const OrderHeaderDesktop = ({
-  searchOrdersByCustomerName,
+  searchInput,
+  setSearchInput,
   currentStatus,
   setCurrentStatus,
   dateRange,
   setDateRange,
 }: {
-  searchOrdersByCustomerName: (customerName: string) => void;
+  searchInput: string;
+  setSearchInput: React.Dispatch<React.SetStateAction<string>>;
   currentStatus: string;
   setCurrentStatus: React.Dispatch<React.SetStateAction<string>>;
   dateRange: DateRange;
@@ -22,7 +23,10 @@ const OrderHeaderDesktop = ({
     <>
       <div className="flex justify-between items-center max-md:hidden">
         <h1 className="text-3xl font-bold">Order List</h1>
-        <OrderSearch onSearch={searchOrdersByCustomerName} />
+        <OrderSearch
+          searchInput={searchInput}
+          setSearchInput={setSearchInput}
+        />
       </div>
       <div className="flex md:gap-3 md:flex-col-reverse xl:flex-row w-full mt-3  xl:justify-between xl:items-center  max-md:hidden">
         <OrderStatusCategoryDesktop

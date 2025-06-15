@@ -9,7 +9,7 @@ const RecentOrdersTable: React.FC<{ orders: Order[] }> = ({ orders }) => {
         <thead>
           <tr className="text-sm xl:text-lg text-left bg-slate-50 sticky top-0 z-10 ">
             <th className="py-4 px-4 th-border text-center">Order ID</th>
-            <th className="py-4 px-4 th-border text-center">Customer</th>{" "}
+            <th className="py-4 px-4 th-border text-center">Customer</th>
             <th className="py-4 px-4 th-border text-center">Items</th>
             <th className="py-4 px-4 th-border text-center">Total</th>
             <th className="py-4 px-4 th-border text-center">Date</th>

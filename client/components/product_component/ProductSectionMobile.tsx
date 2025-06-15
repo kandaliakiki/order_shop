@@ -14,7 +14,7 @@ const ProductSectionMobile = () => {
     <div className=" md:hidden">
       <div className="bg-white">
         <MobileHeader title="Manage Products"></MobileHeader>
-        <CategoryGridMobile></CategoryGridMobile>
+        <CategoryGridMobile isAdmin={true}></CategoryGridMobile>
         <div className="flex flex-col justify-center items-center pb-2">
           <CategoryAddModalButton />
           <ProductSearch />

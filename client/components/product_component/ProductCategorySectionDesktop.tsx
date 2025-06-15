@@ -5,7 +5,6 @@ import React from "react";
 import CategoryList from "./CategoryList";
 import CategoryAddModalButton from "./CategoryAddModalButton";
 import { CategoryProvider } from "./CategoryContext";
-import CategoryGridMobile from "./CategoryGridMobile";
 
 const ProductCategorySectionDesktop = () => {
   return (

@@ -13,7 +13,7 @@ const BuyProductSectionDesktop = () => {
       <div className="bg-white">
         <MobileHeader title="Choose Products" isAdmin={false}></MobileHeader>
         <div className="md:px-4 pb-2">
-          <CategoryGridMobile></CategoryGridMobile>
+          <CategoryGridMobile isAdmin={false}></CategoryGridMobile>
           <CustomerProductSearch />
         </div>
       </div>

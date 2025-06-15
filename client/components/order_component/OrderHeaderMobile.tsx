@@ -5,13 +5,15 @@ import { DateRangePicker } from "../shared/DateRangePicker";
 import OrderStatusCategorMobile from "./OrderStatusCategorMobile";
 
 const OrderHeaderMobile = ({
-  searchOrdersByCustomerName,
+  searchInput,
+  setSearchInput,
   dateRange,
   setDateRange,
   currentStatus,
   setCurrentStatus,
 }: {
-  searchOrdersByCustomerName: (customerName: string) => void;
+  searchInput: string;
+  setSearchInput: React.Dispatch<React.SetStateAction<string>>;
   dateRange: DateRange;
   setDateRange: React.Dispatch<React.SetStateAction<DateRange>>;
   currentStatus: string;
@@ -19,7 +21,7 @@ const OrderHeaderMobile = ({
 }) => {
   return (
     <div className="space-y-2 md:hidden px-3">
-      <OrderSearch onSearch={searchOrdersByCustomerName} />
+      <OrderSearch searchInput={searchInput} setSearchInput={setSearchInput} />
       <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
       <OrderStatusCategorMobile
         currentStatus={currentStatus}
