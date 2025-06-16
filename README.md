@@ -1,210 +1,171 @@
-# Order Shop
+# Order Shop - POS System Starter
 
 ## Overview
 
-Order Shop is a fully functional e-commerce application with two user roles: customers, who can browse and purchase products, and admins, who can manage orders and inventory. It's built using Next.js for the client-side and Express.js for the server-side. The application integrates with Google Drive for image storage and uses MongoDB for data persistence.
+Order Shop is a basic Point of Sale (POS) system starter template that provides essential e-commerce functionality. It's built using Next.js for the client-side and Express.js for the server-side. The application integrates with Google Drive for image storage and uses MongoDB for data persistence.
 
 ## Features
 
-- **Admin Dashboard**: Monitor and manage incoming orders in a clean, organized interface.
-- **Product & Category Management**: Add, update, and delete products and categories — complete with image support via Google Drive.
-- **Google Drive Integration**: Securely upload and manage images through the Google Drive API using OAuth2.
-- **Responsive UI**: Optimized design for desktop and mobile access using Tailwind CSS.
+- **Basic POS System**: Manage products, categories, and orders
+- **Product & Category Management**: Add, update, and delete products and categories with image support
+- **Google Drive Integration**: Securely upload and manage images through Google Drive API
+- **Responsive UI**: Optimized design for desktop and mobile access using Tailwind CSS
+- **Cart System**: Basic shopping cart functionality
+- **Order Management**: Track and manage customer orders
+
+## Demo Video
+
+[![Order Shop Demo](https://img.youtube.com/vi/jE6n3H6qdDg/0.jpg)](https://www.youtube.com/watch?v=jE6n3H6qdDg)
 
 ## Tech Stack
 
-- **Frontend**: Next.js, React, Tailwind CSS
+- **Frontend**: Next.js 14, React, Tailwind CSS
 - **Backend**: Express.js, MongoDB
 - **Image Storage**: Google Drive API with OAuth2
+- **Database**: MongoDB
+- **Styling**: Tailwind CSS
 
-## Getting Started
+## Installation Guide
 
 ### Prerequisites
 
-- Node.js
+- Node.js (v18 or higher)
 - npm or yarn
-- MongoDB
-- Google Cloud account for Drive API
+- MongoDB database
+- Google Cloud account
+- Code editor (VS Code recommended)
 
-### Installation
+### Step 1: Clone and Install
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/yourusername/order_shop.git
-   cd order_shop
-   ```
+1. Download and extract the source code
+2. Open terminal in the project root directory
+3. Install dependencies:
 
-2. **Install dependencies**:
-   ```bash
-   # For client
-   cd client
-   npm install
-   # or
-   yarn install
+```bash
+# Install server dependencies
+cd server
+npm install
 
-   # For server
-   cd ../server
-   npm install
-   # or
-   yarn install
-   ```
+# Install client dependencies
+cd ../client
+npm install
+```
 
-3. **Environment Variables**:
-   - Create a `.env.local` file in both `client` and `server` directories.
-   - Add your MongoDB URI, Google API credentials, and other necessary environment variables.
+### Step 2: Environment Setup
 
-4. **Run the development server**:
-   ```bash
-   # For client
-   cd client
-   npm run dev
-   # or
-   yarn dev
+#### Server Environment Variables
 
-   # For server
-   cd ../server
-   npm start
-   ```
+Create a `.env.local` file in the `server` directory with the following variables:
 
-5. **Open your browser**:
-   - Visit `http://localhost:3000` for the client-side application.
-   - The server runs on `http://localhost:8080`.
+```env
+PORT=your_port_number
+MONGODB_URL=your_mongodb_connection_string
+GOOGLE_CREDENTIALS_PATH=path_to_your_google_credentials.json
+GOOGLE_DRIVE_FOLDER_ID=your_google_drive_folder_id
+```
 
-## Project Structure
+#### Client Environment Variables
 
-- **client**: Contains the Next.js application.
-  - **components**: Reusable React components.
-  - **pages**: Next.js pages.
-  - **styles**: Global styles and Tailwind CSS configuration.
+Create a `.env.local` file in the `client` directory:
 
-- **server**: Contains the Express.js application.
-  - **lib**: Utility functions and database models.
-  - **routes**: API endpoints.
+```env
+NEXT_PUBLIC_BACKEND_ENDPOINT=http://your_domain_or_ip:your_port_number
+```
 
-## Screenshots & Usage Guide
+Note: Make sure the port number matches between server and client environment variables.
 
-### 🔹 Dashboard
+### Step 3: Google Drive Setup
 
-<div align="center">
-  <img src="readme-assets/dashboard.png" width="1200"/>
-  <p><em>Dashboard</em></p>
-</div>
+1. **Create Google Cloud Project**:
 
-### 🔹 View and Add Category
- Steps to view and add a category to the system.
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project
+   - Enable the Google Drive API
+   - Go to "Credentials"
+   - Click "Create Credentials" → "OAuth 2.0 Client ID"
+   - Choose "Web Application" (not Desktop Application)
+   - Add these Authorized redirect URIs:
+     - `http://localhost:3000/` (for client)
+     - `http://localhost:8080/` (for server)
+   - Download the credentials JSON file
+   - Rename it to `client_secret.json`
+   - Place one copy in the `server` directory
+   - Place another copy in the `client` directory
 
-<div align="center">
-  <img src="readme-assets/view-and-add-categories-1.png" width="1200"/>
-  <p><em>Step 1</em></p>
-  <img src="readme-assets/view-and-add-categories-2.png" width="1200"/>
-  <p><em>Step 2</em></p>
-  <img src="readme-assets/view-and-add-categories-3.png" width="1200"/>
-  <p><em>Step 3</em></p>
-  <img src="readme-assets/view-and-add-categories-4.png" width="1200"/>
-  <p><em>Step 4</em></p>
-  <img src="readme-assets/view-and-add-categories-5.png" width="1200"/>
-  <p><em>Step 5</em></p>
-  <img src="readme-assets/view-and-add-categories-6.png" width="1200"/>
-  <p><em>Step 6</em></p>
-</div>
+2. **Setup Google Drive Folder**:
 
----
+   - Create a new folder in your Google Drive
+   - Right-click the folder and select "Share"
+   - Make it accessible to anyone with the link
+   - Copy the folder ID from the URL (it's the long string after /folders/)
 
-### 🔹 View Products
-Display list of all products.
+3. **Configure Credentials**:
 
-<div align="center">
-  <img src="readme-assets/view-product-1.png" width="1200"/>
-  <p><em>Step 1</em></p>
-  <img src="readme-assets/view-product-2.png" width="1200"/>
-  <p><em>Step 2</em></p>
-  <img src="readme-assets/view-product-3.png" width="1200"/>
-  <p><em>Step 3</em></p>
-  <img src="readme-assets/view-product-4.png" width="1200"/>
-  <p><em>Step 4</em></p>
-</div>
+   - Update the `GOOGLE_CREDENTIALS_PATH` in your server `.env.local` file to point to the server's `client_secret.json`
+   - Update the `GOOGLE_DRIVE_FOLDER_ID` with your folder ID
 
----
+4. **Google Authentication Setup**:
+   - If your Google Cloud project is in testing mode:
+     - Add your email to the test users list in Google Cloud Console
+     - You can only authenticate with the added test email
+   - Start the server for the first time
+   - You will be prompted with a Google authentication URL
+   - Open the URL in your browser
+   - Log in with your Google account (must be a test user if in testing mode)
+   - Copy the authorization code from the returned URL
+   - Paste the code back in the terminal
+   - A `token.json` file will be created in your server directory
+   - If you get an `invalid_grant` error in testing mode:
+     1. Delete the `token.json` file
+     2. Restart the server
+     3. Follow the authentication process again
+   - If your project is published:
+     - Any Google account can authenticate
+     - No need to re-authenticate unless you revoke access
 
-### 🔹 Add Product
-Steps to add a product to the system.
+### Step 4: Database Setup
 
-<div align="center">
-  <img src="readme-assets/add-product-1.png" width="1200"/>
-  <p><em>Step 1</em></p>
-  <img src="readme-assets/add-product-2.png" width="1200"/>
-  <p><em>Step 2</em></p>
-  <img src="readme-assets/add-product-3.png" width="1200"/>
-  <p><em>Step 3</em></p>
-  <img src="readme-assets/add-product-4.png" width="1200"/>
-  <p><em>Step 4</em></p>
-  <img src="readme-assets/add-product-5.png" width="1200"/>
-  <p><em>Step 5</em></p>
-  <img src="readme-assets/add-product-6.png" width="1200"/>
-  <p><em>Step 6</em></p>
-</div>
+1. Create a MongoDB database (local or cloud)
+2. Get your MongoDB connection string
+3. Update the `MONGODB_URL` in your server `.env.local` file
 
----
+### Step 5: Running the Application
 
-### 🔹 Delete Product
-Delete multiple products at once.
+1. **Start the server**:
 
-<div align="center">
-  <img src="readme-assets/delete-product-1.png" width="1200"/>
-  <p><em>Step 1</em></p>
-  <img src="readme-assets/delete-product-2.png" width="1200"/>
-  <p><em>Step 2</em></p>
-  <img src="readme-assets/delete-product-3.png" width="1200"/>
-  <p><em>Step 3</em></p>
-  <img src="readme-assets/delete-product-4.png" width="1200"/>
-  <p><em>Step 4</em></p>
-</div>
+```bash
+cd server
+npm start
+```
 
----
+2. **Start the client**:
 
-### 🔹 Filter Products
-Filter products by price or category.
+```bash
+cd client
+npm run dev
+```
 
-<div align="center">
-  <img src="readme-assets/filter-product-1.png" width="1200"/>
-  <p><em>Step 1</em></p>
-  <img src="readme-assets/filter-product-2.png" width="1200"/>
-  <p><em>Step 2</em></p>
-  <img src="readme-assets/filter-product-3.png" width="1200"/>
-  <p><em>Step 3</em></p>
-</div>
-
-### 🔹 Update Product
-Steps to edit an existing product.
-
-<div align="center">
-  <img src="readme-assets/update-product-1.png" width="1200"/>
-  <p><em>Step 1</em></p>
-  <img src="readme-assets/update-product-2.png" width="1200"/>
-  <p><em>Step 2</em></p>
-  <img src="readme-assets/update-product-3.png" width="1200"/>
-  <p><em>Step 3</em></p>
-  <img src="readme-assets/update-product-4.png" width="1200"/>
-  <p><em>Step 4</em></p>
-  <img src="readme-assets/update-product-5.png" width="1200"/>
-  <p><em>Step 5</em></p>
-</div>
-
----
-
-## Table of Contents
-- [Add Product](#add-product)
-- [View Products](#view-products)
-- [Update Product](#update-product)
-- [Delete Product](#delete-product)
-- [Add Category](#add-category)
-- [View Categories](#view-categories)
-
-
+3. Access the application:
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:your_port_number
 
 ## Deployment
 
-To deploy the application, you can run both the client and server on a Virtual Private Server (VPS). This setup allows you to manage and control the deployment environment directly on the VPS.
+To deploy the application:
+
+1. Set up a VPS with Node.js installed
+2. Update the environment variables with your domain/IP and port
+3. For production client build:
+   ```bash
+   cd client
+   npm run build
+   npm start
+   ```
+4. For server:
+   ```bash
+   cd server
+   npm start
+   ```
 
 ## Acknowledgments
 
