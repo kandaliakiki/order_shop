@@ -149,6 +149,16 @@ npm run dev
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:your_port_number
 
+### Development Notes
+
+- After making changes to server code (`.ts` files), you need to compile TypeScript:
+  ```bash
+  cd server
+  tsc
+  ```
+- Then restart the server for changes to take effect
+- Client-side changes will automatically recompile due to Next.js hot reloading
+
 ## Deployment
 
 To deploy the application:
