@@ -58,6 +58,12 @@ export const navigationBarLinks = [
     route: "/ingredients",
     label: "Ingredients",
   },
+  {
+    imgURLActive: "/assets/whatsapp-active.svg",
+    imgURL: "/assets/whatsapp.svg",
+    route: "/whatsapp-messages",
+    label: "WhatsApp Messages",
+  },
 ];
 
 export const bakeryIngredients = [

@@ -19,6 +19,14 @@ export interface OrderData {
   total: number;
   status: string;
   createdAt: Date;
+  source?: string; // "manual" or "whatsapp"
+  whatsappNumber?: string;
+  whatsappMessageId?: mongoose.Types.ObjectId;
+  aiAnalysisMetadata?: {
+    confidence?: number;
+    extractionMethod?: string;
+    rawAnalysis?: any;
+  };
 }
 
 // Custom function to generate sequential orderId with 'O-' prefix
@@ -53,6 +61,25 @@ const orderSchema = new mongoose.Schema<OrderData>({
   total: { type: Number, required: true },
   status: { type: String, default: "New Order" }, // Add status field
   createdAt: { type: Date, default: Date.now },
+  source: {
+    type: String,
+    default: "manual",
+    enum: ["manual", "whatsapp"],
+  },
+  whatsappNumber: {
+    type: String,
+  },
+  whatsappMessageId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "WhatsAppMessage",
+  },
+  aiAnalysisMetadata: {
+    type: {
+      confidence: Number,
+      extractionMethod: String,
+      rawAnalysis: mongoose.Schema.Types.Mixed,
+    },
+  },
 });
 
 // Middleware to generate orderId before saving

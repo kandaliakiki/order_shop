@@ -43,6 +43,13 @@ import {
   countAllIngredients,
 } from "./lib/actions/ingredient.action";
 import { IngredientData } from "./lib/models/ingredient.model";
+import {
+  createWhatsAppMessage,
+  fetchWhatsAppMessages,
+  fetchWhatsAppMessageById,
+  fetchWhatsAppMessagesByOrderId,
+} from "./lib/actions/whatsappMessage.action";
+import { validateTwilioWebhook } from "./lib/utils/twilioWebhookValidator";
 
 // Specify the path to your .env.local file
 dotenv.config({ path: ".env.local" });
@@ -54,8 +61,14 @@ const port = process.env.PORT || 8080;
 app.use(express.json({ limit: "10mb" }));
 
 // Middleware
-app.use(express.json());
 app.use(cors());
+
+// Twilio webhook needs urlencoded body for signature validation
+// Apply urlencoded middleware for Twilio webhook route specifically
+app.use(
+  "/api/twilio/webhook",
+  express.urlencoded({ extended: true, limit: "10mb" })
+);
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
@@ -438,8 +451,15 @@ app.get("/api/dashboardMetrics", async (req: Request, res: Response) => {
 app.post("/api/createIngredient", async (req: Request, res: Response) => {
   const { name, unit, currentStock, minimumStock, imageUrl } = req.body;
 
-  if (!name || !unit || currentStock === undefined || minimumStock === undefined) {
-    return res.status(400).json({ error: "Name, unit, currentStock, and minimumStock are required" });
+  if (
+    !name ||
+    !unit ||
+    currentStock === undefined ||
+    minimumStock === undefined
+  ) {
+    return res.status(400).json({
+      error: "Name, unit, currentStock, and minimumStock are required",
+    });
   }
 
   try {
@@ -495,7 +515,12 @@ app.put("/api/updateIngredient/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
   const { name, unit, currentStock, minimumStock, imageUrl } = req.body;
 
-  if (!name || !unit || currentStock === undefined || minimumStock === undefined) {
+  if (
+    !name ||
+    !unit ||
+    currentStock === undefined ||
+    minimumStock === undefined
+  ) {
     return res.status(400).json({
       error: "Name, unit, currentStock, and minimumStock are required",
     });
@@ -549,6 +574,106 @@ app.get("/api/ingredients/count", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to count ingredients" });
   }
 });
+
+// ========== TWILIO WEBHOOK ENDPOINT ==========
+
+// Endpoint to receive WhatsApp messages from Twilio
+app.post("/api/twilio/webhook", async (req: Request, res: Response) => {
+  try {
+    // Validate webhook signature (required for security)
+    const isValid = validateTwilioWebhook(req);
+    if (!isValid) {
+      console.warn("❌ Invalid Twilio webhook signature - rejecting request");
+      console.warn("   Check: TWILIO_WEBHOOK_URL matches Twilio Console");
+      console.warn("   Check: TWILIO_AUTH_TOKEN is correct");
+      return res.status(403).json({
+        error: "Invalid webhook signature",
+        message: "Request validation failed. Check webhook URL and auth token.",
+      });
+    }
+
+    // Extract message data from Twilio webhook
+    const {
+      MessageSid, // Twilio message SID
+      From, // Sender WhatsApp number (format: whatsapp:+1234567890)
+      To, // Your Twilio WhatsApp number
+      Body, // Message content
+      NumMedia, // Number of media attachments
+    } = req.body;
+
+    console.log("📱 Received WhatsApp message:", {
+      MessageSid,
+      From,
+      To,
+      Body: Body?.substring(0, 100), // Log first 100 chars
+    });
+
+    // Store message in database
+    const messageData = {
+      messageId: MessageSid,
+      from: From,
+      to: To,
+      body: Body || "",
+      analyzed: false,
+    };
+
+    const savedMessage = await createWhatsAppMessage(messageData);
+
+    // TODO: Phase 3 - Trigger AI analysis
+    // TODO: Phase 4 - Generate order if analysis successful
+
+    // Respond to Twilio (must be 200 OK)
+    res.status(200).type("text/xml").send(`
+      <Response>
+        <Message>Message received. We'll process your order shortly.</Message>
+      </Response>
+    `);
+  } catch (error) {
+    console.error("Error processing Twilio webhook:", error);
+    // Still return 200 to Twilio to avoid retries
+    res.status(200).type("text/xml").send("<Response></Response>");
+  }
+});
+
+// Endpoint to get all WhatsApp messages
+app.get("/api/whatsapp/messages", async (req: Request, res: Response) => {
+  try {
+    const messages = await fetchWhatsAppMessages();
+    res.status(200).json(messages);
+  } catch (error) {
+    console.error("Error fetching WhatsApp messages:", error);
+    res.status(500).json({ error: "Failed to fetch messages" });
+  }
+});
+
+// Endpoint to get message by ID
+app.get("/api/whatsapp/message/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const message = await fetchWhatsAppMessageById(id);
+    res.status(200).json(message);
+  } catch (error) {
+    console.error("Error fetching message:", error);
+    res.status(500).json({ error: "Failed to fetch message" });
+  }
+});
+
+// Endpoint to get messages for an order
+app.get(
+  "/api/whatsapp/messages/order/:orderId",
+  async (req: Request, res: Response) => {
+    const { orderId } = req.params;
+
+    try {
+      const messages = await fetchWhatsAppMessagesByOrderId(orderId);
+      res.status(200).json(messages);
+    } catch (error) {
+      console.error("Error fetching messages for order:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  }
+);
 
 // Start server
 app.listen(port, () => {
