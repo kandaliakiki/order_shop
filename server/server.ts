@@ -34,6 +34,15 @@ import {
 } from "./lib/actions/order.action"; // Import the function
 import { OrderData } from "./lib/models/order.model";
 import { seedOrders } from "./lib/utils/seedOrdersUtils";
+import {
+  createIngredient,
+  deleteIngredient,
+  fetchIngredientById,
+  fetchIngredients,
+  updateIngredient,
+  countAllIngredients,
+} from "./lib/actions/ingredient.action";
+import { IngredientData } from "./lib/models/ingredient.model";
 
 // Specify the path to your .env.local file
 dotenv.config({ path: ".env.local" });
@@ -65,14 +74,14 @@ const oAuth2Client: OAuth2Client = getOAuth2Client(); // Use the new function
 
 // Endpoint to add a new product
 app.post("/api/createProduct", async (req: Request, res: Response) => {
-  const { name, price, category, imageUrl } = req.body;
+  const { name, price, category, imageUrl, ingredients } = req.body;
 
   if (!name || !price || !category || !imageUrl) {
     return res.status(400).json({ error: "All fields are required" });
   }
 
   try {
-    const productData: ProductData = { name, price, category };
+    const productData: ProductData = { name, price, category, ingredients };
     const newProduct = await createProduct(productData, imageUrl, oAuth2Client); // Pass imageUrl instead of file
     res.status(201).json(newProduct);
   } catch (error) {
@@ -129,7 +138,7 @@ app.get("/api/product/:id", async (req: Request, res: Response) => {
 // Endpoint to update a product
 app.put("/api/updateProduct/:id", async (req: Request, res: Response) => {
   const { id } = req.params; // Get the product ID from the URL
-  const { name, price, category, imageUrl } = req.body; // Get product data from the request body
+  const { name, price, category, imageUrl, ingredients } = req.body; // Get product data from the request body
 
   if (!name || !price || !category || !imageUrl) {
     // Validate required fields including imageUrl
@@ -139,7 +148,7 @@ app.put("/api/updateProduct/:id", async (req: Request, res: Response) => {
   }
 
   try {
-    const productData: ProductData = { name, price, category };
+    const productData: ProductData = { name, price, category, ingredients };
     const updatedProduct = await updateProduct(
       id,
       productData,
@@ -420,6 +429,124 @@ app.get("/api/dashboardMetrics", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching dashboard metrics:", error);
     res.status(500).json({ error: "Failed to fetch dashboard metrics" });
+  }
+});
+
+// ========== INGREDIENT ENDPOINTS ==========
+
+// Endpoint to create a new ingredient
+app.post("/api/createIngredient", async (req: Request, res: Response) => {
+  const { name, unit, currentStock, minimumStock, imageUrl } = req.body;
+
+  if (!name || !unit || currentStock === undefined || minimumStock === undefined) {
+    return res.status(400).json({ error: "Name, unit, currentStock, and minimumStock are required" });
+  }
+
+  try {
+    const ingredientData: IngredientData = {
+      name,
+      unit,
+      currentStock,
+      minimumStock,
+      imageUrl: imageUrl || "",
+    };
+    const newIngredient = await createIngredient(
+      ingredientData,
+      imageUrl || "",
+      oAuth2Client
+    );
+    res.status(201).json(newIngredient);
+  } catch (error) {
+    console.error("Error creating ingredient:", error);
+    res.status(500).json({ error: "Failed to create ingredient" });
+  }
+});
+
+// Endpoint to fetch all ingredients
+app.get("/api/ingredients", async (req: Request, res: Response) => {
+  try {
+    const ingredients = await fetchIngredients();
+    res.status(200).json(ingredients);
+  } catch (error) {
+    console.error("Error fetching ingredients:", error);
+    res.status(500).json({ error: "Failed to fetch ingredients" });
+  }
+});
+
+// Endpoint to fetch an ingredient by ID
+app.get("/api/ingredient/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ error: "Ingredient ID is required" });
+  }
+
+  try {
+    const ingredient = await fetchIngredientById(id);
+    res.status(200).json(ingredient);
+  } catch (error) {
+    console.error("Error fetching ingredient by ID:", error);
+    res.status(500).json({ error: "Failed to fetch ingredient" });
+  }
+});
+
+// Endpoint to update an ingredient
+app.put("/api/updateIngredient/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { name, unit, currentStock, minimumStock, imageUrl } = req.body;
+
+  if (!name || !unit || currentStock === undefined || minimumStock === undefined) {
+    return res.status(400).json({
+      error: "Name, unit, currentStock, and minimumStock are required",
+    });
+  }
+
+  try {
+    const ingredientData: IngredientData = {
+      name,
+      unit,
+      currentStock,
+      minimumStock,
+      imageUrl: imageUrl || "",
+    };
+    const updatedIngredient = await updateIngredient(
+      id,
+      ingredientData,
+      imageUrl || "",
+      oAuth2Client
+    );
+    res.status(200).json(updatedIngredient);
+  } catch (error) {
+    console.error("Error updating ingredient:", error);
+    res.status(500).json({ error: "Failed to update ingredient" });
+  }
+});
+
+// Endpoint to delete an ingredient
+app.delete("/api/deleteIngredient/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ error: "Ingredient ID is required" });
+  }
+
+  try {
+    await deleteIngredient(id, oAuth2Client);
+    res.status(204).send(); // No content to send back
+  } catch (error) {
+    console.error("Error deleting ingredient:", error);
+    res.status(500).json({ error: "Failed to delete ingredient" });
+  }
+});
+
+// Endpoint to count all ingredients
+app.get("/api/ingredients/count", async (req: Request, res: Response) => {
+  try {
+    const ingredientCount = await countAllIngredients();
+    res.status(200).json({ count: ingredientCount });
+  } catch (error) {
+    console.error("Error counting ingredients:", error);
+    res.status(500).json({ error: "Failed to count ingredients" });
   }
 });
 

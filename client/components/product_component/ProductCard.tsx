@@ -3,6 +3,7 @@ import React from "react";
 import { Checkbox } from "../ui/checkbox";
 import { Product, useProducts } from "./ProductContext";
 import ProductCardDropdown from "./ProductCardDropdown";
+import ProductIngredientsModal from "./ProductIngredientsModal";
 import { Card, CardContent } from "../ui/card";
 
 const ProductCard: React.FC<Product> = ({
@@ -12,6 +13,7 @@ const ProductCard: React.FC<Product> = ({
   name,
   price,
   imageUrl,
+  ingredients,
 }) => {
   const { selectedProducts, setSelectedProducts } = useProducts();
 
@@ -51,9 +53,20 @@ const ProductCard: React.FC<Product> = ({
         <div className="font-medium mb-1 text-sm md:text-base line-clamp-1">
           {name}
         </div>
-        <div className="text-base md:text-lg font-bold">
+        <div className="text-base md:text-lg font-bold mb-2">
           ${price.toFixed(2)}
         </div>
+        <ProductIngredientsModal
+          product={{
+            _id,
+            productId,
+            category,
+            name,
+            price,
+            imageUrl,
+            ingredients,
+          }}
+        />
       </CardContent>
     </Card>
     // <div className="w-56 h-72  rounded-xl border-2 bg-white border-gray-300 shadow-lg flex flex-col items-start ">

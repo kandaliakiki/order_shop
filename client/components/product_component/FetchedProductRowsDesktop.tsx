@@ -4,6 +4,7 @@ import { Checkbox } from "../ui/checkbox";
 import Image from "next/image";
 import ProductTableCheckbox from "./ProductTableCheckbox";
 import EditButtonProductTable from "./EditButtonProductTable";
+import ProductIngredientsPopover from "./ProductIngredientsPopover";
 
 const FetchedProductRowsDesktop = () => {
   const { products } = useProducts(); // Use the context to get products
@@ -33,6 +34,9 @@ const FetchedProductRowsDesktop = () => {
             {product.name}
           </td>
           <td className="px-4 py-4 text-gray-700">{product.category.name}</td>
+          <td className="px-4 py-4">
+            <ProductIngredientsPopover product={product} />
+          </td>
           <td className="px-4 py-4 font-bold text-gray-900">
             ${product.price.toFixed(2)}
           </td>

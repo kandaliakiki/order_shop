@@ -16,6 +16,11 @@ export interface ProductData {
   name: string;
   price: number;
   category: mongoose.Types.ObjectId; // Change category to reference Category schema
+  ingredients?: Array<{
+    ingredient: mongoose.Types.ObjectId;
+    quantity: number;
+    unit: string;
+  }>;
   // Add any other fields defined in your product schema
 }
 
@@ -32,6 +37,17 @@ const productSchema = new mongoose.Schema({
     required: true,
   }, // Link to Category schema
   imageUrl: { type: String, default: "" },
+  ingredients: [
+    {
+      ingredient: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Ingredient",
+        required: true,
+      },
+      quantity: { type: Number, required: true, min: 0 },
+      unit: { type: String, required: true },
+    },
+  ],
 });
 
 // Middleware to generate productId before saving

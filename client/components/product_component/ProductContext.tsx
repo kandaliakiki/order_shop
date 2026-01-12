@@ -8,6 +8,17 @@ export interface Product {
   price: number;
   category: Category;
   imageUrl: string;
+  ingredients?: Array<{
+    ingredient: {
+      _id: string;
+      name: string;
+      unit: string;
+      currentStock: number;
+      minimumStock: number;
+    };
+    quantity: number;
+    unit: string;
+  }>;
 }
 
 interface ProductContextType {

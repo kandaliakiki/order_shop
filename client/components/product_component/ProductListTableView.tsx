@@ -46,6 +46,9 @@ const ProductListTableView = () => {
                 Category
               </th>
               <th className="px-4 py-3 text-left font-medium text-gray-900">
+                Ingredients
+              </th>
+              <th className="px-4 py-3 text-left font-medium text-gray-900">
                 Price
               </th>
               <th className="w-12 px-4 py-3"></th>

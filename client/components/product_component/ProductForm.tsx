@@ -28,12 +28,23 @@ import { MoonLoader } from "react-spinners";
 import { Product, useProducts } from "./ProductContext";
 import CategorySelectItems from "./CategorySelectItems";
 import { setLocalStorageCategoryId, useCategories } from "./CategoryContext";
+import { useIngredients, Ingredient } from "../ingredient_component/IngredientContext";
+import { X } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(3).max(30),
   price: z.coerce.number(),
   category: z.string().min(3).max(30),
   imageUrl: z.string().url().min(1),
+  ingredients: z
+    .array(
+      z.object({
+        ingredient: z.string(),
+        quantity: z.coerce.number().min(0),
+        unit: z.string(),
+      })
+    )
+    .optional(),
 });
 
 const ProductForm = ({
@@ -49,6 +60,7 @@ const ProductForm = ({
     useProducts(); // Get the fetch function from context
 
   const { fetchCategories, fetchCategoryById } = useCategories();
+  const { ingredients: allIngredients, fetchIngredients } = useIngredients();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -56,8 +68,15 @@ const ProductForm = ({
       price: product?.price || 0,
       category: product?.category._id || "",
       imageUrl: product?.imageUrl || "",
+      ingredients: [],
     },
   });
+
+  const selectedIngredients = form.watch("ingredients") || [];
+
+  useEffect(() => {
+    fetchIngredients(); // Fetch ingredients on mount
+  }, []);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -65,12 +84,22 @@ const ProductForm = ({
         const fetchedProduct = await fetchProductById(productId); // Call fetchProductById
         setProduct(fetchedProduct); // Set the product state
         if (fetchedProduct) {
+          // Map ingredients to form format
+          const ingredients = (fetchedProduct as any).ingredients?.map(
+            (ing: any) => ({
+              ingredient: ing.ingredient._id || ing.ingredient,
+              quantity: ing.quantity,
+              unit: ing.unit,
+            })
+          ) || [];
+          
           form.reset({
             // Reset form with fetched product data
             name: fetchedProduct.name,
             price: fetchedProduct.price,
             category: fetchedProduct.category._id,
             imageUrl: fetchedProduct.imageUrl,
+            ingredients: ingredients,
           });
         }
       }
@@ -104,12 +133,22 @@ const ProductForm = ({
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT; // Your backend URL
 
     try {
+      // Format ingredients for API
+      const formattedData = {
+        ...productData,
+        ingredients: productData.ingredients?.map((ing) => ({
+          ingredient: ing.ingredient,
+          quantity: ing.quantity,
+          unit: ing.unit,
+        })) || [],
+      };
+
       const response = await fetch(`${backendUrl}/api/createProduct`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(productData), // Send the product data
+        body: JSON.stringify(formattedData), // Send the product data
       });
 
       if (!response.ok) {
@@ -134,6 +173,16 @@ const ProductForm = ({
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT; // Your backend URL
 
     try {
+      // Format ingredients for API
+      const formattedData = {
+        ...productData,
+        ingredients: productData.ingredients?.map((ing) => ({
+          ingredient: ing.ingredient,
+          quantity: ing.quantity,
+          unit: ing.unit,
+        })) || [],
+      };
+
       const response = await fetch(
         `${backendUrl}/api/updateProduct/${productId}`,
         {
@@ -141,7 +190,7 @@ const ProductForm = ({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(productData), // Send the product data
+          body: JSON.stringify(formattedData), // Send the product data
         }
       );
 
@@ -304,6 +353,113 @@ const ProductForm = ({
             </FormItem>
           )}
         />
+        
+        {/* Ingredients Section */}
+        <div className="space-y-4">
+          <FormLabel>Ingredients</FormLabel>
+          <FormDescription>
+            Add ingredients required for this product (optional).
+          </FormDescription>
+          
+          {/* Add Ingredient Dropdown */}
+          <Select
+            onValueChange={(ingredientId) => {
+              const ingredient = allIngredients.find((ing) => ing._id === ingredientId);
+              if (ingredient && !selectedIngredients.find((ing) => ing.ingredient === ingredientId)) {
+                form.setValue("ingredients", [
+                  ...selectedIngredients,
+                  {
+                    ingredient: ingredientId,
+                    quantity: 0,
+                    unit: ingredient.unit,
+                  },
+                ]);
+              }
+            }}
+            value=""
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select an ingredient to add" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Available Ingredients</SelectLabel>
+                {allIngredients
+                  .filter(
+                    (ing) =>
+                      !selectedIngredients.find(
+                        (selIng) => selIng.ingredient === ing._id
+                      )
+                  )
+                  .map((ingredient) => (
+                    <SelectItem key={ingredient._id} value={ingredient._id}>
+                      {ingredient.name} ({ingredient.unit})
+                    </SelectItem>
+                  ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
+          {/* Selected Ingredients List */}
+          {selectedIngredients.length > 0 && (
+            <div className="space-y-2 border rounded-lg p-4">
+              {selectedIngredients.map((selectedIng, index) => {
+                const ingredient = allIngredients.find(
+                  (ing) => ing._id === selectedIng.ingredient
+                );
+                return (
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 p-2 bg-gray-50 rounded"
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium">
+                        {ingredient?.name || "Unknown"}
+                      </p>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          type="number"
+                          placeholder="Quantity"
+                          value={selectedIng.quantity}
+                          onChange={(e) => {
+                            const updated = [...selectedIngredients];
+                            updated[index].quantity = parseFloat(e.target.value) || 0;
+                            form.setValue("ingredients", updated);
+                          }}
+                          className="w-24"
+                          min="0"
+                          step="0.01"
+                        />
+                        <span className="self-center text-sm text-gray-600">
+                          {selectedIng.unit}
+                        </span>
+                        {ingredient && (
+                          <span className="self-center text-xs text-gray-500">
+                            (Stock: {ingredient.currentStock} {ingredient.unit})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const updated = selectedIngredients.filter(
+                          (_, i) => i !== index
+                        );
+                        form.setValue("ingredients", updated);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         <Button type="submit" disabled={loading} className="bg-sky-950 w-20">
           {loading ? <MoonLoader size={20} color="#fff" /> : "Submit"}
         </Button>

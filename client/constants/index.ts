@@ -52,6 +52,12 @@ export const navigationBarLinks = [
     route: "/product",
     label: "Manage Products",
   },
+  {
+    imgURLActive: "/assets/ingredients-active.svg",
+    imgURL: "/assets/ingredients.svg",
+    route: "/ingredients",
+    label: "Ingredients",
+  },
 ];
 
 export const bakeryIngredients = [
@@ -796,6 +802,17 @@ export const orderStatusList = [
   "On Process",
   "Completed",
   "Cancelled",
+];
+
+export const ingredientUnits = [
+  "kg",
+  "g",
+  "L",
+  "ml",
+  "pieces",
+  "cups",
+  "tbsp",
+  "tsp",
 ];
 
 export const dataChart = [

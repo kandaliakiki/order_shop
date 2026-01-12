@@ -36,7 +36,9 @@ export const fetchProducts = async () => {
   await connectToDB();
 
   try {
-    const products = await Product.find({}).populate("category", "name"); // Populate category with name
+    const products = await Product.find({})
+      .populate("category", "name")
+      .populate("ingredients.ingredient", "name unit currentStock minimumStock"); // Populate ingredients
     return products;
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -77,7 +79,9 @@ export const fetchProductById = async (id: string) => {
   await connectToDB();
 
   try {
-    const product = await Product.findById(id).populate("category", "name"); // Populate category with name
+    const product = await Product.findById(id)
+      .populate("category", "name")
+      .populate("ingredients.ingredient", "name unit currentStock minimumStock"); // Populate ingredients
     if (!product) {
       throw new Error("Product not found");
     }
@@ -103,8 +107,13 @@ export const updateProduct = async (
   // Save the old imageUrl
   const oldImageUrl = existingProduct.imageUrl;
 
-  // Update product fields
+  // Update product fields (including ingredients if provided)
   existingProduct.set({ ...productData });
+  
+  // Handle ingredients update
+  if (productData.ingredients !== undefined) {
+    existingProduct.ingredients = productData.ingredients;
+  }
 
   // is base 65 then user upload new image
   const isUserUploadNewImage = isBase64Image(imageUrl);
@@ -130,10 +139,9 @@ export const fetchProductsByCategoryId = async (categoryId: string) => {
   await connectToDB();
 
   try {
-    const products = await Product.find({ category: categoryId }).populate(
-      "category",
-      "name"
-    ); // Populate category with name
+    const products = await Product.find({ category: categoryId })
+      .populate("category", "name")
+      .populate("ingredients.ingredient", "name unit currentStock minimumStock"); // Populate ingredients
     return products;
   } catch (error) {
     console.error("Error fetching products by category ID:", error);
@@ -260,11 +268,18 @@ export const filterProductsByParams = async (
           price: 1,
           imageUrl: 1,
           category: 1,
+          ingredients: 1,
         },
       },
     ]);
 
-    return products;
+    // Populate ingredients for the filtered products
+    const populatedProducts = await Product.populate(products, {
+      path: "ingredients.ingredient",
+      select: "name unit currentStock minimumStock",
+    });
+
+    return populatedProducts;
   } catch (error) {
     console.error("Error filtering products:", error);
     throw error;

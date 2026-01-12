@@ -16,6 +16,7 @@ const FetchedProductCard = () => {
           name={product.name}
           price={product.price}
           imageUrl={product.imageUrl}
+          ingredients={product.ingredients}
         />
       ))}
     </>
