@@ -28,6 +28,7 @@ import {
   countTotalOrders,
   createOrder,
   fetchOrders,
+  fetchOrderById,
   fetchOverallRevenue,
   searchOrdersByCustomerName,
   updateOrderStatus,
@@ -51,6 +52,8 @@ import {
 } from "./lib/actions/whatsappMessage.action";
 import { processWhatsAppMessageForOrder } from "./lib/actions/whatsappOrderProcessing.action";
 import { validateTwilioWebhook } from "./lib/utils/twilioWebhookValidator";
+import { calculateOrderStockRequirements } from "./lib/actions/orderStockCalculation.action";
+import { processOrderStockAndNotification } from "./lib/actions/orderStockNotification.action";
 
 // Specify the path to your .env.local file
 dotenv.config({ path: ".env.local" });
@@ -614,18 +617,23 @@ app.post("/api/twilio/webhook", async (req: Request, res: Response) => {
 
     const savedMessage = await createWhatsAppMessage(messageData);
 
-    // Process message: AI analysis + order generation
-    await processWhatsAppMessageForOrder(
+    // Process message: AI analysis + order generation + stock check
+    const processResult = await processWhatsAppMessageForOrder(
       Body || "",
       From,
       savedMessage._id.toString(), // MongoDB _id (for order generation)
       MessageSid // Twilio messageId (for message updates)
     );
 
-    // Respond to Twilio (must be 200 OK)
+    // Send dynamic response based on stock availability
+    const responseMessage =
+      processResult.whatsappResponse ||
+      "Message received. We'll process your order shortly.";
+
+    // Respond to Twilio with dynamic message
     res.status(200).type("text/xml").send(`
       <Response>
-        <Message>Message received. We'll process your order shortly.</Message>
+        <Message>${responseMessage}</Message>
       </Response>
     `);
   } catch (error) {
@@ -671,6 +679,91 @@ app.get(
     } catch (error) {
       console.error("Error fetching messages for order:", error);
       res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  }
+);
+
+// Get order by orderId
+app.get("/api/order/:orderId", async (req: Request, res: Response) => {
+  try {
+    const { orderId } = req.params;
+    const order = await fetchOrderById(orderId);
+    res.status(200).json(order);
+  } catch (error: any) {
+    console.error("Error fetching order:", error);
+    res.status(404).json({ error: error.message || "Order not found" });
+  }
+});
+
+// Calculate ingredient requirements for an order
+app.get(
+  "/api/order/:orderId/stock-calculation",
+  async (req: Request, res: Response) => {
+    try {
+      const { orderId } = req.params;
+      const order = await fetchOrderById(orderId);
+
+      // If order has stored stock calculation metadata, use that (historical data)
+      if (order.stockCalculationMetadata) {
+        // Return stored calculation (historical data)
+        return res.status(200).json({
+          orderId,
+          allIngredientsSufficient:
+            order.stockCalculationMetadata.allIngredientsSufficient,
+          requirements: order.stockCalculationMetadata.requirements.map(
+            (req: any) => ({
+              ingredientId: req.ingredientId,
+              ingredientName: req.ingredientName,
+              unit: req.unit,
+              requiredQuantity: req.requiredQuantity,
+              currentStock: req.stockAtTimeOfOrder, // Show stock at time of order
+              minimumStock: 0, // Not stored, but not critical for display
+              isSufficient: req.wasSufficient,
+              shortage: req.wasSufficient
+                ? 0
+                : req.requiredQuantity - req.stockAtTimeOfOrder,
+            })
+          ),
+          warnings: order.stockCalculationMetadata.warnings,
+          isHistorical: true, // Flag to indicate this is stored data
+          calculatedAt: order.stockCalculationMetadata.calculatedAt,
+        });
+      }
+
+      // Fallback: Recalculate for orders without stored metadata (manual orders, old orders)
+      const result = await calculateOrderStockRequirements(orderId);
+      res.status(200).json({
+        ...result,
+        isHistorical: false, // Flag to indicate this is current calculation
+      });
+    } catch (error: any) {
+      console.error("Error calculating stock requirements:", error);
+      res
+        .status(500)
+        .json({ error: error.message || "Failed to calculate stock" });
+    }
+  }
+);
+
+// Process stock calculation, deduction, and notification for an order
+// Can be called manually or via cronjob (e.g., after restocking)
+app.post(
+  "/api/order/:orderId/process-stock",
+  async (req: Request, res: Response) => {
+    try {
+      const { orderId } = req.params;
+      const result = await processOrderStockAndNotification(orderId);
+
+      if (result.success) {
+        res.status(200).json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error: any) {
+      console.error("Error processing order stock:", error);
+      res.status(500).json({
+        error: error.message || "Failed to process order stock",
+      });
     }
   }
 );

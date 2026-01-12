@@ -2,6 +2,7 @@ import { getStatusColor, Order, OrderStatus } from "@/constants";
 import Image from "next/image";
 import React, { useState } from "react";
 import { format } from "date-fns";
+import Link from "next/link";
 import {
   ArrowRight,
   CheckCircle2,
@@ -42,11 +43,15 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onStatusChange }) => {
     switch (currentStatus) {
       case "New Order":
         return ["On Process", "Cancelled"];
+      case "Pending":
+        return ["New Order", "Cancelled"];
       case "On Process":
         return ["Completed", "Cancelled"];
       case "Completed":
         return [];
       case "Cancelled":
+        return [];
+      default:
         return [];
     }
   };
@@ -55,6 +60,8 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onStatusChange }) => {
   const getStatusIcon = (status: OrderStatus) => {
     switch (status) {
       case "New Order":
+        return <Clock className="w-4 h-4 mr-1" />;
+      case "Pending":
         return <Clock className="w-4 h-4 mr-1" />;
       case "On Process":
         return <ArrowRight className="w-4 h-4 mr-1" />;
@@ -134,7 +141,8 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onStatusChange }) => {
         </div>
 
         {/* Status Change Dropdown - Only visible on hover if status can be changed */}
-        {getAvailableStatusTransitions(order.status).length > 0 && (
+        {getAvailableStatusTransitions(order.status as OrderStatus)?.length >
+          0 && (
           <div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -260,6 +268,11 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onStatusChange }) => {
           </div>
         ))}
       </div>
+      <Link href={`/order/${order.orderId}`} className="w-full mt-4">
+        <Button variant="outline" className="w-full">
+          View Details
+        </Button>
+      </Link>
     </div>
   );
 };

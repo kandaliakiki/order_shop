@@ -27,6 +27,19 @@ export interface OrderData {
     extractionMethod?: string;
     rawAnalysis?: any;
   };
+  stockCalculationMetadata?: {
+    calculatedAt: Date;
+    allIngredientsSufficient: boolean;
+    requirements: Array<{
+      ingredientId: string;
+      ingredientName: string;
+      unit: string;
+      requiredQuantity: number;
+      stockAtTimeOfOrder: number;
+      wasSufficient: boolean;
+    }>;
+    warnings: string[];
+  };
 }
 
 // Custom function to generate sequential orderId with 'O-' prefix
@@ -59,7 +72,11 @@ const orderSchema = new mongoose.Schema<OrderData>({
   subtotal: { type: Number, required: true },
   tax: { type: Number, required: true },
   total: { type: Number, required: true },
-  status: { type: String, default: "New Order" }, // Add status field
+  status: {
+    type: String,
+    default: "New Order",
+    enum: ["New Order", "Pending", "On Process", "Completed", "Cancelled"],
+  },
   createdAt: { type: Date, default: Date.now },
   source: {
     type: String,
@@ -78,6 +95,23 @@ const orderSchema = new mongoose.Schema<OrderData>({
       confidence: Number,
       extractionMethod: String,
       rawAnalysis: mongoose.Schema.Types.Mixed,
+    },
+  },
+  stockCalculationMetadata: {
+    type: {
+      calculatedAt: Date,
+      allIngredientsSufficient: Boolean,
+      requirements: [
+        {
+          ingredientId: String,
+          ingredientName: String,
+          unit: String,
+          requiredQuantity: Number,
+          stockAtTimeOfOrder: Number,
+          wasSufficient: Boolean,
+        },
+      ],
+      warnings: [String],
     },
   },
 });

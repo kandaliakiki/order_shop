@@ -14,7 +14,7 @@ export interface Order {
   subtotal: number;
   tax: number;
   total: number;
-  status: "New Order" | "On Process" | "Completed" | "Cancelled";
+  status: "New Order" | "Pending" | "On Process" | "Completed" | "Cancelled";
   createdAt: string;
 }
 
@@ -22,6 +22,8 @@ export const getStatusColor = (status: string) => {
   switch (status) {
     case "New Order":
       return "bg-yellow-100 text-yellow-800 ";
+    case "Pending":
+      return "bg-purple-100 text-purple-800";
     case "On Process":
       return "bg-orange-100 text-orange-800";
     case "Completed":
@@ -805,6 +807,7 @@ export const bakeryCategories = [
 export const orderStatusList = [
   "All",
   "New Order",
+  "Pending",
   "On Process",
   "Completed",
   "Cancelled",

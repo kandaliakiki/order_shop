@@ -106,7 +106,7 @@ const WhatsAppMessageCard = ({ message }: WhatsAppMessageCardProps) => {
       {/* Order Link (if order exists) */}
       {message.orderId && (
         <div className="mt-3 pt-3 border-t border-gray-200">
-          <Link href={`/order/${message.orderId._id}`}>
+          <Link href={`/order/${message.orderId.orderId}`}>
             <Button variant="outline" size="sm" className="w-full">
               <ExternalLink className="h-3 w-3 mr-2" />
               View Order: {message.orderId.orderId}

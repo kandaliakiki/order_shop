@@ -170,3 +170,23 @@ export const calculateTotalItemsSold = async (dateRange?: {
     throw error;
   }
 };
+
+// Function to fetch order by orderId with populated product data
+export const fetchOrderById = async (orderId: string) => {
+  await connectToDB();
+
+  try {
+    const order = await Order.findOne({ orderId }).populate(
+      "whatsappMessageId"
+    );
+
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    return order;
+  } catch (error) {
+    console.error("Error fetching order by ID:", error);
+    throw error;
+  }
+};
