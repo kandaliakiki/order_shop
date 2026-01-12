@@ -49,6 +49,7 @@ import {
   fetchWhatsAppMessageById,
   fetchWhatsAppMessagesByOrderId,
 } from "./lib/actions/whatsappMessage.action";
+import { processWhatsAppMessageForOrder } from "./lib/actions/whatsappOrderProcessing.action";
 import { validateTwilioWebhook } from "./lib/utils/twilioWebhookValidator";
 
 // Specify the path to your .env.local file
@@ -593,13 +594,7 @@ app.post("/api/twilio/webhook", async (req: Request, res: Response) => {
     }
 
     // Extract message data from Twilio webhook
-    const {
-      MessageSid, // Twilio message SID
-      From, // Sender WhatsApp number (format: whatsapp:+1234567890)
-      To, // Your Twilio WhatsApp number
-      Body, // Message content
-      NumMedia, // Number of media attachments
-    } = req.body;
+    const { MessageSid, From, To, Body } = req.body;
 
     console.log("📱 Received WhatsApp message:", {
       MessageSid,
@@ -619,8 +614,13 @@ app.post("/api/twilio/webhook", async (req: Request, res: Response) => {
 
     const savedMessage = await createWhatsAppMessage(messageData);
 
-    // TODO: Phase 3 - Trigger AI analysis
-    // TODO: Phase 4 - Generate order if analysis successful
+    // Process message: AI analysis + order generation
+    await processWhatsAppMessageForOrder(
+      Body || "",
+      From,
+      savedMessage._id.toString(), // MongoDB _id (for order generation)
+      MessageSid // Twilio messageId (for message updates)
+    );
 
     // Respond to Twilio (must be 200 OK)
     res.status(200).type("text/xml").send(`
