@@ -1,10 +1,11 @@
 import dotenv from "dotenv";
 import { connectToDB } from "../lib/mongoose";
-import Ingredient from "../lib/models/ingredient.model";
+import Ingredient, { IngredientData } from "../lib/models/ingredient.model";
 import IngredientLot from "../lib/models/ingredientLot.model";
 import Product from "../lib/models/product.model";
 import Category from "../lib/models/category.model";
 import { addDays, subDays } from "date-fns";
+import mongoose from "mongoose";
 
 // Load environment variables
 dotenv.config({ path: ".env.local" });
@@ -152,7 +153,7 @@ async function seedDataVPS() {
       },
     ];
 
-    const ingredients = [];
+    const ingredients: any[] = [];
     for (const ingredientData of ingredientsData) {
       let ingredient = await Ingredient.findOne({ name: ingredientData.name });
       
@@ -479,8 +480,8 @@ async function seedDataVPS() {
     console.log("\n🔗 Assigning ingredients to products...\n");
     
     // Helper function to find ingredient by name
-    const findIngredient = (name: string) => {
-      return ingredients.find((ing) => ing.name.toLowerCase() === name.toLowerCase());
+    const findIngredient = (name: string): any => {
+      return ingredients.find((ing: any) => ing.name.toLowerCase() === name.toLowerCase());
     };
 
     // Product recipes
