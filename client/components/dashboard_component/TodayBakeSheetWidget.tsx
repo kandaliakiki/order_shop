@@ -5,9 +5,13 @@ import { format } from "date-fns";
 import Link from "next/link";
 
 interface BakeSheet {
-  _id: string;
-  sheetId: string;
+  _id?: string;
+  sheetId?: string;
   date: string;
+  dateRange?: {
+    start: string;
+    end: string;
+  };
   items: Array<{
     productName: string;
     quantity: number;
