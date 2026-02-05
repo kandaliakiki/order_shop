@@ -88,11 +88,48 @@ export class OrderGenerationService {
     const tax = subtotal * this.TAX_RATE;
     const total = subtotal + tax;
 
-    // Extract customer name from AI analysis or use default
-    const customerName = aiAnalysis.customerName || "WhatsApp Customer";
+    // Always use "WhatsApp Customer" for WhatsApp orders
+    const customerName = "WhatsApp Customer";
 
     // Extract phone number (remove whatsapp: prefix if present)
     const phoneNumber = whatsappNumber.replace(/^whatsapp:/, "");
+
+    // Parse pickup date if provided, otherwise will default to createdAt in pre-save hook
+    let pickupDate: Date | undefined;
+    if (aiAnalysis.deliveryDate) {
+      try {
+        // Parse the date string (should be YYYY-MM-DD format)
+        const dateStr = aiAnalysis.deliveryDate.trim();
+        
+        // Validate format (YYYY-MM-DD)
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+          console.warn(`Invalid deliveryDate format: ${dateStr}, using default`);
+          pickupDate = undefined;
+        } else {
+          // Create date at midnight UTC to avoid timezone issues
+          pickupDate = new Date(dateStr + 'T00:00:00.000Z');
+          
+          // Validate date is not invalid and not in the past (allow today and future)
+          if (isNaN(pickupDate.getTime())) {
+            console.warn(`Invalid deliveryDate: ${dateStr}, using default`);
+            pickupDate = undefined;
+          } else {
+            // Check if date is reasonable (not before 2020, not too far in future)
+            const minDate = new Date('2020-01-01');
+            const maxDate = new Date();
+            maxDate.setFullYear(maxDate.getFullYear() + 2); // Allow up to 2 years in future
+            
+            if (pickupDate < minDate || pickupDate > maxDate) {
+              console.warn(`DeliveryDate out of reasonable range: ${dateStr}, using default`);
+              pickupDate = undefined;
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Error parsing deliveryDate: ${aiAnalysis.deliveryDate}`, error);
+        pickupDate = undefined; // Error parsing, will use default
+      }
+    }
 
     // Create order data
     const orderData: OrderData = {
@@ -104,6 +141,7 @@ export class OrderGenerationService {
       total,
       status: "New Order",
       createdAt: new Date(),
+      pickupDate, // Will default to createdAt if not provided
       source: "whatsapp",
       whatsappNumber,
       whatsappMessageId: new mongoose.Types.ObjectId(whatsappMessageId),

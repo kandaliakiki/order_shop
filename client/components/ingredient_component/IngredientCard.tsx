@@ -81,6 +81,12 @@ const IngredientCard = ({ ingredient }: IngredientCardProps) => {
           <span className="text-gray-600">Minimum Stock:</span>
           <span className="font-medium">{ingredient.minimumStock}</span>
         </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">Default Expiry:</span>
+          <span className="font-medium">
+            {ingredient.defaultExpiryDays ? `${ingredient.defaultExpiryDays} days` : "Not set"}
+          </span>
+        </div>
         <div className="pt-2">
           <IngredientStockStatus
             currentStock={ingredient.currentStock}

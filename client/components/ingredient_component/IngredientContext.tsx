@@ -7,20 +7,44 @@ export interface Ingredient {
   unit: string;
   currentStock: number;
   minimumStock: number;
+  defaultExpiryDays?: number;
   imageUrl: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface IngredientLot {
+  _id: string;
+  lotId: string;
+  quantity: number;
+  unit: string;
+  expiryDate: string;
+  purchaseDate?: string;
+  supplier?: string;
+  cost?: number;
+  currentStock: number;
+  expirySource?: "user" | "database" | "ai" | "default";
+  daysUntilExpiry: number;
+  isExpiringSoon: boolean;
+  isExpired: boolean;
+  ingredient?: {
+    _id: string;
+    name: string;
+    unit: string;
+  };
 }
 
 interface IngredientContextType {
   ingredients: Ingredient[];
   fetchIngredients: () => Promise<void>;
   fetchIngredientById: (id: string) => Promise<Ingredient | null>;
+  fetchIngredientLots: (ingredientId: string, includeEmpty?: boolean) => Promise<IngredientLot[]>;
   createIngredient: (ingredientData: {
     name: string;
     unit: string;
     currentStock: number;
     minimumStock: number;
+    defaultExpiryDays?: number;
     imageUrl: string;
   }) => Promise<void>;
   updateIngredient: (
@@ -30,6 +54,7 @@ interface IngredientContextType {
       unit: string;
       currentStock: number;
       minimumStock: number;
+      defaultExpiryDays?: number;
       imageUrl: string;
     }
   ) => Promise<void>;
@@ -80,11 +105,28 @@ export const IngredientProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const fetchIngredientLots = async (ingredientId: string, includeEmpty: boolean = false): Promise<IngredientLot[]> => {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
+    try {
+      const url = `${backendUrl}/api/ingredient/${ingredientId}/lots${includeEmpty ? "?active=false" : ""}`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Failed to fetch ingredient lots:", error);
+      return [];
+    }
+  };
+
   const createIngredient = async (ingredientData: {
     name: string;
     unit: string;
     currentStock: number;
     minimumStock: number;
+    defaultExpiryDays?: number;
     imageUrl: string;
   }) => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
@@ -115,6 +157,7 @@ export const IngredientProvider: React.FC<{ children: React.ReactNode }> = ({
       unit: string;
       currentStock: number;
       minimumStock: number;
+      defaultExpiryDays?: number;
       imageUrl: string;
     }
   ) => {
@@ -174,6 +217,7 @@ export const IngredientProvider: React.FC<{ children: React.ReactNode }> = ({
         ingredients,
         fetchIngredients,
         fetchIngredientById,
+        fetchIngredientLots,
         createIngredient,
         updateIngredient,
         deleteIngredient,

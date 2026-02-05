@@ -66,6 +66,7 @@ const IngredientList = ({ isGridView }: IngredientListProps) => {
             <TableHead>Unit</TableHead>
             <TableHead>Current Stock</TableHead>
             <TableHead>Minimum Stock</TableHead>
+            <TableHead>Default Expiry (Days)</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -86,6 +87,13 @@ const IngredientList = ({ isGridView }: IngredientListProps) => {
               <TableCell>{ingredient.unit}</TableCell>
               <TableCell>{ingredient.currentStock}</TableCell>
               <TableCell>{ingredient.minimumStock}</TableCell>
+              <TableCell>
+                {ingredient.defaultExpiryDays ? (
+                  <span className="font-medium">{ingredient.defaultExpiryDays} days</span>
+                ) : (
+                  <span className="text-gray-400 italic">Not set</span>
+                )}
+              </TableCell>
               <TableCell>
                 <IngredientStockStatus
                   currentStock={ingredient.currentStock}
@@ -118,7 +126,7 @@ const IngredientList = ({ isGridView }: IngredientListProps) => {
           ))}
           {filteredIngredients.length === 0 && (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                 No ingredients found
               </TableCell>
             </TableRow>

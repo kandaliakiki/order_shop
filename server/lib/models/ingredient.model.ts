@@ -17,6 +17,7 @@ export interface IngredientData {
   unit: string;
   currentStock: number;
   minimumStock: number;
+  defaultExpiryDays?: number;
   imageUrl?: string;
 }
 
@@ -48,6 +49,10 @@ const ingredientSchema = new mongoose.Schema(
       required: true,
       default: 0,
       min: 0,
+    },
+    defaultExpiryDays: {
+      type: Number,
+      min: 1,
     },
     imageUrl: {
       type: String,

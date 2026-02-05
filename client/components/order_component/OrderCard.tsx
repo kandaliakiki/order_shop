@@ -31,9 +31,10 @@ interface OrderCardProps {
 }
 
 const OrderCard: React.FC<OrderCardProps> = ({ order, onStatusChange }) => {
-  // Format the createdAt date
-  const formattedCreatedAtDate = format(
-    new Date(order.createdAt),
+  // Format the date - use pickupDate if available, otherwise createdAt
+  const displayDate = order.pickupDate || order.createdAt;
+  const formattedDate = format(
+    new Date(displayDate),
     "hh:mm a, dd MMM, yyyy"
   );
 
@@ -246,7 +247,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onStatusChange }) => {
             width={19}
           />
         </div>
-        <p className="text-sm text-neutral-400 ">{formattedCreatedAtDate}</p>
+        <p className="text-sm text-neutral-400 ">{formattedDate}</p>
       </div>
       <div className="w-full border-t border-gray-300 my-3"></div>
       <div className="w-full flex justify-between">

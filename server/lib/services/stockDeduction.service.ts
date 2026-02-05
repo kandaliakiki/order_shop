@@ -1,6 +1,7 @@
 import { connectToDB } from "../mongoose";
 import Ingredient from "../models/ingredient.model";
 import { IngredientRequirement } from "./ingredientStockCalculation.service";
+import { LotDeductionService, LotUsageInfo } from "./lotDeduction.service";
 
 export interface StockDeductionResult {
   success: boolean;
@@ -10,13 +11,24 @@ export interface StockDeductionResult {
     quantityDeducted: number;
     newStock: number;
   }>;
+  lotUsageMetadata?: {
+    lotsUsed: LotUsageInfo[];
+    deductedAt: Date;
+  };
   errors: string[];
 }
 
 export class StockDeductionService {
+  private lotDeductionService: LotDeductionService;
+
+  constructor() {
+    this.lotDeductionService = new LotDeductionService();
+  }
+
   /**
-   * Deduct ingredient stock for an order
+   * Deduct ingredient stock for an order using FEFO lot-based deduction
    * Only deducts if all ingredients are sufficient
+   * Falls back to aggregate deduction if no lots exist
    */
   async deductStockForOrder(
     requirements: IngredientRequirement[]
@@ -37,7 +49,41 @@ export class StockDeductionService {
       };
     }
 
-    // Deduct stock for each ingredient
+    // Try lot-based deduction first
+    const lotDeductionResult =
+      await this.lotDeductionService.deductFromLots(requirements);
+
+    if (lotDeductionResult.success && lotDeductionResult.lotsUsed.length > 0) {
+      // Lot-based deduction succeeded
+      // Get updated stock for each ingredient
+      for (const requirement of requirements) {
+        const ingredient = await Ingredient.findById(requirement.ingredientId);
+        if (ingredient) {
+          deductedIngredients.push({
+            ingredientId: requirement.ingredientId,
+            ingredientName: requirement.ingredientName,
+            quantityDeducted: requirement.requiredQuantity,
+            newStock: ingredient.currentStock,
+          });
+        }
+      }
+
+      return {
+        success: true,
+        deductedIngredients,
+        lotUsageMetadata: {
+          lotsUsed: lotDeductionResult.lotsUsed,
+          deductedAt: new Date(),
+        },
+        errors: [],
+      };
+    }
+
+    // Fallback: Aggregate deduction (if no lots exist or lot deduction failed)
+    console.log(
+      "⚠️ Lot-based deduction not available, falling back to aggregate deduction"
+    );
+
     for (const requirement of requirements) {
       try {
         const ingredient = await Ingredient.findById(requirement.ingredientId);

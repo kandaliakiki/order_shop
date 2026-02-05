@@ -1,6 +1,7 @@
 import LeftBar from "@/components/shared/LeftBar";
 import "../globals.css";
 import ResponsiveLayout from "@/components/layout_components/MobileHeader";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function RootLayout({
   children,
@@ -14,6 +15,7 @@ export default function RootLayout({
 
         <div className="md:ml-16 flex flex-col flex-1">{children}</div>
       </main>
+      <Toaster />
     </div>
   );
 }

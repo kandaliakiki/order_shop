@@ -33,6 +33,7 @@ const formSchema = z.object({
   unit: z.string().min(1),
   currentStock: z.coerce.number().min(0),
   minimumStock: z.coerce.number().min(0),
+  defaultExpiryDays: z.coerce.number().min(1).optional(),
   imageUrl: z.string().optional(),
 });
 
@@ -55,6 +56,7 @@ const IngredientForm = ({
       unit: ingredient?.unit || "",
       currentStock: ingredient?.currentStock || 0,
       minimumStock: ingredient?.minimumStock || 0,
+      defaultExpiryDays: ingredient?.defaultExpiryDays || undefined,
       imageUrl: ingredient?.imageUrl || "",
     },
   });
@@ -70,6 +72,7 @@ const IngredientForm = ({
             unit: fetchedIngredient.unit,
             currentStock: fetchedIngredient.currentStock,
             minimumStock: fetchedIngredient.minimumStock,
+            defaultExpiryDays: fetchedIngredient.defaultExpiryDays,
             imageUrl: fetchedIngredient.imageUrl,
           });
         }
@@ -87,6 +90,7 @@ const IngredientForm = ({
         unit: ingredientData.unit,
         currentStock: ingredientData.currentStock,
         minimumStock: ingredientData.minimumStock,
+        defaultExpiryDays: ingredientData.defaultExpiryDays,
         imageUrl: ingredientData.imageUrl || "",
       });
       await fetchIngredients();
@@ -106,6 +110,7 @@ const IngredientForm = ({
         unit: ingredientData.unit,
         currentStock: ingredientData.currentStock,
         minimumStock: ingredientData.minimumStock,
+        defaultExpiryDays: ingredientData.defaultExpiryDays,
         imageUrl: ingredientData.imageUrl || "",
       });
       await fetchIngredients();
@@ -232,6 +237,28 @@ const IngredientForm = ({
               </FormControl>
               <FormDescription>
                 Minimum stock level for alerts.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="defaultExpiryDays"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Default Expiry (Days)</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder="e.g., 30 for eggs, 180 for flour"
+                  {...field}
+                  value={field.value || ""}
+                  className="no-focus"
+                />
+              </FormControl>
+              <FormDescription>
+                Default number of days until expiry when adding stock. If not set, AI will predict expiry when creating lots.
               </FormDescription>
               <FormMessage />
             </FormItem>

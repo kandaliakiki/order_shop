@@ -52,8 +52,10 @@ import {
 } from "./lib/actions/whatsappMessage.action";
 import { processWhatsAppMessageForOrder } from "./lib/actions/whatsappOrderProcessing.action";
 import { validateTwilioWebhook } from "./lib/utils/twilioWebhookValidator";
+import { getTwilioService } from "./lib/services/twilio.service";
 import { calculateOrderStockRequirements } from "./lib/actions/orderStockCalculation.action";
 import { processOrderStockAndNotification } from "./lib/actions/orderStockNotification.action";
+import { processWhatsAppWebhook } from "./lib/actions/whatsappWebhook.action";
 
 // Specify the path to your .env.local file
 dotenv.config({ path: ".env.local" });
@@ -453,7 +455,7 @@ app.get("/api/dashboardMetrics", async (req: Request, res: Response) => {
 
 // Endpoint to create a new ingredient
 app.post("/api/createIngredient", async (req: Request, res: Response) => {
-  const { name, unit, currentStock, minimumStock, imageUrl } = req.body;
+  const { name, unit, currentStock, minimumStock, defaultExpiryDays, imageUrl } = req.body;
 
   if (
     !name ||
@@ -472,6 +474,7 @@ app.post("/api/createIngredient", async (req: Request, res: Response) => {
       unit,
       currentStock,
       minimumStock,
+      defaultExpiryDays: defaultExpiryDays || undefined,
       imageUrl: imageUrl || "",
     };
     const newIngredient = await createIngredient(
@@ -514,10 +517,49 @@ app.get("/api/ingredient/:id", async (req: Request, res: Response) => {
   }
 });
 
+// Get all lots for a specific ingredient (active only by default)
+app.get("/api/ingredient/:id/lots", async (req: Request, res: Response) => {
+  try {
+    await connectToDB();
+    const { id } = req.params;
+    const { active } = req.query; // ?active=true (default) or ?active=false (all)
+    const { differenceInDays } = await import("date-fns");
+    const IngredientLot = (await import("./lib/models/ingredientLot.model")).default;
+
+    const query: any = { ingredient: id };
+    if (active !== "false") {
+      query.currentStock = { $gt: 0 }; // Only active lots by default
+    }
+
+    const lots = await IngredientLot.find(query)
+      .populate("ingredient", "name unit")
+      .sort({ expiryDate: 1 }); // Sort by expiry date
+
+    // Calculate days until expiry for each lot
+    const lotsWithDays = lots.map((lot: any) => {
+      const daysUntilExpiry = differenceInDays(
+        new Date(lot.expiryDate),
+        new Date()
+      );
+      return {
+        ...lot.toObject(),
+        daysUntilExpiry,
+        isExpiringSoon: daysUntilExpiry <= 7 && daysUntilExpiry >= 0,
+        isExpired: daysUntilExpiry < 0,
+      };
+    });
+
+    res.status(200).json(lotsWithDays);
+  } catch (error) {
+    console.error("Error fetching ingredient lots:", error);
+    res.status(500).json({ error: "Failed to fetch ingredient lots" });
+  }
+});
+
 // Endpoint to update an ingredient
 app.put("/api/updateIngredient/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, unit, currentStock, minimumStock, imageUrl } = req.body;
+  const { name, unit, currentStock, minimumStock, defaultExpiryDays, imageUrl } = req.body;
 
   if (
     !name ||
@@ -536,6 +578,7 @@ app.put("/api/updateIngredient/:id", async (req: Request, res: Response) => {
       unit,
       currentStock,
       minimumStock,
+      defaultExpiryDays: defaultExpiryDays || undefined,
       imageUrl: imageUrl || "",
     };
     const updatedIngredient = await updateIngredient(
@@ -596,46 +639,8 @@ app.post("/api/twilio/webhook", async (req: Request, res: Response) => {
       });
     }
 
-    // Extract message data from Twilio webhook
-    const { MessageSid, From, To, Body } = req.body;
-
-    console.log("📱 Received WhatsApp message:", {
-      MessageSid,
-      From,
-      To,
-      Body: Body?.substring(0, 100), // Log first 100 chars
-    });
-
-    // Store message in database
-    const messageData = {
-      messageId: MessageSid,
-      from: From,
-      to: To,
-      body: Body || "",
-      analyzed: false,
-    };
-
-    const savedMessage = await createWhatsAppMessage(messageData);
-
-    // Process message: AI analysis + order generation + stock check
-    const processResult = await processWhatsAppMessageForOrder(
-      Body || "",
-      From,
-      savedMessage._id.toString(), // MongoDB _id (for order generation)
-      MessageSid // Twilio messageId (for message updates)
-    );
-
-    // Send dynamic response based on stock availability
-    const responseMessage =
-      processResult.whatsappResponse ||
-      "Message received. We'll process your order shortly.";
-
-    // Respond to Twilio with dynamic message
-    res.status(200).type("text/xml").send(`
-      <Response>
-        <Message>${responseMessage}</Message>
-      </Response>
-    `);
+    // Process webhook using dedicated action
+    await processWhatsAppWebhook(req, res);
   } catch (error) {
     console.error("Error processing Twilio webhook:", error);
     // Still return 200 to Twilio to avoid retries
@@ -651,6 +656,48 @@ app.get("/api/whatsapp/messages", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching WhatsApp messages:", error);
     res.status(500).json({ error: "Failed to fetch messages" });
+  }
+});
+
+// ========== TEST ENDPOINT FOR WHATSAPP ==========
+// Test endpoint to send a simple WhatsApp message
+app.post("/api/whatsapp/test", async (req: Request, res: Response) => {
+  try {
+    const { to, message } = req.body;
+
+    if (!to || !message) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        message: "Please provide 'to' and 'message' in the request body",
+      });
+    }
+
+    const twilioService = getTwilioService();
+    const result = await twilioService.sendWhatsAppMessage(to, message);
+
+    res.status(200).json({
+      success: true,
+      messageSid: result.sid,
+      status: result.status,
+      to: result.to,
+      from: result.from,
+      body: result.body,
+    });
+  } catch (error: any) {
+    console.error("Error sending test WhatsApp message:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Failed to send message",
+      code: error.code,
+      status: error.status,
+      moreInfo: error.moreInfo,
+      details: {
+        message: error.message,
+        code: error.code,
+        status: error.status,
+        moreInfo: error.moreInfo,
+      },
+    });
   }
 });
 
@@ -692,6 +739,53 @@ app.get("/api/order/:orderId", async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("Error fetching order:", error);
     res.status(404).json({ error: error.message || "Order not found" });
+  }
+});
+
+// Get lots used for an order
+app.get("/api/order/:orderId/lots", async (req: Request, res: Response) => {
+  try {
+    await connectToDB();
+    const { orderId } = req.params;
+    const Order = (await import("./lib/models/order.model")).default;
+    const order = await Order.findOne({ orderId });
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    if (!order.lotUsageMetadata || !order.lotUsageMetadata.lotsUsed) {
+      return res.status(200).json({ lotsUsed: [] });
+    }
+
+    res.status(200).json({
+      lotsUsed: order.lotUsageMetadata.lotsUsed,
+      deductedAt: order.lotUsageMetadata.deductedAt,
+    });
+  } catch (error: any) {
+    console.error("Error fetching order lots:", error);
+    res.status(500).json({ error: "Failed to fetch order lots" });
+  }
+});
+
+// Get orders that used a specific lot
+app.get("/api/lot/:lotId/orders", async (req: Request, res: Response) => {
+  try {
+    await connectToDB();
+    const { lotId } = req.params;
+    const Order = (await import("./lib/models/order.model")).default;
+
+    const orders = await Order.find({
+      "lotUsageMetadata.lotsUsed.lotId": lotId,
+    })
+      .select("orderId customerName createdAt status lotUsageMetadata")
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    res.status(200).json(orders);
+  } catch (error: any) {
+    console.error("Error fetching orders for lot:", error);
+    res.status(500).json({ error: "Failed to fetch orders for lot" });
   }
 });
 
@@ -767,6 +861,244 @@ app.post(
     }
   }
 );
+
+// ========== BAKE SHEET ENDPOINTS ==========
+
+// Simple fetch bake sheet (real-time, no document storage)
+// IMPORTANT: This must be BEFORE /api/bakesheet/:sheetId to avoid route conflict
+app.get("/api/bakesheet/generate", async (req: Request, res: Response) => {
+  try {
+    await connectToDB();
+    const { startDate, endDate, date } = req.query; // Support both date range and single date
+    const { generateBakeSheetFromOrders } = await import("./lib/actions/bakeSheet.action");
+    
+    // If date is provided (legacy support), use it for both start and end
+    // Otherwise use startDate and endDate
+    const start = (startDate as string) || (date as string);
+    const end = (endDate as string) || (date as string);
+    
+    const bakeSheet = await generateBakeSheetFromOrders(start, end);
+    res.status(200).json(bakeSheet);
+  } catch (error) {
+    console.error("Error generating bake sheet:", error);
+    res.status(500).json({ error: "Failed to generate bake sheet" });
+  }
+});
+
+// Get all bake sheets (optionally filtered by date)
+app.get("/api/bakesheet", async (req: Request, res: Response) => {
+  try {
+    const { date } = req.query;
+    const { fetchBakeSheets } = await import("./lib/actions/bakeSheet.action");
+    const bakeSheets = await fetchBakeSheets(date as string | undefined);
+    res.status(200).json(bakeSheets);
+  } catch (error) {
+    console.error("Error fetching bake sheets:", error);
+    res.status(500).json({ error: "Failed to fetch bake sheets" });
+  }
+});
+
+// Get bake sheet by ID
+app.get("/api/bakesheet/:sheetId", async (req: Request, res: Response) => {
+  try {
+    const { sheetId } = req.params;
+    const { fetchBakeSheetById } = await import("./lib/actions/bakeSheet.action");
+    const bakeSheet = await fetchBakeSheetById(sheetId);
+    if (!bakeSheet) {
+      return res.status(404).json({ error: "Bake sheet not found" });
+    }
+    res.status(200).json(bakeSheet);
+  } catch (error) {
+    console.error("Error fetching bake sheet:", error);
+    res.status(500).json({ error: "Failed to fetch bake sheet" });
+  }
+});
+
+// Update bake sheet status
+app.patch("/api/bakesheet/:sheetId/status", async (req: Request, res: Response) => {
+  try {
+    const { sheetId } = req.params;
+    const { status } = req.body;
+    const { updateBakeSheetStatus } = await import("./lib/actions/bakeSheet.action");
+    const bakeSheet = await updateBakeSheetStatus(sheetId, status);
+    if (!bakeSheet) {
+      return res.status(404).json({ error: "Bake sheet not found" });
+    }
+    res.status(200).json(bakeSheet);
+  } catch (error) {
+    console.error("Error updating bake sheet status:", error);
+    res.status(500).json({ error: "Failed to update bake sheet status" });
+  }
+});
+
+// ========== WASTE LOG ENDPOINTS ==========
+
+// Get all waste logs
+app.get("/api/waste", async (req: Request, res: Response) => {
+  try {
+    const { limit } = req.query;
+    const { fetchWasteLogs } = await import("./lib/actions/wasteLog.action");
+    const wasteLogs = await fetchWasteLogs(limit ? parseInt(limit as string) : 0);
+    res.status(200).json(wasteLogs);
+  } catch (error) {
+    console.error("Error fetching waste logs:", error);
+    res.status(500).json({ error: "Failed to fetch waste logs" });
+  }
+});
+
+// ========== EXPIRY CHECK ENDPOINTS ==========
+
+// Get expiring ingredients
+app.get("/api/expiry", async (req: Request, res: Response) => {
+  try {
+    const { days, limit } = req.query;
+    const { fetchExpiringIngredients } = await import("./lib/actions/expiryCheck.action");
+    const expiring = await fetchExpiringIngredients(
+      days ? parseInt(days as string) : 7,
+      limit ? parseInt(limit as string) : 5
+    );
+    res.status(200).json(expiring);
+  } catch (error) {
+    console.error("Error fetching expiring ingredients:", error);
+    res.status(500).json({ error: "Failed to fetch expiring ingredients" });
+  }
+});
+
+// Get ingredient lots by ingredient ID
+app.get("/api/expiry/ingredient/:ingredientId", async (req: Request, res: Response) => {
+  try {
+    const { ingredientId } = req.params;
+    const { fetchIngredientLotsByIngredient } = await import("./lib/actions/expiryCheck.action");
+    const lots = await fetchIngredientLotsByIngredient(ingredientId);
+    res.status(200).json(lots);
+  } catch (error) {
+    console.error("Error fetching ingredient lots:", error);
+    res.status(500).json({ error: "Failed to fetch ingredient lots" });
+  }
+});
+
+// ========== COMMAND LOG ENDPOINTS ==========
+
+// Get all command logs
+app.get("/api/logs", async (req: Request, res: Response) => {
+  try {
+    const { limit, command } = req.query;
+    const { fetchCommandLogs, fetchCommandLogsByCommand } = await import("./lib/actions/commandLog.action");
+    
+    let logs;
+    if (command) {
+      logs = await fetchCommandLogsByCommand(command as string);
+    } else {
+      logs = await fetchCommandLogs(limit ? parseInt(limit as string) : 0);
+    }
+    
+    res.status(200).json(logs);
+  } catch (error) {
+    console.error("Error fetching command logs:", error);
+    res.status(500).json({ error: "Failed to fetch command logs" });
+  }
+});
+
+// ========== INGREDIENT LOTS ENDPOINTS ==========
+
+// Create new ingredient lot (manual)
+app.post("/api/lots", async (req: Request, res: Response) => {
+  try {
+    await connectToDB();
+    const { ingredient, quantity, unit, expiryDate, purchaseDate, supplier, cost, currentStock } = req.body;
+
+    const Ingredient = (await import("./lib/models/ingredient.model")).default;
+    const IngredientLot = (await import("./lib/models/ingredientLot.model")).default;
+    const { AIService } = await import("./lib/services/ai.service");
+    const { addDays } = await import("date-fns");
+
+    const ingredientDoc = await Ingredient.findById(ingredient);
+    if (!ingredientDoc) {
+      return res.status(404).json({ error: "Ingredient not found" });
+    }
+
+    // Calculate expiry date if not provided
+    let finalExpiryDate: Date;
+    let expirySource: "user" | "database" | "ai" | "default" = "user";
+    
+    if (expiryDate) {
+      finalExpiryDate = new Date(expiryDate);
+      expirySource = "user";
+    } else {
+      // Use ingredient's defaultExpiryDays if available
+      if (ingredientDoc.defaultExpiryDays && ingredientDoc.defaultExpiryDays > 0) {
+        finalExpiryDate = addDays(new Date(), ingredientDoc.defaultExpiryDays);
+        expirySource = "database";
+      } else {
+        // Use AI to predict expiry days (only for this lot, don't update ingredient)
+        const aiService = new AIService();
+        try {
+          const predictedDays = await aiService.predictExpiryDays(ingredientDoc.name);
+          finalExpiryDate = addDays(new Date(), predictedDays);
+          expirySource = "ai";
+        } catch (error) {
+          console.error("AI prediction failed, using safe default:", error);
+          // Fallback to safe default (30 days) if AI fails
+          finalExpiryDate = addDays(new Date(), 30);
+          expirySource = "default";
+        }
+      }
+    }
+
+    // Create lot
+    const lot = await IngredientLot.create({
+      ingredient,
+      quantity,
+      unit: unit || ingredientDoc.unit,
+      expiryDate: finalExpiryDate,
+      purchaseDate: purchaseDate ? new Date(purchaseDate) : new Date(),
+      supplier,
+      cost,
+      currentStock: currentStock || quantity,
+      expirySource,
+    });
+
+    // Update ingredient total stock
+    ingredientDoc.currentStock += (currentStock || quantity);
+    await ingredientDoc.save();
+
+    res.status(201).json(lot);
+  } catch (error) {
+    console.error("Error creating ingredient lot:", error);
+    res.status(500).json({ error: "Failed to create ingredient lot" });
+  }
+});
+
+// Delete ingredient lot
+app.delete("/api/lots/:id", async (req: Request, res: Response) => {
+  try {
+    await connectToDB();
+    const { id } = req.params;
+
+    const Ingredient = (await import("./lib/models/ingredient.model")).default;
+    const IngredientLot = (await import("./lib/models/ingredientLot.model")).default;
+
+    const lot = await IngredientLot.findById(id);
+    if (!lot) {
+      return res.status(404).json({ error: "Lot not found" });
+    }
+
+    // Update ingredient total stock (subtract lot's currentStock)
+    const ingredient = await Ingredient.findById(lot.ingredient);
+    if (ingredient) {
+      ingredient.currentStock = Math.max(0, ingredient.currentStock - lot.currentStock);
+      await ingredient.save();
+    }
+
+    // Delete lot
+    await IngredientLot.findByIdAndDelete(id);
+
+    res.status(200).json({ message: "Lot deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting ingredient lot:", error);
+    res.status(500).json({ error: "Failed to delete ingredient lot" });
+  }
+});
 
 // Start server
 app.listen(port, () => {

@@ -48,10 +48,23 @@ class TwilioService {
       });
 
       console.log(`✅ WhatsApp message sent: ${message.sid}`);
+      console.log(`   Status: ${message.status}, To: ${message.to}`);
       return message;
-    } catch (error) {
-      console.error("Error sending WhatsApp message:", error);
-      throw error;
+    } catch (error: any) {
+      console.error("❌ Error sending WhatsApp message:");
+      console.error(`   Error Code: ${error.code}`);
+      console.error(`   Error Message: ${error.message}`);
+      console.error(`   To: ${to}`);
+      console.error(`   Full Error:`, error);
+      
+      // Re-throw with more context
+      const enhancedError = new Error(
+        `Twilio Error ${error.code}: ${error.message}`
+      ) as any;
+      enhancedError.code = error.code;
+      enhancedError.status = error.status;
+      enhancedError.moreInfo = error.moreInfo;
+      throw enhancedError;
     }
   }
 

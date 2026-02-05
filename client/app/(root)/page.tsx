@@ -1,6 +1,8 @@
 import { DashboardProvider } from "@/components/dashboard_component/DashboardContext";
 import RecentOrdersSection from "@/components/dashboard_component/RecentOrdersSection";
 import ProductPerformanceSection from "@/components/dashboard_component/ProductPerformanceSection";
+import ExpiringIngredientsWidget from "@/components/dashboard_component/ExpiringIngredientsWidget";
+import TodayBakeSheetWidget from "@/components/dashboard_component/TodayBakeSheetWidget";
 
 import SummarySales from "@/components/dashboard_component/SummarySales";
 
@@ -20,6 +22,11 @@ export default function Home() {
         <div className=" grid grid-cols-1 gap-4 lg:grid-cols-7 rounded-lg px-3 lg:px-5 py-3  w-full h-full lg:h-[680px]">
           <ProductPerformanceSection />
           <RecentOrdersSection></RecentOrdersSection>
+        </div>
+        {/* New Dashboard Widgets */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 rounded-lg px-3 lg:px-5 py-3">
+          <TodayBakeSheetWidget />
+          <ExpiringIngredientsWidget />
         </div>
       </div>
     </DashboardProvider>

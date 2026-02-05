@@ -102,9 +102,21 @@ export async function processWhatsAppMessageForOrder(
       );
 
       if (deductionResult.success) {
+        // Store lot usage metadata if available
+        if (deductionResult.lotUsageMetadata) {
+          await Order.findOneAndUpdate(
+            { orderId: orderResult.order.orderId },
+            { lotUsageMetadata: deductionResult.lotUsageMetadata },
+            { new: true }
+          );
+        }
+
         // Keep status as "New Order" (already set)
+        const frontendBaseUrl = process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
         whatsappResponse = messageFormatter.formatOrderConfirmationMessage(
-          orderResult.order.orderId
+          orderResult.order.orderId,
+          deductionResult.lotUsageMetadata,
+          frontendBaseUrl
         );
         console.log("✅ Order confirmed, stock deducted");
       } else {

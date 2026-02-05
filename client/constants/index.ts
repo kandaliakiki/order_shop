@@ -16,6 +16,7 @@ export interface Order {
   total: number;
   status: "New Order" | "Pending" | "On Process" | "Completed" | "Cancelled";
   createdAt: string;
+  pickupDate?: string; // Optional pickup/delivery date
 }
 
 export const getStatusColor = (status: string) => {
@@ -61,10 +62,34 @@ export const navigationBarLinks = [
     label: "Ingredients",
   },
   {
+    imgURLActive: "/assets/ingredientslot-active.svg",
+    imgURL: "/assets/ingredientslot.svg",
+    route: "/lots",
+    label: "Ingredient Lots",
+  },
+  {
     imgURLActive: "/assets/whatsapp-active.svg",
     imgURL: "/assets/whatsapp.svg",
     route: "/whatsapp-messages",
     label: "WhatsApp Messages",
+  },
+  {
+    imgURLActive: "/assets/bakesheet_active.svg",
+    imgURL: "/assets/bakesheet.svg",
+    route: "/bake-sheet",
+    label: "Bake Sheet",
+  },
+  {
+    imgURLActive: "/assets/expiry_active.svg",
+    imgURL: "/assets/expiry.svg",
+    route: "/expiry",
+    label: "Expiry",
+  },
+  {
+    imgURLActive: "/assets/history-active.svg",
+    imgURL: "/assets/history.svg",
+    route: "/logs",
+    label: "Logs",
   },
 ];
 

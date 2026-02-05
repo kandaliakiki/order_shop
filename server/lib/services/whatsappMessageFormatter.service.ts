@@ -1,30 +1,70 @@
 import { IngredientRequirement } from "./ingredientStockCalculation.service";
+import { LotUsageInfo } from "./lotDeduction.service";
 
 export class WhatsAppMessageFormatter {
   /**
    * Format order confirmation message (when all ingredients are sufficient)
-   * Customer-friendly message
+   * Message for store owner/bakery manager
+   * Includes lot usage details if available
    */
-  formatOrderConfirmationMessage(orderId: string): string {
-    return (
-      `✅ *Order Confirmed*\n\n` +
-      `Your order ${orderId} has been confirmed!\n\n` +
-      `All ingredients are available and your order is being processed.\n\n` +
-      `We'll notify you once your order is ready.\n\n` +
-      `Thank you for your order!`
-    );
+  formatOrderConfirmationMessage(
+    orderId: string,
+    lotUsageMetadata?: { lotsUsed: LotUsageInfo[]; deductedAt: Date },
+    frontendBaseUrl?: string
+  ): string {
+    let message = `✅ *New Order Received*\n\n`;
+    message += `Order ID: *${orderId}*\n`;
+    message += `Status: New Order\n\n`;
+    message += `✅ All ingredients are sufficient. Stock has been deducted.\n\n`;
+
+    // Add lot usage details if available
+    if (lotUsageMetadata && lotUsageMetadata.lotsUsed.length > 0) {
+      message += `*Lots Used (FEFO):*\n\n`;
+
+      // Group lots by ingredient
+      const lotsByIngredient = new Map<string, LotUsageInfo[]>();
+      for (const lot of lotUsageMetadata.lotsUsed) {
+        if (!lotsByIngredient.has(lot.ingredientName)) {
+          lotsByIngredient.set(lot.ingredientName, []);
+        }
+        lotsByIngredient.get(lot.ingredientName)!.push(lot);
+      }
+
+      // Format each ingredient's lots
+      for (const [ingredientName, lots] of lotsByIngredient.entries()) {
+        message += `• *${ingredientName}*\n`;
+        for (const lot of lots) {
+          const statusEmoji = lot.status === "fully_used" ? "✓" : "◐";
+          const statusText = lot.status === "fully_used" ? "Fully Used" : "Partially Used";
+          message += `  ${statusEmoji} ${lot.lotNumber}: ${lot.quantityUsed} ${lot.unit} (${statusText})\n`;
+        }
+        message += `\n`;
+      }
+    }
+
+    // Add clickable link if frontend URL is provided
+    if (frontendBaseUrl) {
+      // Remove trailing slash if present
+      const baseUrl = frontendBaseUrl.replace(/\/$/, "");
+      const orderUrl = `${baseUrl}/order/${orderId}`;
+      message += `📱 View full details: ${orderUrl}`;
+    } else {
+      message += `You can view full details in the POS system.`;
+    }
+
+    return message;
   }
 
   /**
    * Format out-of-stock message (when ingredients are insufficient)
-   * Customer-friendly message
+   * Message for store owner/bakery manager
    */
   formatOutOfStockMessage(
     orderId: string,
     insufficientIngredients: IngredientRequirement[]
   ): string {
-    let message = `⚠️ *Order ${orderId} - Stock Alert*\n\n`;
-    message += `We've received your order, but some ingredients are currently out of stock:\n\n`;
+    let message = `⚠️ *Order ${orderId} - Insufficient Stock*\n\n`;
+    message += `Order received but marked as *Pending* due to insufficient ingredients:\n\n`;
 
     for (const ingredient of insufficientIngredients) {
       message += `• *${ingredient.ingredientName}*\n`;
@@ -33,8 +73,8 @@ export class WhatsAppMessageFormatter {
       message += `  Shortage: *${ingredient.shortage} ${ingredient.unit}*\n\n`;
     }
 
-    message += `Your order has been marked as "Pending" and will be processed once we restock the ingredients.\n\n`;
-    message += `We'll notify you once the ingredients are available. Thank you for your understanding!`;
+    message += `⚠️ Stock was NOT deducted. Order status: *Pending*\n\n`;
+    message += `Please restock and process the order manually, or it will be processed automatically once stock is available.`;
 
     return message;
   }

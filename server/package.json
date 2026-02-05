@@ -8,7 +8,10 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon ./server.ts"
+    "start": "nodemon ./server.ts",
+    "seed": "ts-node scripts/seedIngredientsAndLots.ts",
+    "populateingredients": "ts-node scripts/populateIngredientExpiry.ts",
+    "resetdata": "ts-node scripts/resetData.ts"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +19,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "googleapis": "^144.0.0",

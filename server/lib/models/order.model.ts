@@ -19,6 +19,7 @@ export interface OrderData {
   total: number;
   status: string;
   createdAt: Date;
+  pickupDate?: Date; // When order should be ready/picked up (defaults to createdAt if not provided)
   source?: string; // "manual" or "whatsapp"
   whatsappNumber?: string;
   whatsappMessageId?: mongoose.Types.ObjectId;
@@ -39,6 +40,20 @@ export interface OrderData {
       wasSufficient: boolean;
     }>;
     warnings: string[];
+  };
+  lotUsageMetadata?: {
+    lotsUsed: Array<{
+      lotId: string; // MongoDB _id
+      lotNumber: string; // "LOT-0001"
+      ingredientId: string;
+      ingredientName: string;
+      quantityUsed: number;
+      unit: string;
+      expiryDate: Date;
+      deductedAt: Date;
+      status: "fully_used" | "partially_used";
+    }>;
+    deductedAt: Date;
   };
 }
 
@@ -78,6 +93,10 @@ const orderSchema = new mongoose.Schema<OrderData>({
     enum: ["New Order", "Pending", "On Process", "Completed", "Cancelled"],
   },
   createdAt: { type: Date, default: Date.now },
+  pickupDate: {
+    type: Date,
+    // Optional - if not provided, will default to createdAt in pre-save hook
+  },
   source: {
     type: String,
     default: "manual",
@@ -114,12 +133,37 @@ const orderSchema = new mongoose.Schema<OrderData>({
       warnings: [String],
     },
   },
+  lotUsageMetadata: {
+    type: {
+      lotsUsed: [
+        {
+          lotId: String, // MongoDB _id
+          lotNumber: String, // "LOT-0001"
+          ingredientId: String,
+          ingredientName: String,
+          quantityUsed: Number,
+          unit: String,
+          expiryDate: Date,
+          deductedAt: Date,
+          status: {
+            type: String,
+            enum: ["fully_used", "partially_used"],
+          },
+        },
+      ],
+      deductedAt: Date,
+    },
+  },
 });
 
 // Middleware to generate orderId before saving
 orderSchema.pre("save", async function (next) {
   if (!this.orderId) {
     this.orderId = await generateOrderId();
+  }
+  // If pickupDate not provided, default to createdAt
+  if (!this.pickupDate) {
+    this.pickupDate = this.createdAt || new Date();
   }
   next();
 });

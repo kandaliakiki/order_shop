@@ -3,6 +3,7 @@ import { IngredientStockCalculationService } from "../services/ingredientStockCa
 import { StockDeductionService } from "../services/stockDeduction.service";
 import { WhatsAppMessageFormatter } from "../services/whatsappMessageFormatter.service";
 import { getTwilioService } from "../services/twilio.service";
+import Order from "../models/order.model";
 
 export interface OrderStockNotificationResult {
   success: boolean;
@@ -30,7 +31,7 @@ export async function processOrderStockAndNotification(
 
   try {
     // Step 1: Fetch order
-    const order = await fetchOrderById(orderId);
+    let order = await fetchOrderById(orderId);
 
     if (!order.whatsappNumber) {
       return {
@@ -63,6 +64,17 @@ export async function processOrderStockAndNotification(
         errors.push(...deductionResult.errors);
       }
 
+      // Store lot usage metadata if available
+      if (deductionResult.lotUsageMetadata) {
+        await Order.findOneAndUpdate(
+          { orderId },
+          { lotUsageMetadata: deductionResult.lotUsageMetadata },
+          { new: true }
+        );
+        // Refetch order to get updated lotUsageMetadata
+        order = await fetchOrderById(orderId);
+      }
+
       // Update status to "New Order" if it was "Pending"
       if (order.status === "Pending") {
         await updateOrderStatus(orderId, "New Order");
@@ -70,13 +82,20 @@ export async function processOrderStockAndNotification(
       }
 
       // Send confirmation message
+      const frontendBaseUrl = process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
       const messageFormatter = new WhatsAppMessageFormatter();
-      const message = messageFormatter.formatOrderConfirmationMessage(orderId);
+      const message = messageFormatter.formatOrderConfirmationMessage(
+        orderId,
+        order.lotUsageMetadata,
+        frontendBaseUrl
+      );
 
       const twilioService = getTwilioService();
-      const cleanNumber = order.whatsappNumber.replace(/^whatsapp:/, "");
-      await twilioService.sendWhatsAppMessage(cleanNumber, message);
-      notificationSent = true;
+      if (order.whatsappNumber) {
+        const cleanNumber = order.whatsappNumber.replace(/^whatsapp:/, "");
+        await twilioService.sendWhatsAppMessage(cleanNumber, message);
+        notificationSent = true;
+      }
 
       console.log(
         `✅ Order ${orderId} processed: stock deducted, status updated, notification sent`
@@ -94,9 +113,11 @@ export async function processOrderStockAndNotification(
       );
 
       const twilioService = getTwilioService();
-      const cleanNumber = order.whatsappNumber.replace(/^whatsapp:/, "");
-      await twilioService.sendWhatsAppMessage(cleanNumber, message);
-      notificationSent = true;
+      if (order.whatsappNumber) {
+        const cleanNumber = order.whatsappNumber.replace(/^whatsapp:/, "");
+        await twilioService.sendWhatsAppMessage(cleanNumber, message);
+        notificationSent = true;
+      }
 
       console.log(`⚠️ Order ${orderId} still pending: insufficient stock`);
     }

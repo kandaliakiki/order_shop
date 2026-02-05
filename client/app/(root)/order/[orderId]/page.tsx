@@ -20,6 +20,7 @@ interface OrderDetail {
   total: number;
   status: string;
   createdAt: string;
+  pickupDate?: string; // Optional pickup/delivery date
   source?: string;
   whatsappNumber?: string;
 }
@@ -44,6 +45,23 @@ interface StockCalculationResult {
   calculatedAt?: string;
 }
 
+interface LotUsageInfo {
+  lotId: string;
+  lotNumber: string;
+  ingredientId: string;
+  ingredientName: string;
+  quantityUsed: number;
+  unit: string;
+  expiryDate: string;
+  deductedAt: string;
+  status: "fully_used" | "partially_used";
+}
+
+interface LotUsageMetadata {
+  lotsUsed: LotUsageInfo[];
+  deductedAt: string;
+}
+
 export default function OrderDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -52,11 +70,13 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [stockCalculation, setStockCalculation] =
     useState<StockCalculationResult | null>(null);
+  const [lotUsage, setLotUsage] = useState<LotUsageMetadata | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchOrderDetail();
     fetchStockCalculation();
+    fetchLotUsage();
   }, [orderId]);
 
   const fetchOrderDetail = async () => {
@@ -84,6 +104,18 @@ export default function OrderDetailPage() {
       setStockCalculation(data);
     } catch (error) {
       console.error("Error fetching stock calculation:", error);
+    }
+  };
+
+  const fetchLotUsage = async () => {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT;
+    try {
+      const response = await fetch(`${backendUrl}/api/order/${orderId}/lots`);
+      if (!response.ok) throw new Error("Failed to fetch lot usage");
+      const data = await response.json();
+      setLotUsage(data);
+    } catch (error) {
+      console.error("Error fetching lot usage:", error);
     }
   };
 
@@ -179,8 +211,13 @@ export default function OrderDetailPage() {
               </p>
             )}
             <p>
-              <strong>Date:</strong> {format(new Date(order.createdAt), "PPpp")}
+              <strong>Order Date:</strong> {format(new Date(order.createdAt), "PPpp")}
             </p>
+            {order.pickupDate && (
+              <p>
+                <strong>Pickup Date:</strong> {format(new Date(order.pickupDate), "PPpp")}
+              </p>
+            )}
             <p>
               <strong>Status:</strong> {order.status}
             </p>
@@ -284,6 +321,48 @@ export default function OrderDetailPage() {
                       {req.isSufficient
                         ? "Sufficient"
                         : `Shortage: ${req.shortage} ${req.unit}`}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Lots Used */}
+      {lotUsage && lotUsage.lotsUsed && lotUsage.lotsUsed.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Lots Used</CardTitle>
+            <p className="text-sm text-gray-500">
+              Deducted at: {format(new Date(lotUsage.deductedAt), "PPpp")}
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {lotUsage.lotsUsed.map((lot, index) => (
+                <div
+                  key={index}
+                  className="p-4 rounded-lg border border-gray-200 bg-gray-50"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-semibold">{lot.ingredientName}</p>
+                      <p className="text-sm text-gray-600">
+                        Lot: <span className="font-mono">{lot.lotNumber}</span>
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Quantity Used: {lot.quantityUsed} {lot.unit}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Expiry: {format(new Date(lot.expiryDate), "MMM dd, yyyy")}
+                      </p>
+                    </div>
+                    <Badge
+                      variant={lot.status === "fully_used" ? "destructive" : "outline"}
+                    >
+                      {lot.status === "fully_used" ? "Fully Used" : "Partially Used"}
                     </Badge>
                   </div>
                 </div>
