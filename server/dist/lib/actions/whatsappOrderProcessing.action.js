@@ -1,0 +1,185 @@
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.processWhatsAppMessageForOrder = void 0;
+const ai_service_1 = require("../services/ai.service");
+const orderGeneration_service_1 = require("../services/orderGeneration.service");
+const ingredientStockCalculation_service_1 = require("../services/ingredientStockCalculation.service");
+const stockDeduction_service_1 = require("../services/stockDeduction.service");
+const whatsappMessageFormatter_service_1 = require("../services/whatsappMessageFormatter.service");
+const order_action_1 = require("./order.action");
+const whatsappMessage_action_1 = require("./whatsappMessage.action");
+const product_action_1 = require("./product.action");
+const order_action_2 = require("./order.action");
+const order_model_1 = __importDefault(require("../models/order.model"));
+/**
+ * Process WhatsApp message: Analyze with AI, generate order, check stock, and respond
+ */
+function processWhatsAppMessageForOrder(messageBody, whatsappNumber, whatsappMessageMongoId, // MongoDB _id (for order generation)
+twilioMessageId // Twilio messageId/SID (for message updates)
+) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b;
+        try {
+            // Step 1: AI Analysis
+            const availableProducts = yield fetchProductsForAI();
+            const aiAnalysis = yield analyzeMessageWithAI(messageBody, availableProducts);
+            // Step 2: Generate Order (initially with "New Order" status)
+            const orderResult = yield generateOrderFromAnalysis(aiAnalysis, whatsappNumber, whatsappMessageMongoId);
+            if (!orderResult.success || !orderResult.order) {
+                yield (0, whatsappMessage_action_1.updateMessageAnalysis)(twilioMessageId, {
+                    extractedData: aiAnalysis,
+                    confidence: aiAnalysis.confidence,
+                    error: ((_a = orderResult.errors) === null || _a === void 0 ? void 0 : _a.join(", ")) || "Failed to generate order",
+                });
+                return {
+                    success: false,
+                    error: ((_b = orderResult.errors) === null || _b === void 0 ? void 0 : _b.join(", ")) || "Failed to generate order",
+                    whatsappResponse: "❌ Sorry, we couldn't process your order. Please try again or contact us.",
+                };
+            }
+            // Step 3: Link message to order
+            yield (0, whatsappMessage_action_1.linkMessageToOrder)(twilioMessageId, orderResult.order._id.toString());
+            // Step 4: Calculate ingredient requirements
+            const stockCalculationService = new ingredientStockCalculation_service_1.IngredientStockCalculationService();
+            const order = yield (0, order_action_2.fetchOrderById)(orderResult.order.orderId);
+            const stockCalculation = yield stockCalculationService.calculateOrderIngredientRequirements(order);
+            // Step 4.5: Store stock calculation in order metadata (before deduction)
+            const stockCalculationMetadata = {
+                calculatedAt: new Date(),
+                allIngredientsSufficient: stockCalculation.allIngredientsSufficient,
+                requirements: stockCalculation.requirements.map((req) => ({
+                    ingredientId: req.ingredientId,
+                    ingredientName: req.ingredientName,
+                    unit: req.unit,
+                    requiredQuantity: req.requiredQuantity,
+                    stockAtTimeOfOrder: req.currentStock, // Store stock level BEFORE deduction
+                    wasSufficient: req.isSufficient,
+                })),
+                warnings: stockCalculation.warnings,
+            };
+            // Update order with stock calculation metadata
+            yield order_model_1.default.findOneAndUpdate({ orderId: orderResult.order.orderId }, { stockCalculationMetadata }, { new: true });
+            // Step 5: Check stock and process accordingly
+            const messageFormatter = new whatsappMessageFormatter_service_1.WhatsAppMessageFormatter();
+            let whatsappResponse;
+            if (stockCalculation.allIngredientsSufficient) {
+                // All ingredients sufficient: Deduct stock and confirm order
+                const stockDeductionService = new stockDeduction_service_1.StockDeductionService();
+                const deductionResult = yield stockDeductionService.deductStockForOrder(stockCalculation.requirements);
+                if (deductionResult.success) {
+                    // Store lot usage metadata if available
+                    if (deductionResult.lotUsageMetadata) {
+                        yield order_model_1.default.findOneAndUpdate({ orderId: orderResult.order.orderId }, { lotUsageMetadata: deductionResult.lotUsageMetadata }, { new: true });
+                    }
+                    // Keep status as "New Order" (already set)
+                    const frontendBaseUrl = process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
+                    whatsappResponse = messageFormatter.formatOrderConfirmationMessage(orderResult.order.orderId, deductionResult.lotUsageMetadata, frontendBaseUrl);
+                    console.log("✅ Order confirmed, stock deducted");
+                }
+                else {
+                    // Deduction failed (shouldn't happen if all sufficient, but handle it)
+                    yield (0, order_action_1.updateOrderStatus)(orderResult.order.orderId, "Pending");
+                    whatsappResponse = messageFormatter.formatOutOfStockMessage(orderResult.order.orderId, stockCalculation.requirements.filter((r) => !r.isSufficient));
+                    console.warn("⚠️ Stock deduction failed, order marked as Pending");
+                }
+            }
+            else {
+                // Insufficient ingredients: Mark as Pending, don't deduct stock
+                yield (0, order_action_1.updateOrderStatus)(orderResult.order.orderId, "Pending");
+                const insufficientIngredients = stockCalculation.requirements.filter((r) => !r.isSufficient);
+                whatsappResponse = messageFormatter.formatOutOfStockMessage(orderResult.order.orderId, insufficientIngredients);
+                console.log("⚠️ Order marked as Pending due to insufficient stock");
+            }
+            // Step 6: Update message analysis
+            yield (0, whatsappMessage_action_1.updateMessageAnalysis)(twilioMessageId, {
+                extractedData: aiAnalysis,
+                confidence: aiAnalysis.confidence,
+            });
+            return {
+                success: true,
+                orderId: orderResult.order.orderId,
+                whatsappResponse,
+            };
+        }
+        catch (error) {
+            console.error("❌ Error processing WhatsApp message for order:", error);
+            yield (0, whatsappMessage_action_1.updateMessageAnalysis)(twilioMessageId, {
+                error: error.message || "AI analysis failed",
+            });
+            return {
+                success: false,
+                error: error.message || "Processing failed",
+                whatsappResponse: "❌ Sorry, an error occurred while processing your order. Please contact us.",
+            };
+        }
+    });
+}
+exports.processWhatsAppMessageForOrder = processWhatsAppMessageForOrder;
+/**
+ * Fetch products and format for AI context
+ */
+function fetchProductsForAI() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const products = yield (0, product_action_1.fetchProducts)();
+        return products.map((p) => ({
+            name: p.name,
+            price: p.price,
+        }));
+    });
+}
+/**
+ * Analyze WhatsApp message with AI to extract order information
+ */
+function analyzeMessageWithAI(messageBody, availableProducts) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const aiService = new ai_service_1.AIService();
+        const aiAnalysis = yield aiService.analyzeWhatsAppMessage(messageBody, availableProducts);
+        console.log("🤖 AI Analysis Result:", JSON.stringify(aiAnalysis, null, 2));
+        return aiAnalysis;
+    });
+}
+/**
+ * Generate order from AI analysis results
+ */
+function generateOrderFromAnalysis(aiAnalysis, whatsappNumber, whatsappMessageId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const orderGenerationService = new orderGeneration_service_1.OrderGenerationService();
+        return yield orderGenerationService.generateOrder(aiAnalysis, whatsappNumber, whatsappMessageId);
+    });
+}
+/**
+ * Update WhatsApp message with analysis results and order status
+ */
+function updateMessageWithAnalysisResults(whatsappMessageId, aiAnalysis, orderResult) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
+        if (orderResult.success && orderResult.order) {
+            yield (0, whatsappMessage_action_1.updateMessageAnalysis)(whatsappMessageId, {
+                extractedData: aiAnalysis,
+                confidence: aiAnalysis.confidence,
+            });
+            console.log("✅ Order generated:", orderResult.order.orderId);
+        }
+        else {
+            const errorMessage = ((_a = orderResult.errors) === null || _a === void 0 ? void 0 : _a.join(", ")) || "No products could be matched";
+            yield (0, whatsappMessage_action_1.updateMessageAnalysis)(whatsappMessageId, {
+                extractedData: aiAnalysis,
+                confidence: aiAnalysis.confidence,
+                error: errorMessage,
+            });
+            console.error("❌ Failed to generate order:", orderResult.errors);
+        }
+    });
+}

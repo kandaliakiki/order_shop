@@ -33,7 +33,9 @@ exports.createProduct = createProduct;
 const fetchProducts = () => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, mongoose_1.connectToDB)();
     try {
-        const products = yield product_model_1.default.find({}).populate("category", "name"); // Populate category with name
+        const products = yield product_model_1.default.find({})
+            .populate("category", "name")
+            .populate("ingredients.ingredient", "name unit currentStock minimumStock"); // Populate ingredients
         return products;
     }
     catch (error) {
@@ -70,7 +72,9 @@ exports.deleteProduct = deleteProduct;
 const fetchProductById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, mongoose_1.connectToDB)();
     try {
-        const product = yield product_model_1.default.findById(id).populate("category", "name"); // Populate category with name
+        const product = yield product_model_1.default.findById(id)
+            .populate("category", "name")
+            .populate("ingredients.ingredient", "name unit currentStock minimumStock"); // Populate ingredients
         if (!product) {
             throw new Error("Product not found");
         }
@@ -91,8 +95,12 @@ const updateProduct = (id, productData, imageUrl, oAuth2Client // Specify the ty
     }
     // Save the old imageUrl
     const oldImageUrl = existingProduct.imageUrl;
-    // Update product fields
+    // Update product fields (including ingredients if provided)
     existingProduct.set(Object.assign({}, productData));
+    // Handle ingredients update
+    if (productData.ingredients !== undefined) {
+        existingProduct.ingredients = productData.ingredients;
+    }
     // is base 65 then user upload new image
     const isUserUploadNewImage = (0, googleUtils_1.isBase64Image)(imageUrl);
     // delete old image and upload new image only if user upload new image else do nothing with image
@@ -110,7 +118,9 @@ exports.updateProduct = updateProduct;
 const fetchProductsByCategoryId = (categoryId) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, mongoose_1.connectToDB)();
     try {
-        const products = yield product_model_1.default.find({ category: categoryId }).populate("category", "name"); // Populate category with name
+        const products = yield product_model_1.default.find({ category: categoryId })
+            .populate("category", "name")
+            .populate("ingredients.ingredient", "name unit currentStock minimumStock"); // Populate ingredients
         return products;
     }
     catch (error) {
@@ -222,10 +232,16 @@ const filterProductsByParams = (textToSearch, categoryId, maxPrice) => __awaiter
                     price: 1,
                     imageUrl: 1,
                     category: 1,
+                    ingredients: 1,
                 },
             },
         ]);
-        return products;
+        // Populate ingredients for the filtered products
+        const populatedProducts = yield product_model_1.default.populate(products, {
+            path: "ingredients.ingredient",
+            select: "name unit currentStock minimumStock",
+        });
+        return populatedProducts;
     }
     catch (error) {
         console.error("Error filtering products:", error);

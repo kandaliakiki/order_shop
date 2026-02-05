@@ -21,7 +21,7 @@ const connectToDB = () => __awaiter(void 0, void 0, void 0, function* () {
         return console.log("MONGODB_URL not found");
     }
     if (isConnected) {
-        return console.log("Already connected to MongoDB");
+        // return console.log("Already connected to MongoDB");
     }
     try {
         yield mongoose_1.default.connect(process.env.MONGODB_URL, {

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.calculateTotalItemsSold = exports.countTotalOrders = exports.fetchOverallRevenue = exports.searchOrdersByCustomerName = exports.updateOrderStatus = exports.createOrder = exports.fetchOrders = void 0;
+exports.fetchOrderById = exports.calculateTotalItemsSold = exports.countTotalOrders = exports.fetchOverallRevenue = exports.searchOrdersByCustomerName = exports.updateOrderStatus = exports.createOrder = exports.fetchOrders = void 0;
 const mongoose_1 = require("../mongoose");
 const order_model_1 = __importDefault(require("../models/order.model"));
 // Function to fetch all orders
@@ -154,3 +154,19 @@ const calculateTotalItemsSold = (dateRange) => __awaiter(void 0, void 0, void 0,
     }
 });
 exports.calculateTotalItemsSold = calculateTotalItemsSold;
+// Function to fetch order by orderId with populated product data
+const fetchOrderById = (orderId) => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, mongoose_1.connectToDB)();
+    try {
+        const order = yield order_model_1.default.findOne({ orderId }).populate("whatsappMessageId");
+        if (!order) {
+            throw new Error("Order not found");
+        }
+        return order;
+    }
+    catch (error) {
+        console.error("Error fetching order by ID:", error);
+        throw error;
+    }
+});
+exports.fetchOrderById = fetchOrderById;

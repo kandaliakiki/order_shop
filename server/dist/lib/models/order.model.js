@@ -40,14 +40,83 @@ const orderSchema = new mongoose_1.default.Schema({
     subtotal: { type: Number, required: true },
     tax: { type: Number, required: true },
     total: { type: Number, required: true },
-    status: { type: String, default: "New Order" }, // Add status field
+    status: {
+        type: String,
+        default: "New Order",
+        enum: ["New Order", "Pending", "On Process", "Completed", "Cancelled"],
+    },
     createdAt: { type: Date, default: Date.now },
+    pickupDate: {
+        type: Date,
+        // Optional - if not provided, will default to createdAt in pre-save hook
+    },
+    source: {
+        type: String,
+        default: "manual",
+        enum: ["manual", "whatsapp"],
+    },
+    whatsappNumber: {
+        type: String,
+    },
+    whatsappMessageId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "WhatsAppMessage",
+    },
+    aiAnalysisMetadata: {
+        type: {
+            confidence: Number,
+            extractionMethod: String,
+            rawAnalysis: mongoose_1.default.Schema.Types.Mixed,
+        },
+    },
+    stockCalculationMetadata: {
+        type: {
+            calculatedAt: Date,
+            allIngredientsSufficient: Boolean,
+            requirements: [
+                {
+                    ingredientId: String,
+                    ingredientName: String,
+                    unit: String,
+                    requiredQuantity: Number,
+                    stockAtTimeOfOrder: Number,
+                    wasSufficient: Boolean,
+                },
+            ],
+            warnings: [String],
+        },
+    },
+    lotUsageMetadata: {
+        type: {
+            lotsUsed: [
+                {
+                    lotId: String, // MongoDB _id
+                    lotNumber: String, // "LOT-0001"
+                    ingredientId: String,
+                    ingredientName: String,
+                    quantityUsed: Number,
+                    unit: String,
+                    expiryDate: Date,
+                    deductedAt: Date,
+                    status: {
+                        type: String,
+                        enum: ["fully_used", "partially_used"],
+                    },
+                },
+            ],
+            deductedAt: Date,
+        },
+    },
 });
 // Middleware to generate orderId before saving
 orderSchema.pre("save", function (next) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!this.orderId) {
             this.orderId = yield generateOrderId();
+        }
+        // If pickupDate not provided, default to createdAt
+        if (!this.pickupDate) {
+            this.pickupDate = this.createdAt || new Date();
         }
         next();
     });

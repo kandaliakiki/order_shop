@@ -14,47 +14,62 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const counter_model_1 = __importDefault(require("./counter.model")); // Import the counter model
-// Custom function to generate sequential productId with 'P-' prefix
-function generateProductId() {
+// Custom function to generate sequential ingredientId with 'I-' prefix
+function generateIngredientId() {
     return __awaiter(this, void 0, void 0, function* () {
-        const counter = yield counter_model_1.default.findByIdAndUpdate({ _id: "productId" }, { $inc: { seq: 1 } }, { new: true, upsert: true });
+        const counter = yield counter_model_1.default.findByIdAndUpdate({ _id: "ingredientId" }, { $inc: { seq: 1 } }, { new: true, upsert: true });
         const seq = counter.seq.toString().padStart(4, "0"); // Ensure 4 digits
-        return `P-${seq}`; // Prefix with 'P-'
+        return `I-${seq}`; // Prefix with 'I-'
     });
 }
-const productSchema = new mongoose_1.default.Schema({
-    productId: {
+const ingredientSchema = new mongoose_1.default.Schema({
+    ingredientId: {
         type: String,
         unique: true,
     },
-    name: { type: String, required: true, minlength: 3, maxlength: 30 },
-    price: { type: Number, required: true, min: 0 },
-    category: {
-        type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: "Category",
+    name: {
+        type: String,
         required: true,
-    }, // Link to Category schema
-    imageUrl: { type: String, default: "" },
-    ingredients: [
-        {
-            ingredient: {
-                type: mongoose_1.default.Schema.Types.ObjectId,
-                ref: "Ingredient",
-                required: true,
-            },
-            quantity: { type: Number, required: true, min: 0 },
-            unit: { type: String, required: true },
-        },
-    ],
+        unique: true,
+        minlength: 3,
+        maxlength: 50,
+    },
+    unit: {
+        type: String,
+        required: true,
+    },
+    currentStock: {
+        type: Number,
+        required: true,
+        default: 0,
+        min: 0,
+    },
+    minimumStock: {
+        type: Number,
+        required: true,
+        default: 0,
+        min: 0,
+    },
+    defaultExpiryDays: {
+        type: Number,
+        min: 1,
+    },
+    imageUrl: {
+        type: String,
+        default: "",
+    },
+}, {
+    timestamps: true, // Automatically manage createdAt and updatedAt fields
 });
-// Middleware to generate productId before saving
-productSchema.pre("save", function (next) {
+// Middleware to generate ingredientId before saving
+ingredientSchema.pre("save", function (next) {
     return __awaiter(this, void 0, void 0, function* () {
-        if (!this.productId) {
-            this.productId = yield generateProductId();
+        if (!this.ingredientId) {
+            this.ingredientId = yield generateIngredientId();
         }
         next();
     });
 });
-const Product = mongoose_1.default.models.Product || mongoose_1.default.model("Product", productSchema);
-exports.default = Product;
+const Ingredient = mongoose_1.default.models.Ingredient ||
+    mongoose_1.default.model("Ingredient", ingredientSchema);
+exports.default = Ingredient;
