@@ -15,7 +15,7 @@ export default function Home() {
   return (
     <DashboardProvider>
       <div className="p-3 md:p-5 md:px-4">
-        <MobileHeader title="Hi , Kandaliakiki" />
+        <MobileHeader title="Welcome to BakeryHub !" />
         <DashboardHeaderDesktop />
         <DashboardHeaderMobile />
         <SummarySales />
