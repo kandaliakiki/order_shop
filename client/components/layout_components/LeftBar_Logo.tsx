@@ -12,8 +12,8 @@ const LeftBar_Logo: React.FC<LeftBarLogoProps> = ({ setIsOpen, isOpen, isDarkMod
     <>
       <div className="flex items-center px-3 py-3 gap-2">
         <Image
-          alt="shop-logo"
-          src="assets/shop-logo.svg"
+          alt="bakery-hub-logo"
+          src="/assets/bakery-hub-logo.png"
           width={32}
           height={32}
           className="flex-shrink-0"
@@ -21,7 +21,7 @@ const LeftBar_Logo: React.FC<LeftBarLogoProps> = ({ setIsOpen, isOpen, isDarkMod
         <h1 className={`font-dmsans text-lg font-semibold tracking-tight flex-1 transition-opacity duration-300 ${
           isOpen ? "opacity-100" : "opacity-0"
         } dark:text-white`}>
-          My Shop
+          BakeryHub
         </h1>
         <button
           onClick={() => setIsOpen(!isOpen)}

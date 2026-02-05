@@ -11,8 +11,12 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Shop App",
-  description: "Fully Function E-Commerce Shop App",
+  title: "BakeryHub - Bakery Management System",
+  description: "Complete bakery management and POS system with inventory tracking, order management, and WhatsApp integration",
+  icons: {
+    icon: "/assets/bakery-hub-logo.png",
+    apple: "/assets/bakery-hub-logo.png",
+  },
 };
 
 export default function RootLayout({
