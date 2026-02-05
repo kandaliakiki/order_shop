@@ -9,9 +9,9 @@ import MobileHeader from "@/components/layout_components/MobileHeader";
 const WhatsAppMessagesPage = () => {
   return (
     <WhatsAppProvider>
-      <div className="md:p-5 md:px-4">
+      <div className="p-3 md:p-5 md:px-4">
         <MobileHeader title="WhatsApp Messages" />
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 md:gap-4">
           <WhatsAppHeader />
           <WhatsAppMessageList />
         </div>

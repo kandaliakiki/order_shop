@@ -125,14 +125,14 @@ export default function BakeSheetPage() {
   };
 
   return (
-    <div className="md:p-5 md:px-4">
+    <div className="p-3 md:p-5 md:px-4">
       <MobileHeader title="Daily Bake Sheet" />
       
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 md:gap-6">
         {/* Date Range Picker */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm max-w-4xl border border-gray-200 dark:border-gray-800">
-          <label className="block text-sm font-medium mb-3 dark:text-white">Select Date Range</label>
-          <div className="flex flex-col sm:flex-row gap-4 items-end">
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-3 md:p-4 shadow-sm w-full max-w-4xl border border-gray-200 dark:border-gray-800">
+          <label className="block text-sm font-medium mb-2 md:mb-3 dark:text-white">Select Date Range</label>
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 items-stretch sm:items-end">
                 <div className="flex-1">
                   <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Start Date</label>
                   <input
@@ -153,10 +153,10 @@ export default function BakeSheetPage() {
                   />
                 </div>
             {/* Quick Action Buttons - Beside date inputs on desktop, below on mobile */}
-            <div className="flex gap-2 w-full sm:w-auto">
+            <div className="flex gap-2 w-full sm:w-auto sm:flex-shrink-0">
                   <button
                     onClick={handleTodayClick}
-                    className={`px-4 py-2 text-sm rounded-md transition-colors font-medium ${
+                    className={`flex-1 sm:flex-none px-3 md:px-4 py-2 text-xs md:text-sm rounded-md transition-colors font-medium ${
                       activeButton === "today"
                         ? "bg-sky-950 dark:bg-blue-600 text-white border border-sky-950 dark:border-blue-600"
                         : "bg-blue-50 dark:bg-gray-800 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-gray-700 hover:bg-blue-100 dark:hover:bg-gray-700"
@@ -166,7 +166,7 @@ export default function BakeSheetPage() {
                   </button>
                   <button
                     onClick={handleTomorrowClick}
-                    className={`px-4 py-2 text-sm rounded-md transition-colors font-medium ${
+                    className={`flex-1 sm:flex-none px-3 md:px-4 py-2 text-xs md:text-sm rounded-md transition-colors font-medium ${
                       activeButton === "tomorrow"
                         ? "bg-sky-950 dark:bg-blue-600 text-white border border-sky-950 dark:border-blue-600"
                         : "bg-blue-50 dark:bg-gray-800 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-gray-700 hover:bg-blue-100 dark:hover:bg-gray-700"
@@ -184,8 +184,8 @@ export default function BakeSheetPage() {
         ) : error ? (
           <div className="text-center py-8 text-red-600 dark:text-red-400">{error}</div>
         ) : bakeSheets.length > 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-800">
-            <h3 className="text-lg font-semibold mb-4 dark:text-white">
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-3 md:p-4 shadow-sm border border-gray-200 dark:border-gray-800 overflow-x-auto">
+            <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4 dark:text-white">
               {startDate.getTime() === endDate.getTime()
                 ? format(startDate, "MMMM dd, yyyy")
                 : `${format(startDate, "MMM dd, yyyy")} - ${format(endDate, "MMM dd, yyyy")}`}
@@ -198,12 +198,12 @@ export default function BakeSheetPage() {
                     <h4 className="font-medium mb-3 dark:text-white">Daily Product Breakdown</h4>
                     <div className="space-y-4">
                       {sheet.dailyBreakdown.map((day, dayIdx) => (
-                        <div key={dayIdx} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800/50">
-                          <div className="flex items-center justify-between mb-2">
-                            <h5 className="font-semibold text-gray-800 dark:text-white">
+                        <div key={dayIdx} className="border border-gray-200 dark:border-gray-700 rounded-lg p-2 md:p-3 bg-gray-50 dark:bg-gray-800/50">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-1">
+                            <h5 className="text-sm md:text-base font-semibold text-gray-800 dark:text-white">
                               {format(new Date(day.date), "MMM dd, yyyy")}
                             </h5>
-                            <span className="text-sm text-gray-600 dark:text-gray-400">{day.orders} order(s)</span>
+                            <span className="text-xs md:text-sm text-gray-600 dark:text-gray-400">{day.orders} order(s)</span>
                           </div>
                           <div className="space-y-1 mt-2">
                             {day.items.length > 0 ? (
@@ -225,7 +225,7 @@ export default function BakeSheetPage() {
                                 {day.ingredientRequirements.map((ing, ingIdx) => (
                                   <div key={ingIdx} className="flex justify-between p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm border border-blue-200 dark:border-blue-800">
                                     <span className="text-gray-900 dark:text-blue-200">{ing.ingredientName}</span>
-                                    <span className="font-medium text-gray-900 dark:text-blue-200">{ing.quantity} {ing.unit}</span>
+                                    <span className="font-medium text-gray-900 dark:text-blue-200">{ing.quantity} {ing.unit === "pieces" ? "pcs" : ing.unit}</span>
                                   </div>
                                 ))}
                               </div>
@@ -271,14 +271,14 @@ export default function BakeSheetPage() {
                             <div>
                               <p className="font-semibold dark:text-white">{check.name}</p>
                               <p className="text-sm text-gray-600 dark:text-gray-300">
-                                Need: {check.needed} {check.unit} | Available: {check.available} {check.unit}
+                                Need: {check.needed} {check.unit === "pieces" ? "pcs" : check.unit} | Available: {check.available} {check.unit === "pieces" ? "pcs" : check.unit}
                               </p>
                             </div>
                             <span
-                              className={`px-2 py-1 rounded text-xs font-medium ${
+                              className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
                                 check.sufficient
-                                  ? "bg-green-200 text-green-800"
-                                  : "bg-red-200 text-red-800"
+                                  ? "bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-100"
+                                  : "bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-100"
                               }`}
                             >
                               {check.sufficient ? "✓ Sufficient" : "✗ Insufficient"}
@@ -303,7 +303,7 @@ export default function BakeSheetPage() {
                                     <div className="flex justify-between items-center">
                                       <span className="font-mono font-medium dark:text-gray-200">{lot.lotNumber}</span>
                                       <span className="text-gray-600 dark:text-gray-300">
-                                        {lot.currentStock} {check.unit}
+                                        {lot.currentStock} {check.unit === "pieces" ? "pcs" : check.unit}
                                       </span>
                                     </div>
                                     <div className="flex justify-between items-center mt-1">
@@ -335,12 +335,12 @@ export default function BakeSheetPage() {
 
                 <div className="flex gap-2">
                   <span
-                    className={`px-3 py-1 rounded text-sm ${
+                    className={`px-3 py-1 rounded text-sm font-medium ${
                       sheet.status === "completed"
-                        ? "bg-green-100 text-green-800"
+                        ? "bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100"
                         : sheet.status === "confirmed"
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-gray-100 text-gray-800"
+                        ? "bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                     }`}
                   >
                     {sheet.status}

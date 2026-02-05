@@ -15,13 +15,13 @@ const IngredientsPage = () => {
 
   return (
     <IngredientProvider>
-      <div className="md:p-5 md:px-4">
+      <div className="p-3 md:p-5 md:px-4">
         <MobileHeader title="Ingredients" />
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 md:gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <IngredientHeader />
-            <Link href="/lots">
-              <Button variant="outline" className="flex items-center gap-2">
+            <Link href="/lots" className="w-full sm:w-auto">
+              <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
                 <Package className="h-4 w-4" />
                 View Lots
               </Button>

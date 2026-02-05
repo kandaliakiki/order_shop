@@ -128,25 +128,25 @@ export default function OrderDetailPage() {
   }
 
   return (
-    <div className="p-5 max-w-6xl mx-auto">
+    <div className="p-3 md:p-5 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" onClick={() => router.back()}>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-4 mb-4 md:mb-6">
+        <Button variant="ghost" onClick={() => router.back()} className="text-sm md:text-base">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
-        <h1 className="text-2xl font-bold dark:text-white">Order Details</h1>
-        <Badge variant="outline">{order.orderId}</Badge>
+        <h1 className="text-xl md:text-2xl font-bold dark:text-white">Order Details</h1>
+        <Badge variant="outline" className="text-xs md:text-sm">{order.orderId}</Badge>
       </div>
 
       {/* Stock Warnings */}
       {stockCalculation && !stockCalculation.allIngredientsSufficient && (
-        <Alert variant="destructive" className="mb-6">
+        <Alert variant="destructive" className="mb-4 md:mb-6">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Insufficient Stock</AlertTitle>
-          <AlertDescription>
+          <AlertTitle className="text-sm md:text-base">Insufficient Stock</AlertTitle>
+          <AlertDescription className="text-xs md:text-sm">
             Some ingredients are not available in sufficient quantities:
-            <ul className="mt-2 list-disc list-inside">
+            <ul className="mt-2 list-disc list-inside space-y-1">
               {stockCalculation.requirements
                 .filter((r) => !r.isSufficient)
                 .map((r) => (
@@ -165,12 +165,12 @@ export default function OrderDetailPage() {
       )}
 
       {stockCalculation && stockCalculation.allIngredientsSufficient && (
-        <Alert className="mb-6 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
+        <Alert className="mb-4 md:mb-6 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
           <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-          <AlertTitle className="text-green-800 dark:text-green-300">
+          <AlertTitle className="text-sm md:text-base text-green-800 dark:text-green-300">
             All Ingredients Available
           </AlertTitle>
-          <AlertDescription className="text-green-700 dark:text-green-400">
+          <AlertDescription className="text-xs md:text-sm text-green-700 dark:text-green-400">
             All required ingredients are available in sufficient quantities.
           </AlertDescription>
         </Alert>
@@ -178,9 +178,9 @@ export default function OrderDetailPage() {
 
       {/* Historical Data Indicator */}
       {stockCalculation && stockCalculation.isHistorical && (
-        <Alert className="mb-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-          <AlertTitle className="text-blue-800 dark:text-blue-300">Historical Stock Data</AlertTitle>
-          <AlertDescription className="text-blue-700 dark:text-blue-400">
+        <Alert className="mb-4 md:mb-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+          <AlertTitle className="text-sm md:text-base text-blue-800 dark:text-blue-300">Historical Stock Data</AlertTitle>
+          <AlertDescription className="text-xs md:text-sm text-blue-700 dark:text-blue-400">
             This shows the stock levels at the time the order was created
             {stockCalculation.calculatedAt &&
               ` (${format(
@@ -193,7 +193,7 @@ export default function OrderDetailPage() {
       )}
 
       {/* Order Information */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
         <Card>
           <CardHeader>
             <CardTitle>Customer Information</CardTitle>

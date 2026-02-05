@@ -70,13 +70,13 @@ export default function LogsPage() {
   };
 
   return (
-    <div className="md:p-5 md:px-4">
+    <div className="p-3 md:p-5 md:px-4">
       <MobileHeader title="Command Logs" />
       
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3 md:gap-4">
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-800">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-3 md:p-4 shadow-sm border border-gray-200 dark:border-gray-800">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
             <div>
               <label className="block text-sm font-medium mb-2 dark:text-white">Filter by Command</label>
               <select
@@ -110,11 +110,11 @@ export default function LogsPage() {
         ) : error ? (
           <div className="text-center py-8 text-red-600 dark:text-red-400">{error}</div>
         ) : filteredLogs.length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-2 md:space-y-3">
             {filteredLogs.map((log) => (
-              <div key={log._id} className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-800">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-center gap-2">
+              <div key={log._id} className="bg-white dark:bg-gray-900 rounded-lg p-3 md:p-4 shadow-sm border border-gray-200 dark:border-gray-800">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2 md:mb-3">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span
                       className={`px-2 py-1 rounded text-xs font-medium ${getCommandColor(
                         log.command
@@ -133,7 +133,7 @@ export default function LogsPage() {
                       </span>
                     )}
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
                     {format(new Date(log.executedAt), "MMM dd, yyyy HH:mm")}
                   </span>
                 </div>

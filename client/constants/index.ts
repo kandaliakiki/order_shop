@@ -843,7 +843,7 @@ export const ingredientUnits = [
   "g",
   "L",
   "ml",
-  "pieces",
+  "pcs",
   "cups",
   "tbsp",
   "tsp",

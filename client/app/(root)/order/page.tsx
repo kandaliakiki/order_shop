@@ -94,7 +94,7 @@ const Page = () => {
   };
 
   return (
-    <div className=" md:p-5 ">
+    <div className="p-3 md:p-5">
       <MobileHeader title="Order List" />
       <OrderHeaderMobile
         searchInput={searchInput}

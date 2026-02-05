@@ -36,7 +36,7 @@ const ProductIngredientsModal = ({
           </div>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] max-h-[600px] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Ingredients for {product.name}</DialogTitle>
           <DialogDescription>

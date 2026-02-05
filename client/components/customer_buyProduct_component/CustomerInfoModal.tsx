@@ -130,7 +130,7 @@ const CustomerInfoModal = ({
             />
             {orderSummary()}
             <DialogFooter>
-              <Button type="submit" className="bg-teal-600 hover:bg-teal-700">
+              <Button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white dark:bg-teal-700 dark:hover:bg-teal-800">
                 Submit
               </Button>
             </DialogFooter>

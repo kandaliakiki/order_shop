@@ -53,13 +53,13 @@ export default function ExpiryPage() {
   };
 
   return (
-    <div className="md:p-5 md:px-4">
+    <div className="p-3 md:p-5 md:px-4">
       <MobileHeader title="Ingredient Expiry" />
       
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3 md:gap-4">
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-800">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-3 md:p-4 shadow-sm border border-gray-200 dark:border-gray-800">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
             <div>
               <label className="block text-sm font-medium mb-2 dark:text-white">
                 Expiring Within (days)
@@ -95,27 +95,27 @@ export default function ExpiryPage() {
         ) : error ? (
           <div className="text-center py-8 text-red-600 dark:text-red-400">{error}</div>
         ) : filteredIngredients.length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-2 md:space-y-3">
             {filteredIngredients.map((item) => (
               <div
                 key={item.lotId}
-                className={`rounded-lg p-4 shadow-sm border-2 ${getUrgencyColor(
+                className={`rounded-lg p-3 md:p-4 shadow-sm border-2 ${getUrgencyColor(
                   item.daysLeft
                 )}`}
               >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold text-lg dark:text-white">{item.ingredientName}</h3>
-                    <p className="text-sm mt-1 dark:text-gray-300">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-base md:text-lg dark:text-white">{item.ingredientName}</h3>
+                    <p className="text-xs md:text-sm mt-1 dark:text-gray-300">
                       {item.quantity} {item.unit}
                     </p>
-                    <p className="text-sm mt-1 dark:text-gray-300">
+                    <p className="text-xs md:text-sm mt-1 dark:text-gray-300">
                       Expires: {format(new Date(item.expiryDate), "MMM dd, yyyy")}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-left sm:text-right">
                     <div
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      className={`px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium whitespace-nowrap ${
                         item.daysLeft <= 1
                           ? "bg-red-500 dark:bg-red-600 text-white"
                           : item.daysLeft <= 3

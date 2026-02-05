@@ -402,7 +402,7 @@ const ProductForm = ({
 
           {/* Selected Ingredients List */}
           {selectedIngredients.length > 0 && (
-            <div className="space-y-2 border rounded-lg p-4">
+            <div className="space-y-2 border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
               {selectedIngredients.map((selectedIng, index) => {
                 const ingredient = allIngredients.find(
                   (ing) => ing._id === selectedIng.ingredient
@@ -410,10 +410,10 @@ const ProductForm = ({
                 return (
                   <div
                     key={index}
-                    className="flex items-center gap-2 p-2 bg-gray-50 rounded"
+                    className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
                   >
                     <div className="flex-1">
-                      <p className="font-medium">
+                      <p className="font-medium text-gray-900 dark:text-white">
                         {ingredient?.name || "Unknown"}
                       </p>
                       <div className="flex gap-2 mt-1">
@@ -430,11 +430,11 @@ const ProductForm = ({
                           min="0"
                           step="0.01"
                         />
-                        <span className="self-center text-sm text-gray-600">
+                        <span className="self-center text-sm text-gray-600 dark:text-gray-400">
                           {selectedIng.unit}
                         </span>
                         {ingredient && (
-                          <span className="self-center text-xs text-gray-500">
+                          <span className="self-center text-xs text-gray-500 dark:text-gray-400">
                             (Stock: {ingredient.currentStock} {ingredient.unit})
                           </span>
                         )}
@@ -460,7 +460,7 @@ const ProductForm = ({
           )}
         </div>
 
-        <Button type="submit" disabled={loading} className="bg-sky-950 w-20">
+        <Button type="submit" disabled={loading} className="bg-sky-950 dark:bg-blue-600 text-white w-20">
           {loading ? <MoonLoader size={20} color="#fff" /> : "Submit"}
         </Button>
       </form>

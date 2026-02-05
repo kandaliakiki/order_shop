@@ -11,8 +11,8 @@ import ProductListGridView from "./ProductListGridView";
 const ProductSectionMobile = () => {
   const { isGridView } = useProducts();
   return (
-    <div className=" md:hidden">
-      <div className="bg-white">
+    <div className="md:hidden">
+      <div className="bg-white dark:bg-gray-950">
         <MobileHeader title="Manage Products"></MobileHeader>
         <CategoryGridMobile isAdmin={true}></CategoryGridMobile>
         <div className="flex flex-col justify-center items-center pb-2">
@@ -20,7 +20,7 @@ const ProductSectionMobile = () => {
           <ProductSearch />
         </div>
       </div>
-      <div className="p-4">
+      <div className="p-4 bg-white dark:bg-gray-950">
         <ProductListHeader />
         {isGridView ? <ProductListGridView /> : <ProductListTableView />}
       </div>

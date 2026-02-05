@@ -371,17 +371,17 @@ const IngredientLotsPageContent = () => {
   };
 
   return (
-    <div className="md:p-5 md:px-4">
+    <div className="p-3 md:p-5 md:px-4">
       <MobileHeader title="Ingredient Lots" />
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <h1 className="text-2xl font-bold dark:text-white">Ingredient Lots</h1>
-          <div className="flex gap-2 flex-wrap">
+      <div className="flex flex-col gap-3 md:gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4">
+          <h1 className="text-xl md:text-2xl font-bold dark:text-white">Ingredient Lots</h1>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             {/* Tabs */}
-            <div className="flex gap-2 border border-gray-300 dark:border-gray-700 rounded-md overflow-hidden">
+            <div className="flex gap-1 md:gap-2 border border-gray-300 dark:border-gray-700 rounded-md overflow-hidden w-full sm:w-auto">
               <button
                 onClick={() => setActiveTab("active")}
-                className={`px-4 py-2 ${
+                className={`flex-1 sm:flex-none px-3 md:px-4 py-2 text-xs md:text-sm ${
                   activeTab === "active"
                     ? "bg-sky-950 dark:bg-blue-600 text-white"
                     : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -391,7 +391,7 @@ const IngredientLotsPageContent = () => {
               </button>
               <button
                 onClick={() => setActiveTab("used")}
-                className={`px-4 py-2 ${
+                className={`flex-1 sm:flex-none px-3 md:px-4 py-2 text-xs md:text-sm ${
                   activeTab === "used"
                     ? "bg-sky-950 dark:bg-blue-600 text-white"
                     : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -402,7 +402,7 @@ const IngredientLotsPageContent = () => {
             </div>
             <Button
               onClick={() => setIsAddLotOpen(true)}
-              className="bg-sky-950 hover:bg-sky-900 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
+              className="bg-sky-950 hover:bg-sky-900 dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-xs md:text-sm w-full sm:w-auto"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Lot
@@ -411,7 +411,7 @@ const IngredientLotsPageContent = () => {
               <Button
                 onClick={handleBulkDelete}
                 variant="destructive"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 text-xs md:text-sm w-full sm:w-auto"
               >
                 <Trash2 className="h-4 w-4" />
                 Delete Selected ({selectedLots.length})
@@ -422,7 +422,7 @@ const IngredientLotsPageContent = () => {
                 setShowAll(true);
                 setSelectedIngredientId("");
               }}
-              className={`px-4 py-2 rounded-md ${
+              className={`px-3 md:px-4 py-2 rounded-md text-xs md:text-sm w-full sm:w-auto ${
                 showAll
                   ? "bg-sky-950 dark:bg-blue-600 text-white"
                   : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
@@ -436,7 +436,7 @@ const IngredientLotsPageContent = () => {
                 setSelectedIngredientId(e.target.value);
                 setShowAll(false);
               }}
-              className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              className="px-3 md:px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-xs md:text-sm w-full sm:w-auto"
             >
               <option value="">Filter by Ingredient</option>
               {ingredients.map((ingredient) => (
@@ -449,9 +449,9 @@ const IngredientLotsPageContent = () => {
         </div>
 
         {/* Sorting Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
@@ -465,6 +465,7 @@ const IngredientLotsPageContent = () => {
             variant="outline"
             size="sm"
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+            className="w-full sm:w-auto"
           >
             <ArrowUpDown className="h-4 w-4 mr-2" />
             {sortOrder === "asc" ? "Ascending" : "Descending"}
@@ -478,8 +479,8 @@ const IngredientLotsPageContent = () => {
             {activeTab === "active" ? "No active lots found." : "No used lots found."}
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-800">
-            <Table>
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md overflow-x-auto border border-gray-200 dark:border-gray-800">
+            <Table className="min-w-[700px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12">
@@ -488,77 +489,65 @@ const IngredientLotsPageContent = () => {
                       onCheckedChange={handleSelectAll}
                     />
                   </TableHead>
-                  <TableHead>Ingredient</TableHead>
-                  <TableHead>Lot ID</TableHead>
-                  <TableHead>Current Stock</TableHead>
-                  <TableHead>Expiry Date</TableHead>
-                  <TableHead>Days Left</TableHead>
-                  <TableHead>Purchase Date</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead>Cost</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="min-w-[100px]">Ingredient</TableHead>
+                  <TableHead className="whitespace-nowrap">Lot ID</TableHead>
+                  <TableHead className="whitespace-nowrap">Stock</TableHead>
+                  <TableHead className="whitespace-nowrap">Expiry</TableHead>
+                  <TableHead className="whitespace-nowrap">Days Left</TableHead>
+                  <TableHead className="whitespace-nowrap">Status</TableHead>
+                  <TableHead className="w-12">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {sortedLots.map((lot) => (
                   <TableRow key={lot._id}>
-                    <TableCell>
+                    <TableCell className="py-2">
                       <Checkbox
                         checked={selectedLots.includes(lot._id)}
                         onCheckedChange={() => handleSelectLot(lot._id)}
                       />
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {lot.ingredient?.name || "N/A"}
+                    <TableCell className="py-2">
+                      <div className="line-clamp-2 max-w-[100px] font-medium">{lot.ingredient?.name || "N/A"}</div>
                     </TableCell>
-                    <TableCell className="font-mono text-sm">
+                    <TableCell className="py-2 font-mono text-xs whitespace-nowrap">
                       {lot.lotId}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-2 whitespace-nowrap text-sm">
                       {lot.currentStock} {lot.unit}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span>{format(new Date(lot.expiryDate), "MMM dd, yyyy")}</span>
-                        {lot.expirySource === "default" && (
-                          <Badge variant="outline" className="text-xs mt-1 border-yellow-500 text-yellow-600 w-fit">
-                            <AlertCircle className="h-2 w-2 mr-1" />
-                            Defaulted
-                          </Badge>
-                        )}
-                      </div>
+                    <TableCell className="py-2 whitespace-nowrap text-sm">
+                      {format(new Date(lot.expiryDate), "MMM dd")}
+                      {lot.expirySource === "default" && (
+                        <Badge variant="outline" className="text-xs ml-1 border-yellow-500 text-yellow-600 dark:text-yellow-400">
+                          <AlertCircle className="h-2 w-2 mr-1" />
+                        </Badge>
+                      )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-2 whitespace-nowrap">
                       <span
                         className={
                           lot.daysUntilExpiry < 0
-                            ? "text-red-600 font-medium"
+                            ? "text-red-600 dark:text-red-400 font-medium text-sm"
                             : lot.daysUntilExpiry <= 3
-                            ? "text-orange-600 font-medium"
-                            : "text-gray-600"
+                            ? "text-orange-600 dark:text-orange-400 font-medium text-sm"
+                            : "text-gray-600 dark:text-gray-400 text-sm"
                         }
                       >
                         {lot.daysUntilExpiry < 0
-                          ? `Expired ${Math.abs(lot.daysUntilExpiry)} days ago`
-                          : `${lot.daysUntilExpiry} days`}
+                          ? `${Math.abs(lot.daysUntilExpiry)}d ago`
+                          : `${lot.daysUntilExpiry}d`}
                       </span>
                     </TableCell>
-                    <TableCell>
-                      {lot.purchaseDate
-                        ? format(new Date(lot.purchaseDate), "MMM dd, yyyy")
-                        : "N/A"}
+                    <TableCell className="py-2 whitespace-nowrap">
+                      {getExpiryBadge(lot)}
                     </TableCell>
-                    <TableCell>{lot.supplier || "N/A"}</TableCell>
-                    <TableCell>
-                      {lot.cost ? `$${lot.cost.toFixed(2)}` : "N/A"}
-                    </TableCell>
-                    <TableCell>{getExpiryBadge(lot)}</TableCell>
-                    <TableCell>
+                    <TableCell className="py-2">
                       <Button
                         variant="destructive"
                         size="sm"
                         onClick={() => handleDeleteLot(lot._id)}
+                        className="h-8 w-8 p-0"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -573,7 +562,7 @@ const IngredientLotsPageContent = () => {
 
       {/* Add Lot Modal */}
       <Dialog open={isAddLotOpen} onOpenChange={setIsAddLotOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add New Lot</DialogTitle>
             <DialogDescription>
@@ -661,7 +650,7 @@ const IngredientLotsPageContent = () => {
 
       {/* Delete Single Lot Modal */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
@@ -694,7 +683,7 @@ const IngredientLotsPageContent = () => {
 
       {/* Bulk Delete Modal */}
       <Dialog open={isBulkDeleteModalOpen} onOpenChange={setIsBulkDeleteModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
@@ -702,7 +691,7 @@ const IngredientLotsPageContent = () => {
             </DialogTitle>
             <DialogDescription>
               Are you sure you want to delete{" "}
-              <strong className="text-black">{selectedLots.length}</strong>{" "}
+              <strong className="text-black dark:text-white">{selectedLots.length}</strong>{" "}
               selected lots? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>

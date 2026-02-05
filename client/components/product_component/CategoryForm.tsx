@@ -203,7 +203,7 @@ const CategoryForm = ({
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={loading} className="bg-sky-950 w-20">
+        <Button type="submit" disabled={loading} className="bg-sky-950 dark:bg-blue-600 text-white w-20">
           {loading ? <MoonLoader size={20} color="#fff" /> : "Submit"}
         </Button>
       </form>

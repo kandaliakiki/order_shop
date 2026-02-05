@@ -14,17 +14,17 @@ import DashboardHeaderMobile from "@/components/dashboard_component/DashboardHea
 export default function Home() {
   return (
     <DashboardProvider>
-      <div className="  md:p-5 md:px-4 ">
+      <div className="p-3 md:p-5 md:px-4">
         <MobileHeader title="Hi , Kandaliakiki" />
         <DashboardHeaderDesktop />
         <DashboardHeaderMobile />
         <SummarySales />
-        <div className=" grid grid-cols-1 gap-4 lg:grid-cols-7 rounded-lg px-3 lg:px-5 py-3  w-full h-full lg:h-[680px]">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-7 rounded-lg px-2 md:px-3 lg:px-5 py-3 w-full">
           <ProductPerformanceSection />
           <RecentOrdersSection></RecentOrdersSection>
         </div>
         {/* New Dashboard Widgets */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 rounded-lg px-3 lg:px-5 py-3 mt-6">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 rounded-lg px-2 md:px-3 lg:px-5 py-3 mt-4 md:mt-6">
           <TodayBakeSheetWidget />
           <ExpiringIngredientsWidget />
         </div>

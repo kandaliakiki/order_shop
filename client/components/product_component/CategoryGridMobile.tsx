@@ -38,10 +38,10 @@ const CategoryGridMobile = ({ isAdmin }: { isAdmin: boolean }) => {
 
   return (
     <div className="max-md:px-4   pb-2">
-      <label className="max-md:text-sm text-lg font-medium text-gray-700 mb-1 block text-left">
+      <label className="max-md:text-sm text-lg font-medium text-gray-700 dark:text-gray-300 mb-1 block text-left">
         Category
       </label>
-      <div className="max-h-32 overflow-y-auto border rounded-lg p-2 bg-gray-50">
+      <div className="max-h-32 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2 bg-gray-50 dark:bg-gray-900">
         <div className="grid grid-cols-2 gap-2">
           <button
             key={ALL_CATEGORIES._id}
@@ -52,8 +52,8 @@ const CategoryGridMobile = ({ isAdmin }: { isAdmin: boolean }) => {
             className={cn(
               "flex items-center gap-2 p-2 rounded-md text-left text-xs transition-colors",
               currentCategory._id === ALL_CATEGORIES._id
-                ? "bg-teal-600 text-white"
-                : "bg-white border border-gray-200 hover:bg-gray-50"
+                ? "bg-teal-600 dark:bg-teal-700 text-white"
+                : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
             )}
           >
             <Image
@@ -66,12 +66,12 @@ const CategoryGridMobile = ({ isAdmin }: { isAdmin: boolean }) => {
             <div className="flex-1 min-w-0">
               <div className="truncate font-medium">{ALL_CATEGORIES.name}</div>
               <div
-                className={cn(
-                  "text-xs",
-                  currentCategory._id === ALL_CATEGORIES._id
-                    ? "text-teal-100"
-                    : "text-gray-500"
-                )}
+                  className={cn(
+                    "text-xs",
+                    currentCategory._id === ALL_CATEGORIES._id
+                      ? "text-teal-100"
+                      : "text-gray-500 dark:text-gray-400"
+                  )}
               >
                 {categoryCounts[ALL_CATEGORIES._id] || 0} items
               </div>
@@ -87,8 +87,8 @@ const CategoryGridMobile = ({ isAdmin }: { isAdmin: boolean }) => {
               className={cn(
                 "flex items-center gap-2 p-2 rounded-md text-left text-xs transition-colors",
                 currentCategory._id === category._id
-                  ? "bg-teal-600 text-white"
-                  : "bg-white border border-gray-200 hover:bg-gray-50"
+                  ? "bg-teal-600 dark:bg-teal-700 text-white"
+                  : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
               )}
             >
               <Image
@@ -109,7 +109,7 @@ const CategoryGridMobile = ({ isAdmin }: { isAdmin: boolean }) => {
                     "text-xs",
                     currentCategory._id === category._id
                       ? "text-teal-100"
-                      : "text-gray-500"
+                      : "text-gray-500 dark:text-gray-400"
                   )}
                 >
                   {categoryCounts[category._id] || 0} items

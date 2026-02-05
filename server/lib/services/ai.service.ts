@@ -264,7 +264,7 @@ Return JSON:
     {
       "name": "product or ingredient name",
       "quantity": 5,
-      "unit": "pieces",
+      "unit": "pcs",
       "reason": "burnt"
     }
   ]
@@ -273,7 +273,7 @@ Return JSON:
 Rules:
 - Extract item name (product or ingredient)
 - Extract quantity (number)
-- Extract unit (pieces, kg, g, L, ml, etc.)
+- Extract unit (pcs, kg, g, L, ml, etc.)
 - Extract reason (burnt, expired, damaged, etc.)
 - Return empty array if no waste information found
 
@@ -355,7 +355,7 @@ Return ONLY valid JSON, no other text.`;
 Return JSON with:
 - ingredientName: name of ingredient (e.g., "flour", "eggs", "sugar")
 - quantity: number (e.g., 10, 5, 2.5)
-- unit: unit of measurement (e.g., "kg", "g", "pieces", "L", "ml")
+- unit: unit of measurement (e.g., "kg", "g", "pcs", "L", "ml")
 - expiryDays: number of days until expiry (if mentioned, otherwise null)
 - supplier: supplier name (if mentioned, otherwise null)
 - cost: cost amount (if mentioned, otherwise null)
@@ -365,7 +365,7 @@ Input: "/stock 10kg flour"
 Output: {"ingredientName": "flour", "quantity": 10, "unit": "kg", "expiryDays": null, "supplier": null, "cost": null}
 
 Input: "just received 5 eggs expires in 7 days"
-Output: {"ingredientName": "eggs", "quantity": 5, "unit": "pieces", "expiryDays": 7, "supplier": null, "cost": null}
+Output: {"ingredientName": "eggs", "quantity": 5, "unit": "pcs", "expiryDays": 7, "supplier": null, "cost": null}
 
 Input: "/stock 2kg butter from ABC supplier $25"
 Output: {"ingredientName": "butter", "quantity": 2, "unit": "kg", "expiryDays": null, "supplier": "ABC supplier", "cost": 25}
@@ -404,7 +404,7 @@ Return ONLY valid JSON, no other text.`;
     return {
       ingredientName: parsed.ingredientName || "",
       quantity: parsed.quantity || 0,
-      unit: parsed.unit || "pieces",
+      unit: parsed.unit || "pcs",
       expiryDays: parsed.expiryDays || undefined,
       supplier: parsed.supplier || undefined,
       cost: parsed.cost || undefined,
@@ -440,7 +440,7 @@ Return ONLY valid JSON, no other text.`;
     return {
       ingredientName: parsed.ingredientName || "",
       quantity: parsed.quantity || 0,
-      unit: parsed.unit || "pieces",
+      unit: parsed.unit || "pcs",
       expiryDays: parsed.expiryDays || undefined,
       supplier: parsed.supplier || undefined,
       cost: parsed.cost || undefined,

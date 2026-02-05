@@ -24,7 +24,7 @@ const UpdateDropdownModal = ({
   return (
     <>
       <Dialog open={isOpenUpdateModal} onOpenChange={setIsOpenUpdateModal}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               Update Product

@@ -182,7 +182,7 @@ const IngredientForm = ({
               <FormLabel>Unit</FormLabel>
               <FormControl>
                 <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="w-[280px] no-focus">
+                  <SelectTrigger className="w-full sm:w-[280px] no-focus">
                     <SelectValue placeholder="Select a Unit" />
                   </SelectTrigger>
                   <SelectContent>
@@ -304,7 +304,7 @@ const IngredientForm = ({
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={loading} className="bg-sky-950 w-20">
+        <Button type="submit" disabled={loading} className="bg-sky-950 dark:bg-blue-600 text-white w-20">
           {loading ? <MoonLoader size={20} color="#fff" /> : "Submit"}
         </Button>
       </form>

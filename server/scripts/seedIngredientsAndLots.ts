@@ -21,7 +21,7 @@ async function seedIngredientsAndLots() {
     const ingredientsData = [
       {
         name: "Egg",
-        unit: "pieces",
+        unit: "pcs",
         currentStock: 15,
         minimumStock: 10,
         imageUrl: "",

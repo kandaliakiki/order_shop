@@ -56,54 +56,52 @@ const IngredientList = ({ isGridView }: IngredientListProps) => {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-800">
-      <Table>
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md overflow-x-auto border border-gray-200 dark:border-gray-800">
+      <Table className="min-w-[600px]">
         <TableHeader>
           <TableRow>
-            <TableHead>ID</TableHead>
-            <TableHead>Image</TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead>Unit</TableHead>
-            <TableHead>Current Stock</TableHead>
-            <TableHead>Minimum Stock</TableHead>
-            <TableHead>Default Expiry (Days)</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead className="w-16">Image</TableHead>
+            <TableHead className="min-w-[120px]">Name</TableHead>
+            <TableHead className="whitespace-nowrap">Unit</TableHead>
+            <TableHead className="whitespace-nowrap">Current Stock</TableHead>
+            <TableHead className="whitespace-nowrap">Min Stock</TableHead>
+            <TableHead className="whitespace-nowrap">Expiry Days</TableHead>
+            <TableHead className="whitespace-nowrap">Status</TableHead>
+            <TableHead className="w-12">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredIngredients.map((ingredient) => (
             <TableRow key={ingredient._id}>
-              <TableCell className="font-medium">
-                {ingredient.ingredientId}
-              </TableCell>
-              <TableCell>
+              <TableCell className="py-2">
                 <IngredientTableImage
                   imageUrl={ingredient.imageUrl}
                   name={ingredient.name}
                 />
               </TableCell>
-              <TableCell>{ingredient.name}</TableCell>
-              <TableCell>{ingredient.unit}</TableCell>
-              <TableCell>{ingredient.currentStock}</TableCell>
-              <TableCell>{ingredient.minimumStock}</TableCell>
-              <TableCell>
+              <TableCell className="py-2">
+                <div className="line-clamp-2 max-w-[120px]">{ingredient.name}</div>
+              </TableCell>
+              <TableCell className="py-2 whitespace-nowrap">{ingredient.unit}</TableCell>
+              <TableCell className="py-2 whitespace-nowrap">{ingredient.currentStock}</TableCell>
+              <TableCell className="py-2 whitespace-nowrap">{ingredient.minimumStock}</TableCell>
+              <TableCell className="py-2 whitespace-nowrap">
                 {ingredient.defaultExpiryDays ? (
-                  <span className="font-medium">{ingredient.defaultExpiryDays} days</span>
+                  <span className="font-medium">{ingredient.defaultExpiryDays}</span>
                 ) : (
-                  <span className="text-gray-400 italic">Not set</span>
+                  <span className="text-gray-400 italic text-xs">-</span>
                 )}
               </TableCell>
-              <TableCell>
+              <TableCell className="py-2 whitespace-nowrap">
                 <IngredientStockStatus
                   currentStock={ingredient.currentStock}
                   minimumStock={ingredient.minimumStock}
                 />
               </TableCell>
-              <TableCell>
+              <TableCell className="py-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -126,7 +124,7 @@ const IngredientList = ({ isGridView }: IngredientListProps) => {
           ))}
           {filteredIngredients.length === 0 && (
             <TableRow>
-              <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={8} className="text-center py-8 text-gray-500 dark:text-gray-400">
                 No ingredients found
               </TableCell>
             </TableRow>
