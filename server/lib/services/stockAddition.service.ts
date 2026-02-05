@@ -66,7 +66,7 @@ export class StockAdditionService {
       const expiryDays = this.getDaysUntilExpiry(expiryDate);
       const expiryDateStr = format(expiryDate, "MMM dd, yyyy");
 
-      let response = `✅ Added ${parsed.quantity}${parsed.unit || ingredient.unit} ${ingredient.name}\n`;
+      let response = `✅ Added ${parsed.quantity} ${parsed.unit || ingredient.unit} ${ingredient.name}\n`;
       response += `📦 Lot ID: ${lot.lotId}\n`;
       response += `📅 Expiry: ${expiryDateStr} (${expiryDays} days)`;
       
@@ -75,7 +75,7 @@ export class StockAdditionService {
         response += `\n⚠️ Note: Expiry date defaulted to 30 days (AI prediction unavailable)`;
       }
       
-      response += `\n📊 Total Stock: ${ingredient.currentStock}${ingredient.unit}`;
+      response += `\n📊 Total Stock: ${ingredient.currentStock} ${ingredient.unit}`;
 
       if (parsed.supplier) {
         response += `\n🏪 Supplier: ${parsed.supplier}`;
