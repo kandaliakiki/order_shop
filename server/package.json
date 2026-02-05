@@ -11,7 +11,8 @@
     "start": "nodemon ./server.ts",
     "seed": "ts-node scripts/seedIngredientsAndLots.ts",
     "populateingredients": "ts-node scripts/populateIngredientExpiry.ts",
-    "resetdata": "ts-node scripts/resetData.ts"
+    "resetdata": "ts-node scripts/resetData.ts",
+    "seeddatavps": "ts-node scripts/seedDataVPS.ts"
   },
   "keywords": [],
   "author": "",
