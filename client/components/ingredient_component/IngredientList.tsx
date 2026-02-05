@@ -47,7 +47,7 @@ const IngredientList = ({ isGridView }: IngredientListProps) => {
           <IngredientCard key={ingredient._id} ingredient={ingredient} />
         ))}
         {filteredIngredients.length === 0 && (
-          <div className="col-span-full text-center py-8 text-gray-500">
+          <div className="col-span-full text-center py-8 text-gray-500 dark:text-gray-400">
             No ingredients found
           </div>
         )}
@@ -56,7 +56,7 @@ const IngredientList = ({ isGridView }: IngredientListProps) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-800">
       <Table>
         <TableHeader>
           <TableRow>

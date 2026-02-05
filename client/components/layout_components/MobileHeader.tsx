@@ -17,7 +17,7 @@ const MobileHeader = ({ title, isAdmin = true }: MobileTopBarProps) => {
   return (
     <>
       <div
-        className={`flex h-14 items-center justify-between bg-white px-2 mb-3 border-b border-input ${
+        className={`flex h-14 items-center justify-between bg-white dark:bg-gray-900 px-2 mb-3 border-b border-input dark:border-gray-800 ${
           isAdmin ? "md:hidden" : "lg:hidden"
         }`}
       >
@@ -32,7 +32,7 @@ const MobileHeader = ({ title, isAdmin = true }: MobileTopBarProps) => {
               <Menu className="h-5 w-5" />
             </Button>
           )}
-          <h1 className="text-lg font-semibold">{title}</h1>
+          <h1 className="text-lg font-semibold dark:text-white">{title}</h1>
         </div>
       </div>
 

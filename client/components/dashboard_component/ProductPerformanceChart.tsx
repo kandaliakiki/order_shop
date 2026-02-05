@@ -56,15 +56,22 @@ const ProductPerformanceChart = () => {
             dataKey="name"
             angle={-45}
             textAnchor="end"
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 12, fill: "currentColor" }}
             interval={0}
             height={100}
             width={20}
             tickFormatter={formatXAxisLabel}
+            className="dark:text-gray-300"
           />
-          <YAxis tick={{ fontSize: 14 }} />
-          <CartesianGrid strokeDasharray="3 3" />
-          <Tooltip />
+          <YAxis tick={{ fontSize: 14, fill: "currentColor" }} className="dark:text-gray-300" />
+          <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="dark:stroke-gray-700" />
+          <Tooltip 
+            contentStyle={{
+              backgroundColor: "var(--background)",
+              border: "1px solid var(--border)",
+              color: "var(--foreground)"
+            }}
+          />
           <Bar dataKey="quantity" fill={chartColor} maxBarSize={40} />
         </ComposedChart>
       </ResponsiveContainer>

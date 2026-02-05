@@ -11,10 +11,10 @@ const FetchedProductRowsMobile = () => {
   return (
     <>
       {products.map((product) => (
-        <div key={product._id} className="p-4">
+        <div key={product._id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
           <div className="flex items-center gap-3 mb-3">
             <ProductTableCheckbox _id={product._id} />
-            <span className="text-sm font-medium text-gray-600">
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
               {product.productId}
             </span>
             <EditButtonProductTable _id={product._id} />
@@ -30,11 +30,11 @@ const FetchedProductRowsMobile = () => {
               />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-gray-900 truncate">
+              <h3 className="font-medium text-gray-900 dark:text-gray-300 truncate">
                 {product.name}
               </h3>
-              <p className="text-sm text-gray-600">{product.category.name}</p>
-              <p className="text-lg font-bold text-gray-900 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400">{product.category.name}</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-gray-300 mt-1">
                 ${product.price.toFixed(2)}
               </p>
             </div>

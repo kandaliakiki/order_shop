@@ -4,42 +4,48 @@ import React from "react";
 interface LeftBarLogoProps {
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isOpen: boolean;
+  isDarkMode?: boolean;
 }
 
-const LeftBar_Logo: React.FC<LeftBarLogoProps> = ({ setIsOpen, isOpen }) => {
+const LeftBar_Logo: React.FC<LeftBarLogoProps> = ({ setIsOpen, isOpen, isDarkMode = false }) => {
   return (
     <>
-      <div className="flex items-center px-2 py-2 gap-1 ">
+      <div className="flex items-center px-3 py-3 gap-2">
         <Image
           alt="shop-logo"
           src="assets/shop-logo.svg"
-          width={40}
-          height={40}
+          width={32}
+          height={32}
+          className="flex-shrink-0"
         />
-        <h1 className="font-dmsans text-xl font-bold tracking-tighter flex-1">
+        <h1 className={`font-dmsans text-lg font-semibold tracking-tight flex-1 transition-opacity duration-300 ${
+          isOpen ? "opacity-100" : "opacity-0"
+        } dark:text-white`}>
           My Shop
         </h1>
-        <div
-          className={`transition-transform cursor-pointer duration-300 ${
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={`transition-transform cursor-pointer duration-300 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 ${
             isOpen
               ? "scale-100 translate-x-0"
-              : "scale-125 -translate-x-[0.3rem]"
+              : "scale-110 -translate-x-[0.3rem]"
           }`}
+          aria-label="Toggle sidebar"
         >
           <Image
             alt="burger-icon"
             src="assets/burger-icon.svg"
-            width={30}
-            height={30}
-            onClick={() => setIsOpen(!isOpen)}
+            width={24}
+            height={24}
+            className="dark:invert"
           />
-        </div>
+        </button>
       </div>
       <div
-        className={`h-[0.1rem] w-4/6 bg-neutral-100 mx-auto ${
+        className={`h-[1px] w-4/5 bg-gray-200 dark:bg-gray-700 mx-auto transition-opacity duration-300 ${
           isOpen ? "opacity-100" : "opacity-0"
         }`}
-      ></div>
+      />
     </>
   );
 };

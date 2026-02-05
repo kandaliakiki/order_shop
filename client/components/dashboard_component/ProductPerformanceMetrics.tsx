@@ -45,24 +45,24 @@ const ProductPerformanceMetrics = () => {
   }, [orders]);
 
   return (
-    <div className="flex w-full justify-between mt-5 border-dashed border-2 border-gray-200 bg-slate-50 py-3">
-      <div className="flex flex-col items-center justify-center w-full border-dashed border-r-2 border-gray-200">
-        <p className="lg:text-xl text-lg">{totalProductsSold}</p>
-        <p className="text-neutral-400 lg:text-base text-sm text-center">
+    <div className="flex w-full justify-between mt-5 border-dashed border-2 border-gray-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800 py-3">
+      <div className="flex flex-col items-center justify-center w-full border-dashed border-r-2 border-gray-200 dark:border-gray-700">
+        <p className="lg:text-xl text-lg dark:text-white">{totalProductsSold}</p>
+        <p className="text-neutral-400 dark:text-gray-400 lg:text-base text-sm text-center">
           Total Products Sold
         </p>
       </div>
-      <div className="flex flex-col items-center justify-center w-full border-dashed border-r-2 border-gray-200">
-        <p className="lg:text-xl text-lg">
+      <div className="flex flex-col items-center justify-center w-full border-dashed border-r-2 border-gray-200 dark:border-gray-700">
+        <p className="lg:text-xl text-lg dark:text-white">
           {topProduct?.name} ({topProduct?.quantity})
         </p>
-        <p className="text-neutral-400 lg:text-base text-sm text-center">
+        <p className="text-neutral-400 dark:text-gray-400 lg:text-base text-sm text-center">
           Top Product
         </p>
       </div>
-      <div className="flex flex-col items-center justify-center w-full border-gray-200">
-        <p className="lg:text-xl text-lg">{uniqueProductsCount}</p>
-        <p className="text-neutral-400 lg:text-base text-sm text-center">
+      <div className="flex flex-col items-center justify-center w-full border-gray-200 dark:border-gray-700">
+        <p className="lg:text-xl text-lg dark:text-white">{uniqueProductsCount}</p>
+        <p className="text-neutral-400 dark:text-gray-400 lg:text-base text-sm text-center">
           Unique Products Sold
         </p>
       </div>

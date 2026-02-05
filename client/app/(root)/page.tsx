@@ -24,7 +24,7 @@ export default function Home() {
           <RecentOrdersSection></RecentOrdersSection>
         </div>
         {/* New Dashboard Widgets */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 rounded-lg px-3 lg:px-5 py-3">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 rounded-lg px-3 lg:px-5 py-3 mt-6">
           <TodayBakeSheetWidget />
           <ExpiringIngredientsWidget />
         </div>

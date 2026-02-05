@@ -135,7 +135,7 @@ export default function OrderDetailPage() {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
-        <h1 className="text-2xl font-bold">Order Details</h1>
+        <h1 className="text-2xl font-bold dark:text-white">Order Details</h1>
         <Badge variant="outline">{order.orderId}</Badge>
       </div>
 
@@ -165,12 +165,12 @@ export default function OrderDetailPage() {
       )}
 
       {stockCalculation && stockCalculation.allIngredientsSufficient && (
-        <Alert className="mb-6 bg-green-50 border-green-200">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <AlertTitle className="text-green-800">
+        <Alert className="mb-6 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
+          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <AlertTitle className="text-green-800 dark:text-green-300">
             All Ingredients Available
           </AlertTitle>
-          <AlertDescription className="text-green-700">
+          <AlertDescription className="text-green-700 dark:text-green-400">
             All required ingredients are available in sufficient quantities.
           </AlertDescription>
         </Alert>
@@ -178,9 +178,9 @@ export default function OrderDetailPage() {
 
       {/* Historical Data Indicator */}
       {stockCalculation && stockCalculation.isHistorical && (
-        <Alert className="mb-6 bg-blue-50 border-blue-200">
-          <AlertTitle className="text-blue-800">Historical Stock Data</AlertTitle>
-          <AlertDescription className="text-blue-700">
+        <Alert className="mb-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+          <AlertTitle className="text-blue-800 dark:text-blue-300">Historical Stock Data</AlertTitle>
+          <AlertDescription className="text-blue-700 dark:text-blue-400">
             This shows the stock levels at the time the order was created
             {stockCalculation.calculatedAt &&
               ` (${format(
@@ -301,17 +301,17 @@ export default function OrderDetailPage() {
                   key={req.ingredientId}
                   className={`p-4 rounded-lg border ${
                     req.isSufficient
-                      ? "bg-green-50 border-green-200"
-                      : "bg-red-50 border-red-200"
+                      ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                      : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
                   }`}
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="font-semibold">{req.ingredientName}</p>
-                      <p className="text-sm text-gray-600">
+                      <p className="font-semibold dark:text-white">{req.ingredientName}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
                         Required: {req.requiredQuantity} {req.unit}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
                         Available: {req.currentStock} {req.unit}
                       </p>
                     </div>
@@ -335,7 +335,7 @@ export default function OrderDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle>Lots Used</CardTitle>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Deducted at: {format(new Date(lotUsage.deductedAt), "PPpp")}
             </p>
           </CardHeader>
@@ -344,18 +344,18 @@ export default function OrderDetailPage() {
               {lotUsage.lotsUsed.map((lot, index) => (
                 <div
                   key={index}
-                  className="p-4 rounded-lg border border-gray-200 bg-gray-50"
+                  className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="font-semibold">{lot.ingredientName}</p>
-                      <p className="text-sm text-gray-600">
+                      <p className="font-semibold dark:text-white">{lot.ingredientName}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
                         Lot: <span className="font-mono">{lot.lotNumber}</span>
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
                         Quantity Used: {lot.quantityUsed} {lot.unit}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
                         Expiry: {format(new Date(lot.expiryDate), "MMM dd, yyyy")}
                       </p>
                     </div>

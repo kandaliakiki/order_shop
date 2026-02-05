@@ -12,11 +12,11 @@ const FetchedProductRowsDesktop = () => {
   return (
     <>
       {products.map((product) => (
-        <tr key={product._id} className="hover:bg-gray-50">
+        <tr key={product._id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
           <td className="px-4 py-4">
             <ProductTableCheckbox _id={product._id} />
           </td>
-          <td className="px-4 py-4 font-medium text-gray-900">
+          <td className="px-4 py-4 font-medium text-gray-900 dark:text-gray-300">
             {product.productId}
           </td>
           <td className="px-4 py-4">
@@ -30,14 +30,14 @@ const FetchedProductRowsDesktop = () => {
               />
             </div>
           </td>
-          <td className="px-4 py-4 font-medium text-gray-900">
+          <td className="px-4 py-4 font-medium text-gray-900 dark:text-gray-300">
             {product.name}
           </td>
-          <td className="px-4 py-4 text-gray-700">{product.category.name}</td>
+          <td className="px-4 py-4 text-gray-700 dark:text-gray-400">{product.category.name}</td>
           <td className="px-4 py-4">
             <ProductIngredientsPopover product={product} />
           </td>
-          <td className="px-4 py-4 font-bold text-gray-900">
+          <td className="px-4 py-4 font-bold text-gray-900 dark:text-gray-300">
             ${product.price.toFixed(2)}
           </td>
           <td className="px-4 py-4">

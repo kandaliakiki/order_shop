@@ -10,7 +10,7 @@ export default function RootLayout({
 }>) {
   return (
     <div className="overflow-auto">
-      <main className="flex flex-col  min-h-screen bg-neutral-100  font-dmsans font-medium tracking-tight  ">
+      <main className="flex flex-col min-h-screen bg-neutral-100 dark:bg-gray-950 font-dmsans font-medium tracking-tight">
         <LeftBar />
 
         <div className="md:ml-16 flex flex-col flex-1">{children}</div>

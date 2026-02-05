@@ -53,37 +53,37 @@ export default function TodayBakeSheetWidget() {
   const totalProducts = bakeSheet?.items.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
   return (
-    <div className="bg-white rounded-lg p-4 shadow-sm h-full">
+    <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm h-full border border-gray-200 dark:border-gray-800">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Today's Bake Sheet</h3>
+        <h3 className="text-lg font-semibold dark:text-white">Today's Bake Sheet</h3>
         <Link
           href="/bake-sheet"
-          className="text-sm text-blue-600 hover:text-blue-800"
+          className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
         >
           View All
         </Link>
       </div>
 
       {loading ? (
-        <div className="text-center py-4 text-gray-500">Loading...</div>
+        <div className="text-center py-4 text-gray-500 dark:text-gray-400">Loading...</div>
       ) : bakeSheet ? (
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Total Products:</span>
-            <span className="font-semibold">{totalProducts}</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Total Products:</span>
+            <span className="font-semibold dark:text-white">{totalProducts}</span>
           </div>
 
           <div>
-            <p className="text-sm font-medium mb-2">Products Needed:</p>
+            <p className="text-sm font-medium mb-2 dark:text-white">Products Needed:</p>
             <div className="space-y-1 max-h-32 overflow-y-auto">
               {bakeSheet.items.slice(0, 5).map((item, idx) => (
                 <div key={idx} className="flex justify-between text-sm">
-                  <span>{item.productName}</span>
-                  <span className="font-medium">{item.quantity}</span>
+                  <span className="dark:text-gray-300">{item.productName}</span>
+                  <span className="font-medium dark:text-white">{item.quantity}</span>
                 </div>
               ))}
               {bakeSheet.items.length > 5 && (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   +{bakeSheet.items.length - 5} more
                 </p>
               )}
@@ -91,19 +91,19 @@ export default function TodayBakeSheetWidget() {
           </div>
 
           {hasInsufficientStock && (
-            <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+            <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-sm text-yellow-800 dark:text-yellow-300">
               ⚠️ Some ingredients insufficient
             </div>
           )}
 
           {!hasInsufficientStock && bakeSheet.items.length > 0 && (
-            <div className="p-2 bg-green-50 border border-green-200 rounded text-sm text-green-800">
+            <div className="p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-sm text-green-800 dark:text-green-300">
               ✅ All ingredients sufficient
             </div>
           )}
         </div>
       ) : (
-        <div className="text-center py-4 text-gray-500 text-sm">
+        <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
           No bake sheet for today
         </div>
       )}

@@ -46,37 +46,37 @@ export default function ExpiringIngredientsWidget() {
   };
 
   return (
-    <div className="bg-white rounded-lg p-4 shadow-sm h-full">
+    <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm h-full border border-gray-200 dark:border-gray-800">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Expiring Ingredients</h3>
+        <h3 className="text-lg font-semibold dark:text-white">Expiring Ingredients</h3>
         <Link
           href="/expiry"
-          className="text-sm text-blue-600 hover:text-blue-800"
+          className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
         >
           View All
         </Link>
       </div>
 
       {loading ? (
-        <div className="text-center py-4 text-gray-500">Loading...</div>
+        <div className="text-center py-4 text-gray-500 dark:text-gray-400">Loading...</div>
       ) : expiringIngredients.length > 0 ? (
         <div className="space-y-2">
           {expiringIngredients.map((item) => (
             <div
               key={item.lotId}
-              className="flex justify-between items-center p-2 bg-gray-50 rounded"
+              className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
             >
               <div className="flex-1">
-                <p className="font-medium text-sm">{item.ingredientName}</p>
-                <p className="text-xs text-gray-600">
+                <p className="font-medium text-sm dark:text-white">{item.ingredientName}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
                   {item.quantity} {item.unit}
                 </p>
               </div>
               <div className="text-right">
-                <p className={`text-sm font-medium ${getUrgencyColor(item.daysLeft)}`}>
+                <p className={`text-sm font-medium ${getUrgencyColor(item.daysLeft)} dark:text-opacity-80`}>
                   {item.daysLeft} {item.daysLeft === 1 ? "day" : "days"}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {format(new Date(item.expiryDate), "MMM dd")}
                 </p>
               </div>
@@ -84,7 +84,7 @@ export default function ExpiringIngredientsWidget() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-4 text-gray-500 text-sm">
+        <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
           ✅ No ingredients expiring in the next 7 days
         </div>
       )}

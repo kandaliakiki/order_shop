@@ -57,15 +57,15 @@ export default function LogsPage() {
   const getCommandColor = (command: string) => {
     switch (command) {
       case "bakesheet":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300";
       case "waste":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300";
       case "expiry":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300";
       case "order":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300";
     }
   };
 
@@ -75,14 +75,14 @@ export default function LogsPage() {
       
       <div className="flex flex-col gap-4">
         {/* Filters */}
-        <div className="bg-white rounded-lg p-4 shadow-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-800">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Filter by Command</label>
+              <label className="block text-sm font-medium mb-2 dark:text-white">Filter by Command</label>
               <select
                 value={commandFilter}
                 onChange={(e) => setCommandFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               >
                 <option value="all">All Commands</option>
                 <option value="bakesheet">Bake Sheet</option>
@@ -92,13 +92,13 @@ export default function LogsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Search</label>
+              <label className="block text-sm font-medium mb-2 dark:text-white">Search</label>
               <input
                 type="text"
                 placeholder="Search logs..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
               />
             </div>
           </div>
@@ -106,13 +106,13 @@ export default function LogsPage() {
 
         {/* Logs List */}
         {loading ? (
-          <div className="text-center py-8">Loading...</div>
+          <div className="text-center py-8 dark:text-gray-300">Loading...</div>
         ) : error ? (
-          <div className="text-center py-8 text-red-600">{error}</div>
+          <div className="text-center py-8 text-red-600 dark:text-red-400">{error}</div>
         ) : filteredLogs.length > 0 ? (
           <div className="space-y-3">
             {filteredLogs.map((log) => (
-              <div key={log._id} className="bg-white rounded-lg p-4 shadow-sm border">
+              <div key={log._id} className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-800">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-2">
                     <span
@@ -123,42 +123,42 @@ export default function LogsPage() {
                       {log.command}
                     </span>
                     {log.aiUsed && (
-                      <span className="px-2 py-1 rounded text-xs bg-purple-100 text-purple-800">
+                      <span className="px-2 py-1 rounded text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">
                         AI Used
                       </span>
                     )}
                     {log.tokensUsed && (
-                      <span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-800">
+                      <span className="px-2 py-1 rounded text-xs bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300">
                         {log.tokensUsed} tokens
                       </span>
                     )}
                   </div>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
                     {format(new Date(log.executedAt), "MMM dd, yyyy HH:mm")}
                   </span>
                 </div>
                 
                 <div className="space-y-2">
                   <div>
-                    <p className="text-xs font-medium text-gray-600 mb-1">Input:</p>
-                    <p className="text-sm bg-gray-50 p-2 rounded">{log.input || "(empty)"}</p>
+                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Input:</p>
+                    <p className="text-sm bg-gray-50 dark:bg-gray-800 p-2 rounded text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700">{log.input || "(empty)"}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-gray-600 mb-1">Output:</p>
-                    <p className="text-sm bg-blue-50 p-2 rounded whitespace-pre-wrap">
+                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Output:</p>
+                    <p className="text-sm bg-blue-50 dark:bg-blue-900/20 p-2 rounded whitespace-pre-wrap text-gray-900 dark:text-white border border-blue-200 dark:border-blue-800">
                       {log.output}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-2 text-xs text-gray-500">
+                <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                   From: {log.whatsappNumber}
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             {searchTerm
               ? "No logs found matching your search"
               : "No command logs found"}

@@ -47,9 +47,9 @@ export default function ExpiryPage() {
   );
 
   const getUrgencyColor = (daysLeft: number) => {
-    if (daysLeft <= 1) return "bg-red-100 border-red-300 text-red-800";
-    if (daysLeft <= 3) return "bg-orange-100 border-orange-300 text-orange-800";
-    return "bg-yellow-100 border-yellow-300 text-yellow-800";
+    if (daysLeft <= 1) return "bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-800 text-red-800 dark:text-red-300";
+    if (daysLeft <= 3) return "bg-orange-50 dark:bg-orange-900/20 border-orange-300 dark:border-orange-800 text-orange-800 dark:text-orange-300";
+    return "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-800 text-yellow-800 dark:text-yellow-300";
   };
 
   return (
@@ -58,16 +58,16 @@ export default function ExpiryPage() {
       
       <div className="flex flex-col gap-4">
         {/* Filters */}
-        <div className="bg-white rounded-lg p-4 shadow-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-800">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium mb-2 dark:text-white">
                 Expiring Within (days)
               </label>
               <select
                 value={daysFilter}
                 onChange={(e) => setDaysFilter(parseInt(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               >
                 <option value={1}>1 day</option>
                 <option value={3}>3 days</option>
@@ -77,13 +77,13 @@ export default function ExpiryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Search</label>
+              <label className="block text-sm font-medium mb-2 dark:text-white">Search</label>
               <input
                 type="text"
                 placeholder="Search ingredient..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
               />
             </div>
           </div>
@@ -91,25 +91,25 @@ export default function ExpiryPage() {
 
         {/* Results */}
         {loading ? (
-          <div className="text-center py-8">Loading...</div>
+          <div className="text-center py-8 dark:text-gray-300">Loading...</div>
         ) : error ? (
-          <div className="text-center py-8 text-red-600">{error}</div>
+          <div className="text-center py-8 text-red-600 dark:text-red-400">{error}</div>
         ) : filteredIngredients.length > 0 ? (
           <div className="space-y-3">
             {filteredIngredients.map((item) => (
               <div
                 key={item.lotId}
-                className={`bg-white rounded-lg p-4 shadow-sm border-2 ${getUrgencyColor(
+                className={`rounded-lg p-4 shadow-sm border-2 ${getUrgencyColor(
                   item.daysLeft
                 )}`}
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-semibold text-lg">{item.ingredientName}</h3>
-                    <p className="text-sm mt-1">
+                    <h3 className="font-semibold text-lg dark:text-white">{item.ingredientName}</h3>
+                    <p className="text-sm mt-1 dark:text-gray-300">
                       {item.quantity} {item.unit}
                     </p>
-                    <p className="text-sm mt-1">
+                    <p className="text-sm mt-1 dark:text-gray-300">
                       Expires: {format(new Date(item.expiryDate), "MMM dd, yyyy")}
                     </p>
                   </div>
@@ -117,10 +117,10 @@ export default function ExpiryPage() {
                     <div
                       className={`px-3 py-1 rounded-full text-sm font-medium ${
                         item.daysLeft <= 1
-                          ? "bg-red-500 text-white"
+                          ? "bg-red-500 dark:bg-red-600 text-white"
                           : item.daysLeft <= 3
-                          ? "bg-orange-500 text-white"
-                          : "bg-yellow-500 text-white"
+                          ? "bg-orange-500 dark:bg-orange-600 text-white"
+                          : "bg-yellow-500 dark:bg-yellow-600 text-white"
                       }`}
                     >
                       {item.daysLeft} {item.daysLeft === 1 ? "day" : "days"} left
@@ -131,7 +131,7 @@ export default function ExpiryPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             {searchTerm
               ? "No ingredients found matching your search"
               : `No ingredients expiring within ${daysFilter} days`}

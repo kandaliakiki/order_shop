@@ -26,12 +26,14 @@ const ProductListControls = () => {
         setIsOpenDeleteModal={setIsOpenDeleteModal}
       />
 
-      <div className="flex w-20 max-md:w-16 bg-white rounded-md h-7 max-md:h-8">
+      <div className="flex w-20 max-md:w-16 bg-white dark:bg-gray-800 rounded-md h-7 max-md:h-8 border border-gray-300 dark:border-gray-700 overflow-hidden">
         <div
           onClick={() => setIsGridView(true)}
-          className={`rounded-tl-md rounded-bl-md  w-1/2  border-2 ${
-            isGridView ? "border-teal-600" : "border-gray-300 border-r-0"
-          } flex justify-center items-center cursor-pointer`}
+          className={`rounded-tl-md rounded-bl-md w-1/2 border-2 ${
+            isGridView 
+              ? "bg-sky-950 dark:bg-blue-600 border-sky-950 dark:border-blue-600" 
+              : "border-gray-300 dark:border-gray-700 border-r-0 bg-transparent"
+          } flex justify-center items-center cursor-pointer transition-colors`}
         >
           <Image
             src={isGridView ? "/assets/grid-active.svg" : "/assets/grid.svg"}
@@ -43,9 +45,11 @@ const ProductListControls = () => {
         </div>
         <div
           onClick={() => setIsGridView(false)}
-          className={`rounded-tr-md rounded-br-md  w-1/2   border-2 ${
-            !isGridView ? "border-teal-600" : "border-gray-300 border-l-0"
-          } flex justify-center items-center cursor-pointer`}
+          className={`rounded-tr-md rounded-br-md w-1/2 border-2 ${
+            !isGridView 
+              ? "bg-sky-950 dark:bg-blue-600 border-sky-950 dark:border-blue-600" 
+              : "border-gray-300 dark:border-gray-700 border-l-0 bg-transparent"
+          } flex justify-center items-center cursor-pointer transition-colors`}
         >
           <Image
             src={!isGridView ? "/assets/list-active.svg" : "/assets/list.svg"}

@@ -123,10 +123,10 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onStatusChange }) => {
   };
 
   return (
-    <div className="p-5 rounded-xl border-2 bg-white border-gray-300 shadow-lg flex flex-col items-start justify-start">
+    <div className="p-5 rounded-xl border-2 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 shadow-lg flex flex-col items-start justify-start">
       <div>
-        <p className="font-bold">{order.customerName}</p>
-        <p className="text-neutral-400 max-md:text-sm">{order.phoneNumber}</p>
+        <p className="font-bold dark:text-white">{order.customerName}</p>
+        <p className="text-neutral-400 dark:text-gray-400 max-md:text-sm">{order.phoneNumber}</p>
       </div>
       <Badge variant="outline" className="text-xs my-1">
         {order.orderId}
@@ -237,7 +237,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onStatusChange }) => {
         </DialogContent>
       </Dialog>
 
-      <div className="w-full border-t border-gray-300 my-3"></div>
+      <div className="w-full border-t border-gray-300 dark:border-gray-700 my-3"></div>
       <div className="flex h-2 w-full gap-1 justify items-center my-1">
         <div className="aspect-square flex justify-center items-center">
           <Image
@@ -245,14 +245,15 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onStatusChange }) => {
             src="/assets/clock.svg"
             height={19}
             width={19}
+            className="dark:invert"
           />
         </div>
-        <p className="text-sm text-neutral-400 ">{formattedDate}</p>
+        <p className="text-sm text-neutral-400 dark:text-gray-400">{formattedDate}</p>
       </div>
-      <div className="w-full border-t border-gray-300 my-3"></div>
+      <div className="w-full border-t border-gray-300 dark:border-gray-700 my-3"></div>
       <div className="w-full flex justify-between">
-        <p className="font-semibold">{order.items.length} Items</p>
-        <p className="font-bold text-blue-500">
+        <p className="font-semibold dark:text-white">{order.items.length} Items</p>
+        <p className="font-bold text-blue-500 dark:text-blue-400">
           $
           {order.items
             .reduce((total, item) => total + item.price * item.quantity, 0)
@@ -262,10 +263,10 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onStatusChange }) => {
       <div className="w-full flex flex-col gap-2 mt-2 text-sm">
         {order.items.map((item, index) => (
           <div key={index} className="w-full flex justify-between ">
-            <p className="text-neutral-400 ">
+            <p className="text-neutral-400 dark:text-gray-400">
               {item.quantity} {item.name}
             </p>
-            <p className="font-semibold">${item.price.toFixed(2)}</p>
+            <p className="font-semibold dark:text-white">${item.price.toFixed(2)}</p>
           </div>
         ))}
       </div>

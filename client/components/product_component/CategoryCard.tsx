@@ -32,10 +32,10 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
 
   return (
     <div
-      className={`relative flex items-center border border-gray-300 shadow-sm rounded-lg p-2 py-3 mb-2  cursor-pointer ${
+      className={`relative flex items-center border border-gray-300 dark:border-gray-700 shadow-sm rounded-lg p-2 py-3 mb-2 cursor-pointer ${
         selectedCategory === _id
-          ? " bg-teal-600 text-white"
-          : "bg-white text-black"
+          ? "bg-teal-600 dark:bg-teal-700 text-white"
+          : "bg-white dark:bg-gray-900 text-black dark:text-white"
       }`}
       key={_id}
       onClick={() => {
@@ -48,11 +48,13 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
         alt="cateogry icon"
         width={20}
         height={20}
-        className="mr-2 "
+        className="mr-2"
       ></Image>
       <h2 className="flex-1">{name}</h2>
       <span
-        className={` text-black inline-flex items-center justify-center aspect-square  w-[1.15rem] md:w-6 text-xs md:text-base font-bold leading-none text-vibrant-pink bg-gray-300 rounded-full  `}
+        className={`inline-flex items-center justify-center aspect-square w-[1.15rem] md:w-6 text-xs md:text-base font-bold leading-none text-vibrant-pink bg-gray-300 dark:bg-gray-700 rounded-full ${
+          selectedCategory === _id ? "text-white" : "text-black dark:text-white"
+        }`}
       >
         {count}
       </span>

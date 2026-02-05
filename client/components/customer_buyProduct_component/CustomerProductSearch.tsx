@@ -20,7 +20,14 @@ const CustomerProductSearch = () => {
           alt="search logo"
           width={20}
           height={20}
-          className="max-lg:w-4 max-lg:h-4 "
+          className="max-lg:w-4 max-lg:h-4 dark:hidden"
+        ></Image>
+        <Image
+          src="/assets/search-white.svg"
+          alt="search logo"
+          width={20}
+          height={20}
+          className="max-lg:w-4 max-lg:h-4 hidden dark:block"
         ></Image>
         <input
           value={searchText}

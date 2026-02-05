@@ -31,11 +31,11 @@ const IngredientCard = ({ ingredient }: IngredientCardProps) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow border border-gray-200 dark:border-gray-800">
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
-          <h3 className="font-semibold text-lg mb-1">{ingredient.name}</h3>
-          <p className="text-sm text-gray-600">ID: {ingredient.ingredientId}</p>
+          <h3 className="font-semibold text-lg mb-1 dark:text-white">{ingredient.name}</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">ID: {ingredient.ingredientId}</p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -70,20 +70,20 @@ const IngredientCard = ({ ingredient }: IngredientCardProps) => {
 
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Unit:</span>
-          <span className="font-medium">{ingredient.unit}</span>
+          <span className="text-gray-600 dark:text-gray-400">Unit:</span>
+          <span className="font-medium dark:text-white">{ingredient.unit}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Current Stock:</span>
-          <span className="font-medium">{ingredient.currentStock}</span>
+          <span className="text-gray-600 dark:text-gray-400">Current Stock:</span>
+          <span className="font-medium dark:text-white">{ingredient.currentStock}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Minimum Stock:</span>
-          <span className="font-medium">{ingredient.minimumStock}</span>
+          <span className="text-gray-600 dark:text-gray-400">Minimum Stock:</span>
+          <span className="font-medium dark:text-white">{ingredient.minimumStock}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Default Expiry:</span>
-          <span className="font-medium">
+          <span className="text-gray-600 dark:text-gray-400">Default Expiry:</span>
+          <span className="font-medium dark:text-white">
             {ingredient.defaultExpiryDays ? `${ingredient.defaultExpiryDays} days` : "Not set"}
           </span>
         </div>

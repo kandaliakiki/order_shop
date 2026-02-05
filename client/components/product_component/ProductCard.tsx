@@ -26,11 +26,11 @@ const ProductCard: React.FC<Product> = ({
   };
 
   return (
-    <Card key={productId} className="overflow-hidden">
+    <Card key={productId} className="overflow-hidden hover:shadow-lg transition-shadow border border-gray-200 dark:border-gray-800">
       <div className="relative">
         <div className="absolute top-2 left-2 z-10">
           <Checkbox
-            className="bg-white border-gray-300"
+            className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
             checked={selectedProducts.includes(_id)}
             onCheckedChange={handleCheckboxChange}
           />
@@ -49,11 +49,11 @@ const ProductCard: React.FC<Product> = ({
         </div>
       </div>
       <CardContent className="p-2 md:p-3">
-        <div className="text-xs text-gray-500 mb-1">{category.name}</div>
-        <div className="font-medium mb-1 text-sm md:text-base line-clamp-1">
+        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">{category.name}</div>
+        <div className="font-medium mb-1 text-sm md:text-base line-clamp-1 dark:text-white">
           {name}
         </div>
-        <div className="text-base md:text-lg font-bold mb-2">
+        <div className="text-base md:text-lg font-bold mb-2 dark:text-white">
           ${price.toFixed(2)}
         </div>
         <ProductIngredientsModal

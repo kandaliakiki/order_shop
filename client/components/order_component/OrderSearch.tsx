@@ -25,7 +25,14 @@ const OrderSearch: React.FC<OrderSearchProps> = ({
           alt="search logo"
           width={20}
           height={20}
-          className="max-md:w-4 max-md:h-4"
+          className="max-md:w-4 max-md:h-4 dark:hidden"
+        />
+        <Image
+          src="/assets/search-white.svg"
+          alt="search logo"
+          width={20}
+          height={20}
+          className="max-md:w-4 max-md:h-4 hidden dark:block"
         />
         <input
           type="text"

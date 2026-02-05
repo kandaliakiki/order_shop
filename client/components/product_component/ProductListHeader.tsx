@@ -26,7 +26,7 @@ const ProductListHeader = () => {
 
   return (
     <div className="flex justify-between items-center md:py-7 max-md:mb-4">
-      <h1 className="text-2xl max-md:text-lg">
+      <h1 className="text-2xl max-md:text-lg dark:text-white">
         {categoryName} ({products.length})
       </h1>
       <div className="flex gap-2 justify-between items-center">

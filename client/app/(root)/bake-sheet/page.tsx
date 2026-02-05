@@ -130,62 +130,62 @@ export default function BakeSheetPage() {
       
       <div className="flex flex-col gap-6">
         {/* Date Range Picker */}
-        <div className="bg-white rounded-lg p-4 shadow-sm max-w-4xl">
-          <label className="block text-sm font-medium mb-3">Select Date Range</label>
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm max-w-4xl border border-gray-200 dark:border-gray-800">
+          <label className="block text-sm font-medium mb-3 dark:text-white">Select Date Range</label>
           <div className="flex flex-col sm:flex-row gap-4 items-end">
-            <div className="flex-1">
-              <label className="block text-xs text-gray-600 mb-1">Start Date</label>
-              <input
-                type="date"
-                value={format(startDate, "yyyy-MM-dd")}
-                onChange={(e) => handleDateChange(true, new Date(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="block text-xs text-gray-600 mb-1">End Date</label>
-              <input
-                type="date"
-                value={format(endDate, "yyyy-MM-dd")}
-                onChange={(e) => handleDateChange(false, new Date(e.target.value))}
-                min={format(startDate, "yyyy-MM-dd")}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+                <div className="flex-1">
+                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    value={format(startDate, "yyyy-MM-dd")}
+                    onChange={(e) => handleDateChange(true, new Date(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">End Date</label>
+                  <input
+                    type="date"
+                    value={format(endDate, "yyyy-MM-dd")}
+                    onChange={(e) => handleDateChange(false, new Date(e.target.value))}
+                    min={format(startDate, "yyyy-MM-dd")}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  />
+                </div>
             {/* Quick Action Buttons - Beside date inputs on desktop, below on mobile */}
             <div className="flex gap-2 w-full sm:w-auto">
-              <button
-                onClick={handleTodayClick}
-                className={`px-4 py-2 text-sm rounded-md transition-colors font-medium ${
-                  activeButton === "today"
-                    ? "bg-sky-950 text-white border border-sky-950"
-                    : "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100"
-                }`}
-              >
-                Today
-              </button>
-              <button
-                onClick={handleTomorrowClick}
-                className={`px-4 py-2 text-sm rounded-md transition-colors font-medium ${
-                  activeButton === "tomorrow"
-                    ? "bg-sky-950 text-white border border-sky-950"
-                    : "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100"
-                }`}
-              >
-                Tomorrow
-              </button>
+                  <button
+                    onClick={handleTodayClick}
+                    className={`px-4 py-2 text-sm rounded-md transition-colors font-medium ${
+                      activeButton === "today"
+                        ? "bg-sky-950 dark:bg-blue-600 text-white border border-sky-950 dark:border-blue-600"
+                        : "bg-blue-50 dark:bg-gray-800 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-gray-700 hover:bg-blue-100 dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    Today
+                  </button>
+                  <button
+                    onClick={handleTomorrowClick}
+                    className={`px-4 py-2 text-sm rounded-md transition-colors font-medium ${
+                      activeButton === "tomorrow"
+                        ? "bg-sky-950 dark:bg-blue-600 text-white border border-sky-950 dark:border-blue-600"
+                        : "bg-blue-50 dark:bg-gray-800 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-gray-700 hover:bg-blue-100 dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    Tomorrow
+                  </button>
             </div>
           </div>
         </div>
 
         {/* Selected Date Details */}
         {loading ? (
-          <div className="text-center py-8">Loading...</div>
+          <div className="text-center py-8 dark:text-gray-300">Loading...</div>
         ) : error ? (
-          <div className="text-center py-8 text-red-600">{error}</div>
+          <div className="text-center py-8 text-red-600 dark:text-red-400">{error}</div>
         ) : bakeSheets.length > 0 ? (
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <h3 className="text-lg font-semibold mb-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-800">
+            <h3 className="text-lg font-semibold mb-4 dark:text-white">
               {startDate.getTime() === endDate.getTime()
                 ? format(startDate, "MMMM dd, yyyy")
                 : `${format(startDate, "MMM dd, yyyy")} - ${format(endDate, "MMM dd, yyyy")}`}
@@ -195,37 +195,37 @@ export default function BakeSheetPage() {
                 {/* Daily Breakdown (show when date range is selected and breakdown exists) */}
                 {startDate.getTime() !== endDate.getTime() && sheet.dailyBreakdown && sheet.dailyBreakdown.length > 0 ? (
                   <div>
-                    <h4 className="font-medium mb-3">Daily Product Breakdown</h4>
+                    <h4 className="font-medium mb-3 dark:text-white">Daily Product Breakdown</h4>
                     <div className="space-y-4">
                       {sheet.dailyBreakdown.map((day, dayIdx) => (
-                        <div key={dayIdx} className="border border-gray-200 rounded-lg p-3">
+                        <div key={dayIdx} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800/50">
                           <div className="flex items-center justify-between mb-2">
-                            <h5 className="font-semibold text-gray-800">
+                            <h5 className="font-semibold text-gray-800 dark:text-white">
                               {format(new Date(day.date), "MMM dd, yyyy")}
                             </h5>
-                            <span className="text-sm text-gray-600">{day.orders} order(s)</span>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">{day.orders} order(s)</span>
                           </div>
                           <div className="space-y-1 mt-2">
                             {day.items.length > 0 ? (
                               <>
-                                <p className="text-xs font-medium text-gray-700 mb-1">Products:</p>
+                                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Products:</p>
                                 {day.items.map((item, itemIdx) => (
-                                  <div key={itemIdx} className="flex justify-between p-2 bg-gray-50 rounded text-sm">
-                                    <span>{item.productName}</span>
-                                    <span className="font-medium">{item.quantity}</span>
+                                  <div key={itemIdx} className="flex justify-between p-2 bg-white dark:bg-gray-900 rounded text-sm border border-gray-200 dark:border-gray-700">
+                                    <span className="text-gray-900 dark:text-gray-100">{item.productName}</span>
+                                    <span className="font-medium text-gray-900 dark:text-gray-100">{item.quantity}</span>
                                   </div>
                                 ))}
                               </>
                             ) : (
-                              <p className="text-sm text-gray-500">No products needed</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">No products needed</p>
                             )}
                             {day.ingredientRequirements && day.ingredientRequirements.length > 0 && (
-                              <div className="mt-3 pt-3 border-t border-gray-300">
-                                <p className="text-xs font-medium text-gray-700 mb-1">Ingredients Needed:</p>
+                              <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-700">
+                                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ingredients Needed:</p>
                                 {day.ingredientRequirements.map((ing, ingIdx) => (
-                                  <div key={ingIdx} className="flex justify-between p-2 bg-blue-50 rounded text-sm">
-                                    <span>{ing.ingredientName}</span>
-                                    <span className="font-medium">{ing.quantity} {ing.unit}</span>
+                                  <div key={ingIdx} className="flex justify-between p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm border border-blue-200 dark:border-blue-800">
+                                    <span className="text-gray-900 dark:text-blue-200">{ing.ingredientName}</span>
+                                    <span className="font-medium text-gray-900 dark:text-blue-200">{ing.quantity} {ing.unit}</span>
                                   </div>
                                 ))}
                               </div>
@@ -239,38 +239,38 @@ export default function BakeSheetPage() {
                 
                 {/* Overall Products Needed (always show) */}
                 <div>
-                  <h4 className="font-medium mb-2">Overall Products Needed</h4>
+                  <h4 className="font-medium mb-2 dark:text-white">Overall Products Needed</h4>
                   <div className="space-y-2">
                     {sheet.items.length > 0 ? (
                       sheet.items.map((item, itemIdx) => (
-                        <div key={itemIdx} className="flex justify-between p-2 bg-gray-50 rounded">
-                          <span>{item.productName}</span>
-                          <span className="font-medium">{item.quantity}</span>
+                        <div key={itemIdx} className="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                          <span className="text-gray-900 dark:text-gray-100">{item.productName}</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{item.quantity}</span>
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-gray-500">No products needed</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">No products needed</p>
                     )}
                   </div>
                 </div>
 
                 {sheet.stockChecks && sheet.stockChecks.length > 0 && (
                   <div>
-                    <h4 className="font-medium mb-2">Ingredient Stock Status</h4>
+                    <h4 className="font-medium mb-2 dark:text-white">Ingredient Stock Status</h4>
                     <div className="space-y-2">
                       {sheet.stockChecks.map((check, idx) => (
                         <div
                           key={idx}
                           className={`p-3 rounded ${
                             check.sufficient
-                              ? "bg-green-50 border border-green-200"
-                              : "bg-red-50 border border-red-200"
+                              ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
+                              : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
                           }`}
                         >
                           <div className="flex justify-between items-start mb-2">
                             <div>
-                              <p className="font-semibold">{check.name}</p>
-                              <p className="text-sm text-gray-600">
+                              <p className="font-semibold dark:text-white">{check.name}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-300">
                                 Need: {check.needed} {check.unit} | Available: {check.available} {check.unit}
                               </p>
                             </div>
@@ -286,41 +286,41 @@ export default function BakeSheetPage() {
                           </div>
                           {/* Recommended Lots */}
                           {check.recommendedLots && check.recommendedLots.length > 0 && (
-                            <div className="mt-2 pt-2 border-t border-gray-300">
-                              <p className="text-xs font-medium text-gray-700 mb-1">Recommended Lots (FEFO):</p>
+                            <div className="mt-2 pt-2 border-t border-gray-300 dark:border-gray-700">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Recommended Lots (FEFO):</p>
                               <div className="space-y-1">
                                 {check.recommendedLots.slice(0, 3).map((lot, lotIdx) => (
                                   <div
                                     key={lotIdx}
                                     className={`text-xs p-2 rounded ${
                                       lot.isExpired
-                                        ? "bg-red-100 border border-red-300"
+                                        ? "bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-800"
                                         : lot.isExpiringSoon
-                                        ? "bg-orange-100 border border-orange-300"
-                                        : "bg-gray-100 border border-gray-300"
+                                        ? "bg-orange-100 dark:bg-orange-900/30 border border-orange-300 dark:border-orange-800"
+                                        : "bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700"
                                     }`}
                                   >
                                     <div className="flex justify-between items-center">
-                                      <span className="font-mono font-medium">{lot.lotNumber}</span>
-                                      <span className="text-gray-600">
+                                      <span className="font-mono font-medium dark:text-gray-200">{lot.lotNumber}</span>
+                                      <span className="text-gray-600 dark:text-gray-300">
                                         {lot.currentStock} {check.unit}
                                       </span>
                                     </div>
                                     <div className="flex justify-between items-center mt-1">
-                                      <span className="text-gray-500">
+                                      <span className="text-gray-500 dark:text-gray-400">
                                         Exp: {format(new Date(lot.expiryDate), "MMM dd")}
                                       </span>
                                       {lot.isExpired && (
-                                        <span className="text-red-600 font-medium">Expired</span>
+                                        <span className="text-red-600 dark:text-red-400 font-medium">Expired</span>
                                       )}
                                       {lot.isExpiringSoon && !lot.isExpired && (
-                                        <span className="text-orange-600 font-medium">Expiring Soon</span>
+                                        <span className="text-orange-600 dark:text-orange-400 font-medium">Expiring Soon</span>
                                       )}
                                     </div>
                                   </div>
                                 ))}
                                 {check.recommendedLots.length > 3 && (
-                                  <p className="text-xs text-gray-500 mt-1">
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                     +{check.recommendedLots.length - 3} more lots
                                   </p>
                                 )}
