@@ -221,11 +221,11 @@ export default function BakeSheetPage() {
                             )}
                             {day.ingredientRequirements && day.ingredientRequirements.length > 0 && (
                               <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-700">
-                                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ingredients Needed:</p>
+                                <p className="text-xs font-medium text-gray-700 dark:text-white mb-1">Ingredients Needed:</p>
                                 {day.ingredientRequirements.map((ing, ingIdx) => (
                                   <div key={ingIdx} className="flex justify-between p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm border border-blue-200 dark:border-blue-800">
-                                    <span className="text-gray-900 dark:text-blue-200">{ing.ingredientName}</span>
-                                    <span className="font-medium text-gray-900 dark:text-blue-200">{ing.quantity} {ing.unit === "pieces" ? "pcs" : ing.unit}</span>
+                                    <span className="text-gray-900 dark:text-white">{ing.ingredientName}</span>
+                                    <span className="font-medium text-gray-900 dark:text-white">{ing.quantity} {ing.unit === "pieces" ? "pcs" : ing.unit}</span>
                                   </div>
                                 ))}
                               </div>
