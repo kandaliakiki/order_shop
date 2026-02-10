@@ -178,17 +178,66 @@ endDate // YYYY-MM-DD format, defaults to startDate
     // 5. Check stock and get recommended lots (FEFO)
     const lotDeductionService = new lotDeduction_service_1.LotDeductionService();
     const stockChecks = [];
+    // Calculate reserved stock for OTHER dates (not in the current date range)
+    // This is stock reserved by orders outside the current bake sheet date range
+    const reservedStockForOtherDates = {};
+    // Get all orders NOT in the current date range that have reserved stock
+    // Only count orders that are "New Order" or "Pending" (not yet processed)
+    const otherOrders = yield order_model_1.default.find({
+        $and: [
+            {
+                $or: [
+                    { pickupDate: { $lt: startDateObj } },
+                    { pickupDate: { $gt: endDateObj } },
+                    {
+                        $or: [
+                            { pickupDate: { $exists: false } },
+                            { pickupDate: null }
+                        ],
+                        createdAt: { $not: { $gte: startDateObj, $lte: endDateObj } }
+                    },
+                ],
+            },
+            { status: { $nin: ["Cancelled", "Completed", "On Process"] } }, // Only reserve for New Order/Pending
+        ],
+    });
+    // Calculate reserved stock from other orders
+    const otherProducts = yield product_model_1.default.find({}).populate("ingredients.ingredient", "name unit");
+    for (const otherOrder of otherOrders) {
+        for (const item of otherOrder.items) {
+            const product = otherProducts.find((p) => p.name.toLowerCase() === item.name.toLowerCase());
+            if (product && product.ingredients) {
+                product.ingredients.forEach((ing) => {
+                    const ingredient = ing.ingredient;
+                    if (ingredient) {
+                        const totalNeeded = ing.quantity * item.quantity;
+                        const key = `${ingredient._id}_${ing.unit}`;
+                        if (reservedStockForOtherDates[key]) {
+                            reservedStockForOtherDates[key] += totalNeeded;
+                        }
+                        else {
+                            reservedStockForOtherDates[key] = totalNeeded;
+                        }
+                    }
+                });
+            }
+        }
+    }
     for (const [key, req] of Object.entries(ingredientRequirements)) {
         const [ingredientId, unit] = key.split("_");
         const ingredient = yield ingredient_model_1.default.findById(ingredientId);
         if (ingredient) {
+            // Calculate available stock: currentStock - reservedStockForOtherDates
+            // This gives us what's truly available for the current date range
+            const reservedForOtherDates = reservedStockForOtherDates[key] || 0;
+            const availableStock = Math.max(0, ingredient.currentStock - reservedForOtherDates);
             const lotRecommendations = yield lotDeductionService.getRecommendedLots(ingredientId, req.quantity);
             stockChecks.push({
                 name: ingredient.name,
                 needed: req.quantity,
-                available: ingredient.currentStock,
+                available: availableStock, // Use availableStock instead of currentStock
                 unit: req.unit,
-                sufficient: ingredient.currentStock >= req.quantity,
+                sufficient: availableStock >= req.quantity,
                 recommendedLots: lotRecommendations.lots,
                 totalAvailable: lotRecommendations.totalAvailable,
             });

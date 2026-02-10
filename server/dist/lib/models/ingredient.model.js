@@ -50,6 +50,11 @@ const ingredientSchema = new mongoose_1.default.Schema({
         default: 0,
         min: 0,
     },
+    reservedStock: {
+        type: Number,
+        default: 0,
+        min: 0,
+    },
     defaultExpiryDays: {
         type: Number,
         min: 1,

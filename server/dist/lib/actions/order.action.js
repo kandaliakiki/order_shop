@@ -15,6 +15,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetchOrderById = exports.calculateTotalItemsSold = exports.countTotalOrders = exports.fetchOverallRevenue = exports.searchOrdersByCustomerName = exports.updateOrderStatus = exports.createOrder = exports.fetchOrders = void 0;
 const mongoose_1 = require("../mongoose");
 const order_model_1 = __importDefault(require("../models/order.model"));
+const stockDeduction_service_1 = require("../services/stockDeduction.service");
+const stockReservation_service_1 = require("../services/stockReservation.service");
+const ingredientStockCalculation_service_1 = require("../services/ingredientStockCalculation.service");
 // Function to fetch all orders
 const fetchOrders = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (limit = 0, dateRange) {
     yield (0, mongoose_1.connectToDB)();
@@ -58,11 +61,48 @@ exports.createOrder = createOrder;
 const updateOrderStatus = (orderId, newStatus) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, mongoose_1.connectToDB)();
     try {
-        const order = yield order_model_1.default.findOneAndUpdate({ orderId }, { status: newStatus }, { new: true });
+        const order = yield order_model_1.default.findOne({ orderId });
         if (!order) {
             throw new Error("Order not found");
         }
-        return order;
+        const oldStatus = order.status;
+        // Update order status
+        const updatedOrder = yield order_model_1.default.findOneAndUpdate({ orderId }, { status: newStatus }, { new: true });
+        // Handle stock operations based on status change
+        if (oldStatus !== newStatus) {
+            const stockCalculationService = new ingredientStockCalculation_service_1.IngredientStockCalculationService();
+            const stockCalculation = yield stockCalculationService.calculateOrderIngredientRequirements(order);
+            // When changing to "On Process": Deduct stock (from reserved stock)
+            if (newStatus === "On Process" && oldStatus !== "On Process") {
+                const stockDeductionService = new stockDeduction_service_1.StockDeductionService();
+                const deductionResult = yield stockDeductionService.deductStockForOrder(stockCalculation.requirements);
+                if (deductionResult.success) {
+                    // Release reserved stock (since we're now deducting actual stock)
+                    const stockReservationService = new stockReservation_service_1.StockReservationService();
+                    yield stockReservationService.releaseReservedStock(stockCalculation.requirements);
+                    // Store lot usage metadata if available
+                    if (deductionResult.lotUsageMetadata) {
+                        yield order_model_1.default.findOneAndUpdate({ orderId }, { lotUsageMetadata: deductionResult.lotUsageMetadata }, { new: true });
+                    }
+                    console.log(`✅ Order ${orderId} status changed to "On Process", stock deducted from reserved stock`);
+                }
+                else {
+                    console.warn(`⚠️ Failed to deduct stock for order ${orderId} when changing to "On Process"`);
+                }
+            }
+            // When changing to "Cancelled": Release reserved stock
+            if (newStatus === "Cancelled" && oldStatus !== "Cancelled") {
+                const stockReservationService = new stockReservation_service_1.StockReservationService();
+                const releaseResult = yield stockReservationService.releaseReservedStock(stockCalculation.requirements);
+                if (releaseResult.success) {
+                    console.log(`✅ Order ${orderId} cancelled, reserved stock released`);
+                }
+                else {
+                    console.warn(`⚠️ Failed to release reserved stock for cancelled order ${orderId}`);
+                }
+            }
+        }
+        return updatedOrder;
     }
     catch (error) {
         console.error("Error updating order status:", error);

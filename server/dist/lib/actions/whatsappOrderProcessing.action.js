@@ -16,7 +16,7 @@ exports.processWhatsAppMessageForOrder = void 0;
 const ai_service_1 = require("../services/ai.service");
 const orderGeneration_service_1 = require("../services/orderGeneration.service");
 const ingredientStockCalculation_service_1 = require("../services/ingredientStockCalculation.service");
-const stockDeduction_service_1 = require("../services/stockDeduction.service");
+const stockReservation_service_1 = require("../services/stockReservation.service");
 const whatsappMessageFormatter_service_1 = require("../services/whatsappMessageFormatter.service");
 const order_action_1 = require("./order.action");
 const whatsappMessage_action_1 = require("./whatsappMessage.action");
@@ -26,10 +26,11 @@ const order_model_1 = __importDefault(require("../models/order.model"));
 /**
  * Process WhatsApp message: Analyze with AI, generate order, check stock, and respond
  */
-function processWhatsAppMessageForOrder(messageBody, whatsappNumber, whatsappMessageMongoId, // MongoDB _id (for order generation)
-twilioMessageId // Twilio messageId/SID (for message updates)
-) {
-    return __awaiter(this, void 0, void 0, function* () {
+function processWhatsAppMessageForOrder(messageBody_1, whatsappNumber_1, whatsappMessageMongoId_1, twilioMessageId_1) {
+    return __awaiter(this, arguments, void 0, function* (messageBody, whatsappNumber, whatsappMessageMongoId, // MongoDB _id (for order generation)
+    twilioMessageId, // Twilio messageId/SID (for message updates)
+    skipStockCheck = false // If true, just create order without stock checks/reservations
+    ) {
         var _a, _b;
         try {
             // Step 1: AI Analysis
@@ -51,56 +52,69 @@ twilioMessageId // Twilio messageId/SID (for message updates)
             }
             // Step 3: Link message to order
             yield (0, whatsappMessage_action_1.linkMessageToOrder)(twilioMessageId, orderResult.order._id.toString());
-            // Step 4: Calculate ingredient requirements
-            const stockCalculationService = new ingredientStockCalculation_service_1.IngredientStockCalculationService();
-            const order = yield (0, order_action_2.fetchOrderById)(orderResult.order.orderId);
-            const stockCalculation = yield stockCalculationService.calculateOrderIngredientRequirements(order);
-            // Step 4.5: Store stock calculation in order metadata (before deduction)
-            const stockCalculationMetadata = {
-                calculatedAt: new Date(),
-                allIngredientsSufficient: stockCalculation.allIngredientsSufficient,
-                requirements: stockCalculation.requirements.map((req) => ({
-                    ingredientId: req.ingredientId,
-                    ingredientName: req.ingredientName,
-                    unit: req.unit,
-                    requiredQuantity: req.requiredQuantity,
-                    stockAtTimeOfOrder: req.currentStock, // Store stock level BEFORE deduction
-                    wasSufficient: req.isSufficient,
-                })),
-                warnings: stockCalculation.warnings,
-            };
-            // Update order with stock calculation metadata
-            yield order_model_1.default.findOneAndUpdate({ orderId: orderResult.order.orderId }, { stockCalculationMetadata }, { new: true });
-            // Step 5: Check stock and process accordingly
-            const messageFormatter = new whatsappMessageFormatter_service_1.WhatsAppMessageFormatter();
             let whatsappResponse;
-            if (stockCalculation.allIngredientsSufficient) {
-                // All ingredients sufficient: Deduct stock and confirm order
-                const stockDeductionService = new stockDeduction_service_1.StockDeductionService();
-                const deductionResult = yield stockDeductionService.deductStockForOrder(stockCalculation.requirements);
-                if (deductionResult.success) {
-                    // Store lot usage metadata if available
-                    if (deductionResult.lotUsageMetadata) {
-                        yield order_model_1.default.findOneAndUpdate({ orderId: orderResult.order.orderId }, { lotUsageMetadata: deductionResult.lotUsageMetadata }, { new: true });
+            if (!skipStockCheck) {
+                // Step 4: Calculate ingredient requirements
+                const stockCalculationService = new ingredientStockCalculation_service_1.IngredientStockCalculationService();
+                const order = yield (0, order_action_2.fetchOrderById)(orderResult.order.orderId);
+                const stockCalculation = yield stockCalculationService.calculateOrderIngredientRequirements(order);
+                // Step 4.5: Store stock calculation in order metadata (before deduction)
+                const stockCalculationMetadata = {
+                    calculatedAt: new Date(),
+                    allIngredientsSufficient: stockCalculation.allIngredientsSufficient,
+                    requirements: stockCalculation.requirements.map((req) => ({
+                        ingredientId: req.ingredientId,
+                        ingredientName: req.ingredientName,
+                        unit: req.unit,
+                        requiredQuantity: req.requiredQuantity,
+                        stockAtTimeOfOrder: req.currentStock, // Store stock level BEFORE deduction
+                        wasSufficient: req.isSufficient,
+                    })),
+                    warnings: stockCalculation.warnings,
+                };
+                // Update order with stock calculation metadata
+                yield order_model_1.default.findOneAndUpdate({ orderId: orderResult.order.orderId }, { stockCalculationMetadata }, { new: true });
+                // Step 5: Check stock and process accordingly
+                const messageFormatter = new whatsappMessageFormatter_service_1.WhatsAppMessageFormatter();
+                if (stockCalculation.allIngredientsSufficient) {
+                    // All ingredients sufficient: RESERVE stock (don't deduct yet)
+                    const stockReservationService = new stockReservation_service_1.StockReservationService();
+                    const order = yield (0, order_action_2.fetchOrderById)(orderResult.order.orderId);
+                    const reservationResult = yield stockReservationService.reserveStockForOrder(stockCalculation.requirements, order.pickupDate);
+                    if (reservationResult.success) {
+                        // Keep status as "New Order" (already set)
+                        // Stock is reserved but not deducted - will be deducted when status changes to "On Process"
+                        const frontendBaseUrl = process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
+                        whatsappResponse = messageFormatter.formatOrderConfirmationMessage(orderResult.order.orderId, undefined, // No lot usage metadata yet (will be set when actually deducted)
+                        frontendBaseUrl);
+                        console.log("✅ Order confirmed, stock reserved (will be deducted when processing)");
                     }
-                    // Keep status as "New Order" (already set)
-                    const frontendBaseUrl = process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
-                    whatsappResponse = messageFormatter.formatOrderConfirmationMessage(orderResult.order.orderId, deductionResult.lotUsageMetadata, frontendBaseUrl);
-                    console.log("✅ Order confirmed, stock deducted");
+                    else {
+                        // Reservation failed (shouldn't happen if all sufficient, but handle it)
+                        yield (0, order_action_1.updateOrderStatus)(orderResult.order.orderId, "Pending");
+                        whatsappResponse = messageFormatter.formatOutOfStockMessage(orderResult.order.orderId, stockCalculation.requirements.filter((r) => !r.isSufficient));
+                        console.warn("⚠️ Stock reservation failed, order marked as Pending");
+                    }
                 }
                 else {
-                    // Deduction failed (shouldn't happen if all sufficient, but handle it)
+                    // Insufficient ingredients: Mark as Pending, don't deduct stock
                     yield (0, order_action_1.updateOrderStatus)(orderResult.order.orderId, "Pending");
-                    whatsappResponse = messageFormatter.formatOutOfStockMessage(orderResult.order.orderId, stockCalculation.requirements.filter((r) => !r.isSufficient));
-                    console.warn("⚠️ Stock deduction failed, order marked as Pending");
+                    const insufficientIngredients = stockCalculation.requirements.filter((r) => !r.isSufficient);
+                    whatsappResponse = messageFormatter.formatOutOfStockMessage(orderResult.order.orderId, insufficientIngredients);
+                    console.log("⚠️ Order marked as Pending due to insufficient stock");
                 }
             }
             else {
-                // Insufficient ingredients: Mark as Pending, don't deduct stock
-                yield (0, order_action_1.updateOrderStatus)(orderResult.order.orderId, "Pending");
-                const insufficientIngredients = stockCalculation.requirements.filter((r) => !r.isSufficient);
-                whatsappResponse = messageFormatter.formatOutOfStockMessage(orderResult.order.orderId, insufficientIngredients);
-                console.log("⚠️ Order marked as Pending due to insufficient stock");
+                // Skip all stock checks/reservations: just confirm order creation
+                const frontendBaseUrl = process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
+                const baseUrl = frontendBaseUrl ? frontendBaseUrl.replace(/\/$/, "") : null;
+                const orderLink = baseUrl ? `${baseUrl}/order/${orderResult.order.orderId}` : null;
+                whatsappResponse =
+                    `✅ Pesanan Anda sudah kami terima.\n\n` +
+                        `Order ID: *${orderResult.order.orderId}*.\n` +
+                        (orderLink ? `📱 Lihat detail pesanan: ${orderLink}\n\n` : "\n") +
+                        `Kami akan cek stok dan mengonfirmasi berikutnya bila diperlukan.`;
+                console.log("✅ Order created without stock checks (skipStockCheck=true)");
             }
             // Step 6: Update message analysis
             yield (0, whatsappMessage_action_1.updateMessageAnalysis)(twilioMessageId, {

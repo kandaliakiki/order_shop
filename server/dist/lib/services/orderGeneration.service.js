@@ -114,6 +114,12 @@ class OrderGenerationService {
                     pickupDate = undefined; // Error parsing, will use default
                 }
             }
+            // Build notes including delivery address if provided
+            let notes = aiAnalysis.notes || "";
+            if (aiAnalysis.deliveryAddress) {
+                const addressNote = `Alamat pengiriman: ${aiAnalysis.deliveryAddress}`;
+                notes = notes ? `${notes}\n${addressNote}` : addressNote;
+            }
             // Create order data
             const orderData = {
                 customerName,
@@ -128,12 +134,18 @@ class OrderGenerationService {
                 source: "whatsapp",
                 whatsappNumber,
                 whatsappMessageId: new mongoose_1.default.Types.ObjectId(whatsappMessageId),
+                deliveryAddress: aiAnalysis.deliveryAddress || undefined,
                 aiAnalysisMetadata: {
                     confidence: aiAnalysis.confidence,
                     extractionMethod: "ai_analysis",
                     rawAnalysis: aiAnalysis,
                 },
             };
+            // Add notes to order if available (if Order model supports it)
+            // For now, we'll include it in the rawAnalysis metadata
+            if (notes) {
+                orderData.aiAnalysisMetadata.notes = notes;
+            }
             try {
                 const order = yield (0, order_action_1.createOrder)(orderData);
                 return {

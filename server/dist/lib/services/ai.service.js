@@ -41,6 +41,180 @@ class AIService {
         }
     }
     /**
+     * Analyze WhatsApp message with conversation context
+     * Returns extracted data, missing fields, and ambiguous products
+     */
+    analyzeWithContext(messageBody, availableProducts, conversationHistory, currentState) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.checkGeminiRateLimit();
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowStr = tomorrow.toISOString().split('T')[0];
+            const historyText = conversationHistory
+                ? conversationHistory
+                    .map((msg) => `${msg.role === "user" ? "Pelanggan" : "Anda"}: ${msg.message}`)
+                    .join("\n")
+                : "Tidak ada riwayat percakapan sebelumnya.";
+            const collectedDataText = (currentState === null || currentState === void 0 ? void 0 : currentState.collectedData)
+                ? JSON.stringify(currentState.collectedData, null, 2)
+                : "Belum ada data yang dikumpulkan.";
+            const prompt = `Anda adalah asisten penjualan yang ramah untuk toko kue. 
+Anda sedang mengobrol dengan pelanggan melalui WhatsApp untuk mengambil pesanan.
+
+PRODUK YANG TERSEDIA:
+${availableProducts.map((p, i) => `${i + 1}. ${p.name} - Rp ${p.price.toLocaleString("id-ID")}`).join("\n")}
+
+RIWAYAT PERCAKAPAN:
+${historyText}
+
+DATA YANG SUDAH DIKOLEKSI:
+${collectedDataText}
+
+Hari ini: ${todayStr} (YYYY-MM-DD)
+Besok: ${tomorrowStr} (YYYY-MM-DD)
+
+PESAN TERBARU DARI PELANGGAN:
+"${messageBody}"
+
+TUGAS ANDA:
+1. Ekstrak informasi dari pesan terbaru:
+   - products: Nama produk yang disebutkan (harus cocok dengan produk yang tersedia)
+   - quantities: Jumlah untuk setiap produk
+   - deliveryDate: Tanggal pengiriman (format: YYYY-MM-DD atau null)
+   - deliveryAddress: Alamat pengiriman lengkap (atau null)
+   
+2. Identifikasi field yang masih kurang:
+   - "products": Apakah ada produk yang disebutkan?
+   - "quantities": Apakah ada jumlah yang disebutkan untuk setiap produk?
+   - "deliveryDate": Apakah ada tanggal pengiriman?
+   - "deliveryAddress": Apakah ada alamat pengiriman?
+
+3. Jika produk yang disebutkan ambigu (misal "kue" bisa berarti beberapa produk), list semua kemungkinan dengan similarity score.
+   PENTING: Jika sebuah kata dari pelanggan bisa cocok ke LEBIH DARI 1 produk (misal "cake" atau "kue"), SELALU anggap itu ambigu dan MASUKKAN ke "ambiguousProducts" walaupun pada pesan yang sama juga ada produk lain yang sudah jelas.
+
+4. Buat pertanyaan follow-up yang natural dalam Bahasa Indonesia jika ada field yang kurang.
+
+RESPOND DENGAN JSON:
+{
+  "extractedData": {
+    "products": [{"name": "exact product name", "quantity": 1, "confidence": 0.9}],
+    "deliveryDate": "YYYY-MM-DD or null",
+    "deliveryAddress": "string or null",
+    "notes": "string or null",
+    "confidence": 0.85
+  },
+  "missingFields": ["products", "quantities", "deliveryDate", "deliveryAddress"],
+  "ambiguousProducts": [
+    {
+      "userMention": "kue",
+      "possibleMatches": [
+        {"name": "Chiffon Cake", "price": 50000, "similarity": 0.8},
+        {"name": "Cheesecake", "price": 75000, "similarity": 0.7}
+      ]
+    }
+  ],
+  "suggestedQuestion": "Pertanyaan follow-up dalam Bahasa Indonesia yang ramah",
+  "intent": "reset" | "order" | "other"
+}
+
+RULES:
+- Product names harus cocok EXACTLY dengan produk yang tersedia
+- Quantities harus positive integers
+- deliveryDate: "besok" = ${tomorrowStr}, "hari ini" = ${todayStr}
+- Return null untuk field yang tidak ditemukan
+- missingFields: List field yang BELUM lengkap
+- ambiguousProducts: WAJIB diisi jika ada kata dari pelanggan yang bisa cocok ke >= 2 produk (misal "cake" cocok ke Sweet Cake dan Cheesecake), bahkan jika pada pesan yang sama juga ada produk lain yang sudah jelas.
+- Jika sebuah mention dianggap ambigu, JANGAN memasukkan produk hasil tebakannya ke "extractedData.products" sebelum pelanggan menjawab klarifikasi.
+- suggestedQuestion: Pertanyaan natural dalam Bahasa Indonesia
+- intent:
+  - "reset" jika pelanggan dengan jelas meminta untuk mengulang / reset / mulai dari awal / batalkan semua pesanan sebelumnya (contoh: "saya mau pesan dari awal lagi", "reset pesanan", "hapus semua pesanan yang sudah dicatat").
+  - "order" jika pesan ini bagian normal dari percakapan pesanan.
+  - "other" jika pesan bukan tentang pesanan (small talk, pertanyaan lain, dsb).
+
+Return ONLY valid JSON, no other text.`;
+            if (this.provider === "gemini") {
+                return yield this.analyzeWithContextGemini(prompt);
+            }
+            else {
+                return yield this.analyzeWithContextOpenAI(prompt);
+            }
+        });
+    }
+    analyzeWithContextGemini(prompt) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.geminiModel)
+                throw new Error("Gemini model not initialized");
+            const result = yield this.geminiModel.generateContent(prompt);
+            const response = result.response;
+            const text = response.text();
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) {
+                throw new Error("Failed to extract JSON from AI response");
+            }
+            return JSON.parse(jsonMatch[0]);
+        });
+    }
+    analyzeWithContextOpenAI(prompt) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b;
+            if (!this.openai)
+                throw new Error("OpenAI client not initialized");
+            const response = yield this.openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a friendly sales assistant for a bakery. Extract order information from WhatsApp messages and return ONLY valid JSON.",
+                    },
+                    { role: "user", content: prompt },
+                ],
+                response_format: { type: "json_object" },
+                temperature: 0.3,
+            });
+            const content = ((_b = (_a = response.choices[0]) === null || _a === void 0 ? void 0 : _a.message) === null || _b === void 0 ? void 0 : _b.content) || "{}";
+            return JSON.parse(content);
+        });
+    }
+    /**
+     * Extract product phrases and quantities from message as the user wrote them.
+     * Does NOT match to catalog - use for post-clarification resolution.
+     */
+    extractProductPhrasesWithQuantities(messageBody) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b;
+            yield this.checkGeminiRateLimit();
+            const prompt = `Extract from this order message each product or term the customer mentioned and the quantity.
+Return ONLY valid JSON in this format: { "items": [ { "phrase": "exact text as customer wrote", "quantity": number } ] }
+Do NOT translate or match to any product catalog. Keep "phrase" exactly as the customer wrote it (e.g. "chocolate", "cheese biscuit", "cheesecake").
+Message: "${messageBody}"`;
+            if (this.provider === "gemini") {
+                const result = yield this.geminiModel.generateContent(prompt);
+                const text = result.response.text();
+                const jsonMatch = text.match(/\{[\s\S]*\}/);
+                if (!jsonMatch)
+                    return [];
+                const parsed = JSON.parse(jsonMatch[0]);
+                return Array.isArray(parsed.items) ? parsed.items : [];
+            }
+            else {
+                const response = yield this.openai.chat.completions.create({
+                    model: "gpt-4o-mini",
+                    messages: [
+                        { role: "system", content: "Extract product phrases and quantities. Return ONLY valid JSON with key 'items'." },
+                        { role: "user", content: prompt },
+                    ],
+                    response_format: { type: "json_object" },
+                    temperature: 0.2,
+                });
+                const content = ((_b = (_a = response.choices[0]) === null || _a === void 0 ? void 0 : _a.message) === null || _b === void 0 ? void 0 : _b.content) || "{}";
+                const parsed = JSON.parse(content);
+                return Array.isArray(parsed.items) ? parsed.items : [];
+            }
+        });
+    }
+    /**
      * Analyze WhatsApp message and extract order information
      */
     analyzeWhatsAppMessage(messageBody, availableProducts // For context
@@ -74,7 +248,10 @@ Extract the following information:
    - If user says "today", return "${todayStr}"
    - For other dates, calculate relative to today (${todayStr}) and return in YYYY-MM-DD format
    - Return null if no date mentioned
-5. Any special notes or requirements
+5. Delivery address (if mentioned - e.g., "alamat Jl. Sudirman No. 123, Jakarta")
+   - Extract full address including street, number, city
+   - Return null if no address mentioned
+6. Any special notes or requirements
 
 IMPORTANT: Do NOT extract customer name. Always return null for customerName.
 
@@ -90,6 +267,7 @@ Respond with ONLY valid JSON in this exact format:
   "customerName": null,
   "phoneNumber": "phone or null",
   "deliveryDate": "YYYY-MM-DD or null",
+  "deliveryAddress": "full address or null",
   "notes": "any special notes or null",
   "confidence": 0.85
 }
