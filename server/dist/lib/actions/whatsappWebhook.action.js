@@ -11,7 +11,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.processWhatsAppWebhook = void 0;
 const messageRouter_service_1 = require("../services/messageRouter.service");
-const menuHelpers_1 = require("../utils/menuHelpers");
 const whatsappRouter_action_1 = require("./whatsappRouter.action");
 const commandLog_action_1 = require("./commandLog.action");
 const whatsappMessage_action_1 = require("./whatsappMessage.action");
@@ -49,11 +48,21 @@ function processWhatsAppWebhook(req, res) {
             let shouldLogCommand = false;
             let commandName = "unknown";
             let aiUsed = false;
-            if (route.type === "greeting") {
-                // No AI call - just return menu (Option A selected)
-                // Don't log greetings - exclude from logs
-                responseMessage = (0, menuHelpers_1.getGreetingMenu)();
-                console.log("✅ Greeting detected - returning menu (0 tokens)");
+            if (route.type === "greeting" || route.type === "order") {
+                // Treat greetings the same as regular orders for now - focus on order generation
+                shouldLogCommand = true;
+                commandName = "order";
+                aiUsed = route.shouldCallAI || true; // Orders always use AI
+                const conversationManager = new conversationManager_service_1.ConversationManager();
+                const processResult = yield conversationManager.processMessage(Body || "", From, MessageSid, savedMessage._id.toString());
+                responseMessage = processResult.whatsappResponse || "Message received.";
+                console.log("✅ Order processed (conversational flow)");
+                console.log("📝 Response message:", {
+                    hasResponse: !!processResult.whatsappResponse,
+                    responseLength: ((_a = processResult.whatsappResponse) === null || _a === void 0 ? void 0 : _a.length) || 0,
+                    preview: ((_b = processResult.whatsappResponse) === null || _b === void 0 ? void 0 : _b.substring(0, 100)) || "No response",
+                    shouldCreateOrder: processResult.shouldCreateOrder,
+                });
             }
             else if (route.type === "command") {
                 // Commands like /order, /bakesheet, /waste, /expiry
@@ -73,26 +82,6 @@ function processWhatsAppWebhook(req, res) {
                     responseMessage = yield (0, whatsappRouter_action_1.handleCommand)(route.command, route.args, From, savedMessage._id.toString());
                     console.log(`✅ /${route.command} command processed`);
                 }
-            }
-            else if (route.type === "order") {
-                // Regular order processing (DEFAULT BEHAVIOR) - Uses conversational flow
-                // This happens when user sends plain message like "chiffon 1 cheesecake 1" or "need 2 chiffon for tomorrow"
-                // No command prefix, no greeting - just regular order
-                // Log this as an "order" command for AI logs
-                shouldLogCommand = true;
-                commandName = "order";
-                aiUsed = route.shouldCallAI || true; // Orders always use AI
-                // Use ConversationManager for conversational order taking
-                const conversationManager = new conversationManager_service_1.ConversationManager();
-                const processResult = yield conversationManager.processMessage(Body || "", From, MessageSid, savedMessage._id.toString());
-                responseMessage = processResult.whatsappResponse || "Message received.";
-                console.log("✅ Regular order processed (conversational flow)");
-                console.log("📝 Response message:", {
-                    hasResponse: !!processResult.whatsappResponse,
-                    responseLength: ((_a = processResult.whatsappResponse) === null || _a === void 0 ? void 0 : _a.length) || 0,
-                    preview: ((_b = processResult.whatsappResponse) === null || _b === void 0 ? void 0 : _b.substring(0, 100)) || "No response",
-                    shouldCreateOrder: processResult.shouldCreateOrder,
-                });
             }
             // Log command interaction (for logs page)
             // Include orders (with or without /order prefix) but exclude greetings

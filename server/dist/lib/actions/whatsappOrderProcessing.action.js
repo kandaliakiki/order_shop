@@ -24,18 +24,38 @@ const product_action_1 = require("./product.action");
 const order_action_2 = require("./order.action");
 const order_model_1 = __importDefault(require("../models/order.model"));
 /**
- * Process WhatsApp message: Analyze with AI, generate order, check stock, and respond
+ * Process WhatsApp message: Analyze with AI, generate order, check stock, and respond.
+ * When collectedData is provided (from conversational flow), order is built from it so pickupTime/fulfillmentType are persisted.
  */
 function processWhatsAppMessageForOrder(messageBody_1, whatsappNumber_1, whatsappMessageMongoId_1, twilioMessageId_1) {
     return __awaiter(this, arguments, void 0, function* (messageBody, whatsappNumber, whatsappMessageMongoId, // MongoDB _id (for order generation)
     twilioMessageId, // Twilio messageId/SID (for message updates)
-    skipStockCheck = false // If true, just create order without stock checks/reservations
+    skipStockCheck = false, // If true, just create order without stock checks/reservations
+    collectedData // When set, use this for order instead of AI-parsing messageBody
     ) {
         var _a, _b;
         try {
-            // Step 1: AI Analysis
-            const availableProducts = yield fetchProductsForAI();
-            const aiAnalysis = yield analyzeMessageWithAI(messageBody, availableProducts);
+            let aiAnalysis;
+            if (collectedData && collectedData.products && collectedData.products.length > 0) {
+                // Build order from conversational collected data so pickupTime, fulfillmentType, etc. are persisted
+                aiAnalysis = {
+                    products: collectedData.products.map((p) => ({
+                        name: p.name,
+                        quantity: p.quantity,
+                        confidence: 1,
+                    })),
+                    deliveryDate: collectedData.deliveryDate,
+                    deliveryAddress: collectedData.deliveryAddress,
+                    fulfillmentType: collectedData.fulfillmentType,
+                    pickupTime: collectedData.pickupTime,
+                    confidence: 1,
+                };
+            }
+            else {
+                // Step 1: AI Analysis
+                const availableProducts = yield fetchProductsForAI();
+                aiAnalysis = yield analyzeMessageWithAI(messageBody, availableProducts);
+            }
             // Step 2: Generate Order (initially with "New Order" status)
             const orderResult = yield generateOrderFromAnalysis(aiAnalysis, whatsappNumber, whatsappMessageMongoId);
             if (!orderResult.success || !orderResult.order) {
@@ -109,11 +129,19 @@ function processWhatsAppMessageForOrder(messageBody_1, whatsappNumber_1, whatsap
                 const frontendBaseUrl = process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
                 const baseUrl = frontendBaseUrl ? frontendBaseUrl.replace(/\/$/, "") : null;
                 const orderLink = baseUrl ? `${baseUrl}/order/${orderResult.order.orderId}` : null;
-                whatsappResponse =
-                    `✅ Pesanan Anda sudah kami terima.\n\n` +
-                        `Order ID: *${orderResult.order.orderId}*.\n` +
-                        (orderLink ? `📱 Lihat detail pesanan: ${orderLink}\n\n` : "\n") +
-                        `Kami akan cek stok dan mengonfirmasi berikutnya bila diperlukan.`;
+                let confirmLines = `✅ Pesanan Anda sudah kami terima.\n\n` +
+                    `Order ID: *${orderResult.order.orderId}*.\n`;
+                if (orderResult.order.fulfillmentType) {
+                    confirmLines += orderResult.order.fulfillmentType === "pickup"
+                        ? `📦 Ambil di toko (pickup).\n`
+                        : `🚚 Dikirim (delivery).\n`;
+                }
+                if (orderResult.order.pickupTime) {
+                    confirmLines += `🕐 Waktu: ${orderResult.order.pickupTime}\n`;
+                }
+                confirmLines += (orderLink ? `📱 Lihat detail pesanan: ${orderLink}\n\n` : "\n") +
+                    `Kami akan cek stok dan mengonfirmasi berikutnya bila diperlukan.`;
+                whatsappResponse = confirmLines;
                 console.log("✅ Order created without stock checks (skipStockCheck=true)");
             }
             // Step 6: Update message analysis

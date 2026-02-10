@@ -27,13 +27,22 @@ const conversationStateSchema = new mongoose_1.default.Schema({
             ],
             deliveryDate: String,
             deliveryAddress: String,
+            fulfillmentType: String,
+            pickupTime: String,
             customerName: String,
         },
         default: {},
     },
     missingFields: {
         type: [String],
-        default: ["products", "quantities", "deliveryDate", "deliveryAddress"],
+        default: [
+            "products",
+            "quantities",
+            "deliveryDate",
+            "fulfillmentType",
+            "deliveryAddress",
+            "pickupTime",
+        ],
     },
     pendingQuestion: {
         type: {

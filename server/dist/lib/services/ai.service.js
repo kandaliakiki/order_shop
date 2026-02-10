@@ -84,12 +84,16 @@ TUGAS ANDA:
    - quantities: Jumlah untuk setiap produk
    - deliveryDate: Tanggal pengiriman (format: YYYY-MM-DD atau null)
    - deliveryAddress: Alamat pengiriman lengkap (atau null)
+   - fulfillmentType: "pickup" jika pelanggan ingin ambil sendiri di toko, atau "delivery" jika ingin dikirim (atau null jika belum jelas)
+   - pickupTime: Jam pengambilan atau pengiriman, dalam Bahasa Indonesia bebas (contoh: "jam 3 sore") atau null
    
 2. Identifikasi field yang masih kurang:
    - "products": Apakah ada produk yang disebutkan?
    - "quantities": Apakah ada jumlah yang disebutkan untuk setiap produk?
    - "deliveryDate": Apakah ada tanggal pengiriman?
    - "deliveryAddress": Apakah ada alamat pengiriman?
+   - "fulfillmentType": Apakah sudah jelas ini pickup atau delivery?
+   - "pickupTime": Apakah sudah jelas jam berapa pesanan diambil/dikirim?
 
 3. Jika produk yang disebutkan ambigu (misal "kue" bisa berarti beberapa produk), list semua kemungkinan dengan similarity score.
    PENTING: Jika sebuah kata dari pelanggan bisa cocok ke LEBIH DARI 1 produk (misal "cake" atau "kue"), SELALU anggap itu ambigu dan MASUKKAN ke "ambiguousProducts" walaupun pada pesan yang sama juga ada produk lain yang sudah jelas.
@@ -102,10 +106,12 @@ RESPOND DENGAN JSON:
     "products": [{"name": "exact product name", "quantity": 1, "confidence": 0.9}],
     "deliveryDate": "YYYY-MM-DD or null",
     "deliveryAddress": "string or null",
+    "fulfillmentType": "pickup" | "delivery" | null,
+    "pickupTime": "string or null",
     "notes": "string or null",
     "confidence": 0.85
   },
-  "missingFields": ["products", "quantities", "deliveryDate", "deliveryAddress"],
+  "missingFields": ["products", "quantities", "deliveryDate", "deliveryAddress", "fulfillmentType", "pickupTime"],
   "ambiguousProducts": [
     {
       "userMention": "kue",
@@ -124,7 +130,7 @@ RULES:
 - Quantities harus positive integers
 - deliveryDate: "besok" = ${tomorrowStr}, "hari ini" = ${todayStr}
 - Return null untuk field yang tidak ditemukan
-- missingFields: List field yang BELUM lengkap
+- missingFields: List field yang BELUM lengkap (gunakan hanya nilai: "products", "quantities", "deliveryDate", "deliveryAddress", "fulfillmentType", "pickupTime")
 - ambiguousProducts: WAJIB diisi jika ada kata dari pelanggan yang bisa cocok ke >= 2 produk (misal "cake" cocok ke Sweet Cake dan Cheesecake), bahkan jika pada pesan yang sama juga ada produk lain yang sudah jelas.
 - Jika sebuah mention dianggap ambigu, JANGAN memasukkan produk hasil tebakannya ke "extractedData.products" sebelum pelanggan menjawab klarifikasi.
 - suggestedQuestion: Pertanyaan natural dalam Bahasa Indonesia

@@ -16,7 +16,7 @@ class MessageRouterService {
      * Check if message is a greeting
      * Only returns true if:
      * 1. Message is 3 words or less
-     * 2. AND contains a greeting pattern or agent name
+     * 2. AND contains a greeting pattern or agent name as a whole word (not substring)
      */
     isGreeting(message) {
         const normalizedBody = message.toLowerCase().trim();
@@ -25,9 +25,10 @@ class MessageRouterService {
         if (words.length > 3) {
             return false;
         }
-        // Check if contains greeting pattern
-        const hasGreetingPattern = this.greetingPatterns.some(pattern => normalizedBody.includes(pattern));
-        // Check if contains agent name
+        // Match greeting patterns as whole words only (so "chiffon" doesn't match "hi")
+        const wordSet = new Set(words);
+        const hasGreetingPattern = this.greetingPatterns.some(pattern => wordSet.has(pattern));
+        // Agent name can be multi-word; check if normalized body equals or contains it as phrase
         const hasAgentName = this.agentNameVariations.some(name => normalizedBody.includes(name));
         // Must have greeting pattern OR agent name
         return hasGreetingPattern || hasAgentName;

@@ -50,6 +50,13 @@ const orderSchema = new mongoose_1.default.Schema({
         type: Date,
         // Optional - if not provided, will default to createdAt in pre-save hook
     },
+    fulfillmentType: {
+        type: String,
+        enum: ["pickup", "delivery"],
+    },
+    pickupTime: {
+        type: String,
+    },
     source: {
         type: String,
         default: "manual",
