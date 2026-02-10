@@ -23,6 +23,7 @@ export interface OrderData {
   source?: string; // "manual" or "whatsapp"
   whatsappNumber?: string;
   whatsappMessageId?: mongoose.Types.ObjectId;
+  deliveryAddress?: string;
   aiAnalysisMetadata?: {
     confidence?: number;
     extractionMethod?: string;
@@ -108,6 +109,9 @@ const orderSchema = new mongoose.Schema<OrderData>({
   whatsappMessageId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "WhatsAppMessage",
+  },
+  deliveryAddress: {
+    type: String,
   },
   aiAnalysisMetadata: {
     type: {

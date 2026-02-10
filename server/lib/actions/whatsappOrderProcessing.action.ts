@@ -2,6 +2,7 @@ import { AIService } from "../services/ai.service";
 import { OrderGenerationService } from "../services/orderGeneration.service";
 import { IngredientStockCalculationService } from "../services/ingredientStockCalculation.service";
 import { StockDeductionService } from "../services/stockDeduction.service";
+import { StockReservationService } from "../services/stockReservation.service";
 import { WhatsAppMessageFormatter } from "../services/whatsappMessageFormatter.service";
 import { updateOrderStatus } from "./order.action";
 import {
@@ -28,7 +29,8 @@ export async function processWhatsAppMessageForOrder(
   messageBody: string,
   whatsappNumber: string,
   whatsappMessageMongoId: string, // MongoDB _id (for order generation)
-  twilioMessageId: string // Twilio messageId/SID (for message updates)
+  twilioMessageId: string, // Twilio messageId/SID (for message updates)
+  skipStockCheck: boolean = false // If true, just create order without stock checks/reservations
 ): Promise<ProcessWhatsAppMessageResult> {
   try {
     // Step 1: AI Analysis
@@ -62,83 +64,94 @@ export async function processWhatsAppMessageForOrder(
     // Step 3: Link message to order
     await linkMessageToOrder(twilioMessageId, orderResult.order._id.toString());
 
-    // Step 4: Calculate ingredient requirements
-    const stockCalculationService = new IngredientStockCalculationService();
-    const order = await fetchOrderById(orderResult.order.orderId);
-    const stockCalculation =
-      await stockCalculationService.calculateOrderIngredientRequirements(order);
-
-    // Step 4.5: Store stock calculation in order metadata (before deduction)
-    const stockCalculationMetadata = {
-      calculatedAt: new Date(),
-      allIngredientsSufficient: stockCalculation.allIngredientsSufficient,
-      requirements: stockCalculation.requirements.map((req) => ({
-        ingredientId: req.ingredientId,
-        ingredientName: req.ingredientName,
-        unit: req.unit,
-        requiredQuantity: req.requiredQuantity,
-        stockAtTimeOfOrder: req.currentStock, // Store stock level BEFORE deduction
-        wasSufficient: req.isSufficient,
-      })),
-      warnings: stockCalculation.warnings,
-    };
-
-    // Update order with stock calculation metadata
-    await Order.findOneAndUpdate(
-      { orderId: orderResult.order.orderId },
-      { stockCalculationMetadata },
-      { new: true }
-    );
-
-    // Step 5: Check stock and process accordingly
-    const messageFormatter = new WhatsAppMessageFormatter();
     let whatsappResponse: string;
 
-    if (stockCalculation.allIngredientsSufficient) {
-      // All ingredients sufficient: Deduct stock and confirm order
-      const stockDeductionService = new StockDeductionService();
-      const deductionResult = await stockDeductionService.deductStockForOrder(
-        stockCalculation.requirements
+    if (!skipStockCheck) {
+      // Step 4: Calculate ingredient requirements
+      const stockCalculationService = new IngredientStockCalculationService();
+      const order = await fetchOrderById(orderResult.order.orderId);
+      const stockCalculation =
+        await stockCalculationService.calculateOrderIngredientRequirements(order);
+
+      // Step 4.5: Store stock calculation in order metadata (before deduction)
+      const stockCalculationMetadata = {
+        calculatedAt: new Date(),
+        allIngredientsSufficient: stockCalculation.allIngredientsSufficient,
+        requirements: stockCalculation.requirements.map((req) => ({
+          ingredientId: req.ingredientId,
+          ingredientName: req.ingredientName,
+          unit: req.unit,
+          requiredQuantity: req.requiredQuantity,
+          stockAtTimeOfOrder: req.currentStock, // Store stock level BEFORE deduction
+          wasSufficient: req.isSufficient,
+        })),
+        warnings: stockCalculation.warnings,
+      };
+
+      // Update order with stock calculation metadata
+      await Order.findOneAndUpdate(
+        { orderId: orderResult.order.orderId },
+        { stockCalculationMetadata },
+        { new: true }
       );
 
-      if (deductionResult.success) {
-        // Store lot usage metadata if available
-        if (deductionResult.lotUsageMetadata) {
-          await Order.findOneAndUpdate(
-            { orderId: orderResult.order.orderId },
-            { lotUsageMetadata: deductionResult.lotUsageMetadata },
-            { new: true }
-          );
-        }
+      // Step 5: Check stock and process accordingly
+      const messageFormatter = new WhatsAppMessageFormatter();
 
-        // Keep status as "New Order" (already set)
-        const frontendBaseUrl = process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
-        whatsappResponse = messageFormatter.formatOrderConfirmationMessage(
-          orderResult.order.orderId,
-          deductionResult.lotUsageMetadata,
-          frontendBaseUrl
+      if (stockCalculation.allIngredientsSufficient) {
+        // All ingredients sufficient: RESERVE stock (don't deduct yet)
+        const stockReservationService = new StockReservationService();
+        const order = await fetchOrderById(orderResult.order.orderId);
+        const reservationResult = await stockReservationService.reserveStockForOrder(
+          stockCalculation.requirements,
+          order.pickupDate
         );
-        console.log("✅ Order confirmed, stock deducted");
+
+        if (reservationResult.success) {
+          // Keep status as "New Order" (already set)
+          // Stock is reserved but not deducted - will be deducted when status changes to "On Process"
+          const frontendBaseUrl =
+            process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
+          whatsappResponse = messageFormatter.formatOrderConfirmationMessage(
+            orderResult.order.orderId,
+            undefined, // No lot usage metadata yet (will be set when actually deducted)
+            frontendBaseUrl
+          );
+          console.log("✅ Order confirmed, stock reserved (will be deducted when processing)");
+        } else {
+          // Reservation failed (shouldn't happen if all sufficient, but handle it)
+          await updateOrderStatus(orderResult.order.orderId, "Pending");
+          whatsappResponse = messageFormatter.formatOutOfStockMessage(
+            orderResult.order.orderId,
+            stockCalculation.requirements.filter((r) => !r.isSufficient)
+          );
+          console.warn("⚠️ Stock reservation failed, order marked as Pending");
+        }
       } else {
-        // Deduction failed (shouldn't happen if all sufficient, but handle it)
+        // Insufficient ingredients: Mark as Pending, don't deduct stock
         await updateOrderStatus(orderResult.order.orderId, "Pending");
+        const insufficientIngredients = stockCalculation.requirements.filter(
+          (r) => !r.isSufficient
+        );
         whatsappResponse = messageFormatter.formatOutOfStockMessage(
           orderResult.order.orderId,
-          stockCalculation.requirements.filter((r) => !r.isSufficient)
+          insufficientIngredients
         );
-        console.warn("⚠️ Stock deduction failed, order marked as Pending");
+        console.log("⚠️ Order marked as Pending due to insufficient stock");
       }
     } else {
-      // Insufficient ingredients: Mark as Pending, don't deduct stock
-      await updateOrderStatus(orderResult.order.orderId, "Pending");
-      const insufficientIngredients = stockCalculation.requirements.filter(
-        (r) => !r.isSufficient
-      );
-      whatsappResponse = messageFormatter.formatOutOfStockMessage(
-        orderResult.order.orderId,
-        insufficientIngredients
-      );
-      console.log("⚠️ Order marked as Pending due to insufficient stock");
+      // Skip all stock checks/reservations: just confirm order creation
+      const frontendBaseUrl =
+        process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
+      const baseUrl = frontendBaseUrl ? frontendBaseUrl.replace(/\/$/, "") : null;
+      const orderLink = baseUrl ? `${baseUrl}/order/${orderResult.order.orderId}` : null;
+
+      whatsappResponse =
+        `✅ Pesanan Anda sudah kami terima.\n\n` +
+        `Order ID: *${orderResult.order.orderId}*.\n` +
+        (orderLink ? `📱 Lihat detail pesanan: ${orderLink}\n\n` : "\n") +
+        `Kami akan cek stok dan mengonfirmasi berikutnya bila diperlukan.`;
+      console.log("✅ Order created without stock checks (skipStockCheck=true)");
     }
 
     // Step 6: Update message analysis

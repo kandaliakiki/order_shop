@@ -77,7 +77,7 @@ export class IngredientStockCalculationService {
             requiredQuantity,
             currentStock: ingredient.currentStock,
             minimumStock: ingredient.minimumStock,
-            isSufficient: false, // Will calculate below
+            isSufficient: false, // Will calculate below (considering reservedStock)
             shortage: 0, // Will calculate below
           };
           ingredientMap.set(ingredientId, requirement);
@@ -85,13 +85,17 @@ export class IngredientStockCalculationService {
       }
     }
 
-    // Calculate sufficiency and shortages
+    // Calculate sufficiency and shortages (considering reservedStock)
     for (const requirement of ingredientMap.values()) {
-      requirement.isSufficient =
-        requirement.currentStock >= requirement.requiredQuantity;
+      // Get fresh ingredient data to check reservedStock
+      const freshIngredient = await (await import("../models/ingredient.model")).default.findById(requirement.ingredientId);
+      const reservedStock = freshIngredient?.reservedStock || 0;
+      const availableStock = requirement.currentStock - reservedStock;
+      
+      requirement.isSufficient = availableStock >= requirement.requiredQuantity;
       requirement.shortage = requirement.isSufficient
         ? 0
-        : requirement.requiredQuantity - requirement.currentStock;
+        : requirement.requiredQuantity - availableStock;
       requirements.push(requirement);
     }
 

@@ -1,5 +1,8 @@
 import { connectToDB } from "../mongoose";
 import Order, { OrderData } from "../models/order.model";
+import { StockDeductionService } from "../services/stockDeduction.service";
+import { StockReservationService } from "../services/stockReservation.service";
+import { IngredientStockCalculationService } from "../services/ingredientStockCalculation.service";
 // Function to fetch all orders
 export const fetchOrders = async (
   limit: number = 0,
@@ -50,15 +53,66 @@ export const updateOrderStatus = async (orderId: string, newStatus: string) => {
   await connectToDB();
 
   try {
-    const order = await Order.findOneAndUpdate(
+    const order = await Order.findOne({ orderId });
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    const oldStatus = order.status;
+
+    // Update order status
+    const updatedOrder = await Order.findOneAndUpdate(
       { orderId },
       { status: newStatus },
       { new: true }
     );
-    if (!order) {
-      throw new Error("Order not found");
+
+    // Handle stock operations based on status change
+    if (oldStatus !== newStatus) {
+      const stockCalculationService = new IngredientStockCalculationService();
+      const stockCalculation = await stockCalculationService.calculateOrderIngredientRequirements(order);
+
+      // When changing to "On Process": Deduct stock (from reserved stock)
+      if (newStatus === "On Process" && oldStatus !== "On Process") {
+        const stockDeductionService = new StockDeductionService();
+        const deductionResult = await stockDeductionService.deductStockForOrder(
+          stockCalculation.requirements
+        );
+
+        if (deductionResult.success) {
+          // Release reserved stock (since we're now deducting actual stock)
+          const stockReservationService = new StockReservationService();
+          await stockReservationService.releaseReservedStock(stockCalculation.requirements);
+
+          // Store lot usage metadata if available
+          if (deductionResult.lotUsageMetadata) {
+            await Order.findOneAndUpdate(
+              { orderId },
+              { lotUsageMetadata: deductionResult.lotUsageMetadata },
+              { new: true }
+            );
+          }
+          console.log(`✅ Order ${orderId} status changed to "On Process", stock deducted from reserved stock`);
+        } else {
+          console.warn(`⚠️ Failed to deduct stock for order ${orderId} when changing to "On Process"`);
+        }
+      }
+
+      // When changing to "Cancelled": Release reserved stock
+      if (newStatus === "Cancelled" && oldStatus !== "Cancelled") {
+        const stockReservationService = new StockReservationService();
+        const releaseResult = await stockReservationService.releaseReservedStock(
+          stockCalculation.requirements
+        );
+        if (releaseResult.success) {
+          console.log(`✅ Order ${orderId} cancelled, reserved stock released`);
+        } else {
+          console.warn(`⚠️ Failed to release reserved stock for cancelled order ${orderId}`);
+        }
+      }
     }
-    return order;
+
+    return updatedOrder;
   } catch (error) {
     console.error("Error updating order status:", error);
     throw error;

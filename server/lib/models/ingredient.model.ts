@@ -17,6 +17,7 @@ export interface IngredientData {
   unit: string;
   currentStock: number;
   minimumStock: number;
+  reservedStock?: number; // Stock reserved for future orders (not yet deducted)
   defaultExpiryDays?: number;
   imageUrl?: string;
 }
@@ -47,6 +48,11 @@ const ingredientSchema = new mongoose.Schema(
     minimumStock: {
       type: Number,
       required: true,
+      default: 0,
+      min: 0,
+    },
+    reservedStock: {
+      type: Number,
       default: 0,
       min: 0,
     },
