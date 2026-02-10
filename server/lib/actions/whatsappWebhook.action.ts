@@ -47,11 +47,27 @@ export async function processWhatsAppWebhook(
     let commandName = "unknown";
     let aiUsed = false;
 
-    if (route.type === "greeting") {
-      // No AI call - just return menu (Option A selected)
-      // Don't log greetings - exclude from logs
-      responseMessage = getGreetingMenu();
-      console.log("✅ Greeting detected - returning menu (0 tokens)");
+    if (route.type === "greeting" || route.type === "order") {
+      // Treat greetings the same as regular orders for now - focus on order generation
+      shouldLogCommand = true;
+      commandName = "order";
+      aiUsed = route.shouldCallAI || true; // Orders always use AI
+
+      const conversationManager = new ConversationManager();
+      const processResult = await conversationManager.processMessage(
+        Body || "",
+        From,
+        MessageSid,
+        savedMessage._id.toString()
+      );
+      responseMessage = processResult.whatsappResponse || "Message received.";
+      console.log("✅ Order processed (conversational flow)");
+      console.log("📝 Response message:", {
+        hasResponse: !!processResult.whatsappResponse,
+        responseLength: processResult.whatsappResponse?.length || 0,
+        preview: processResult.whatsappResponse?.substring(0, 100) || "No response",
+        shouldCreateOrder: processResult.shouldCreateOrder,
+      });
     } else if (route.type === "command") {
       // Commands like /order, /bakesheet, /waste, /expiry
       shouldLogCommand = true;
@@ -80,31 +96,6 @@ export async function processWhatsAppWebhook(
         );
         console.log(`✅ /${route.command} command processed`);
       }
-    } else if (route.type === "order") {
-      // Regular order processing (DEFAULT BEHAVIOR) - Uses conversational flow
-      // This happens when user sends plain message like "chiffon 1 cheesecake 1" or "need 2 chiffon for tomorrow"
-      // No command prefix, no greeting - just regular order
-      // Log this as an "order" command for AI logs
-      shouldLogCommand = true;
-      commandName = "order";
-      aiUsed = route.shouldCallAI || true; // Orders always use AI
-      
-      // Use ConversationManager for conversational order taking
-      const conversationManager = new ConversationManager();
-      const processResult = await conversationManager.processMessage(
-        Body || "",
-        From,
-        MessageSid,
-        savedMessage._id.toString()
-      );
-      responseMessage = processResult.whatsappResponse || "Message received.";
-      console.log("✅ Regular order processed (conversational flow)");
-      console.log("📝 Response message:", {
-        hasResponse: !!processResult.whatsappResponse,
-        responseLength: processResult.whatsappResponse?.length || 0,
-        preview: processResult.whatsappResponse?.substring(0, 100) || "No response",
-        shouldCreateOrder: processResult.shouldCreateOrder,
-      });
     }
 
     // Log command interaction (for logs page)

@@ -44,14 +44,28 @@ export class ConversationManager {
           phoneNumber,
           status: "collecting",
           collectedData: {},
-          missingFields: ["products", "quantities", "deliveryDate", "deliveryAddress"],
+          missingFields: [
+            "products",
+            "quantities",
+            "deliveryDate",
+            "fulfillmentType",
+            "deliveryAddress",
+            "pickupTime",
+          ],
           conversationHistory: [],
         });
       } else if (state.status !== "collecting") {
         // Previous conversation was completed/cancelled – hard reset for a new order
         state.status = "collecting";
         state.collectedData = {};
-        state.missingFields = ["products", "quantities", "deliveryDate", "deliveryAddress"];
+        state.missingFields = [
+          "products",
+          "quantities",
+          "deliveryDate",
+          "fulfillmentType",
+          "deliveryAddress",
+          "pickupTime",
+        ];
         state.pendingQuestion = undefined;
         state.conversationHistory = [];
         state.lastMessageId = undefined;
@@ -205,12 +219,23 @@ export class ConversationManager {
         }
 
         const orderMessage = this.buildOrderMessageFromCollectedData(state.collectedData);
+        const collectedForOrder = {
+          products: (state.collectedData.products || []).map((p: { name: string; quantity: number }) => ({
+            name: p.name,
+            quantity: p.quantity,
+          })),
+          deliveryDate: state.collectedData.deliveryDate,
+          deliveryAddress: state.collectedData.deliveryAddress,
+          fulfillmentType: state.collectedData.fulfillmentType,
+          pickupTime: state.collectedData.pickupTime,
+        };
         const orderResult = await processWhatsAppMessageForOrder(
           orderMessage,
           phoneNumber,
           whatsappMessageMongoId,
           twilioMessageId,
-          true
+          true,
+          collectedForOrder
         );
         if (orderResult.success && orderResult.orderId) {
           state.status = "completed";
@@ -252,7 +277,14 @@ export class ConversationManager {
       // 4b. Let AI decide if the user wants to reset / start over
       if (analysis.intent === "reset") {
         state.collectedData = {};
-        state.missingFields = ["products", "quantities", "deliveryDate", "deliveryAddress"];
+        state.missingFields = [
+          "products",
+          "quantities",
+          "deliveryDate",
+          "fulfillmentType",
+          "deliveryAddress",
+          "pickupTime",
+        ];
         state.pendingQuestion = undefined;
         state.status = "collecting";
         state.orderId = undefined;
@@ -404,16 +436,26 @@ export class ConversationManager {
         };
       }
 
-      // 8. All data complete! Build order message from collected data
+      // 8. All data complete! Create order from structured collected data so pickupTime/fulfillmentType are persisted
       const orderMessage = this.buildOrderMessageFromCollectedData(state.collectedData);
+      const collectedForOrder = {
+        products: (state.collectedData.products || []).map((p: { name: string; quantity: number }) => ({
+          name: p.name,
+          quantity: p.quantity,
+        })),
+        deliveryDate: state.collectedData.deliveryDate,
+        deliveryAddress: state.collectedData.deliveryAddress,
+        fulfillmentType: state.collectedData.fulfillmentType,
+        pickupTime: state.collectedData.pickupTime,
+      };
 
-      // Create order using existing order processing
       const orderResult = await processWhatsAppMessageForOrder(
         orderMessage,
         phoneNumber,
         whatsappMessageMongoId,
         twilioMessageId,
-        true // For conversational flow, skip stock checks and just create the order
+        true, // For conversational flow, skip stock checks and just create the order
+        collectedForOrder
       );
 
       if (orderResult.success && orderResult.orderId) {
@@ -493,6 +535,17 @@ export class ConversationManager {
       state.collectedData.deliveryAddress = extractedData.deliveryAddress;
     }
 
+    // Update fulfillment type (pickup vs delivery) whenever the user clearly says pickup or delivery
+    // (e.g. "mau di ambil besok jam 3 sore" → pickup) so we don't get stuck asking "what else?"
+    if (extractedData.fulfillmentType === "pickup" || extractedData.fulfillmentType === "delivery") {
+      state.collectedData.fulfillmentType = extractedData.fulfillmentType;
+    }
+
+    // Update pickup / delivery time (free‑form string)
+    if (extractedData.pickupTime) {
+      state.collectedData.pickupTime = extractedData.pickupTime;
+    }
+
     // Update customer name if provided
     if (extractedData.customerName) {
       state.collectedData.customerName = extractedData.customerName;
@@ -504,9 +557,23 @@ export class ConversationManager {
    */
   private checkCompleteness(state: ConversationStateData): {
     isComplete: boolean;
-    missingFields: Array<"products" | "quantities" | "deliveryDate" | "deliveryAddress">;
+    missingFields: Array<
+      | "products"
+      | "quantities"
+      | "deliveryDate"
+      | "deliveryAddress"
+      | "fulfillmentType"
+      | "pickupTime"
+    >;
   } {
-    const missing: Array<"products" | "quantities" | "deliveryDate" | "deliveryAddress"> = [];
+    const missing: Array<
+      | "products"
+      | "quantities"
+      | "deliveryDate"
+      | "deliveryAddress"
+      | "fulfillmentType"
+      | "pickupTime"
+    > = [];
 
     // Check products
     if (
@@ -529,9 +596,22 @@ export class ConversationManager {
       missing.push("deliveryDate");
     }
 
-    // Check delivery address
-    if (!state.collectedData.deliveryAddress) {
+    // Check fulfillment type (pickup vs delivery)
+    if (!state.collectedData.fulfillmentType) {
+      missing.push("fulfillmentType");
+    }
+
+    // Check delivery address – only required if fulfillmentType is delivery
+    if (
+      state.collectedData.fulfillmentType === "delivery" &&
+      !state.collectedData.deliveryAddress
+    ) {
       missing.push("deliveryAddress");
+    }
+
+    // Check pickup / delivery time – always ask for a time
+    if (!state.collectedData.pickupTime) {
+      missing.push("pickupTime");
     }
 
     return {
@@ -544,11 +624,33 @@ export class ConversationManager {
    * Generate follow-up question for missing field
    */
   private generateFollowUpQuestion(
-    missingField: "products" | "quantities" | "deliveryDate" | "deliveryAddress",
+    missingField:
+      | "products"
+      | "quantities"
+      | "deliveryDate"
+      | "deliveryAddress"
+      | "fulfillmentType"
+      | "pickupTime",
     state: ConversationStateData,
     aiSuggestedQuestion?: string
   ): string {
-    // Use AI suggestion if available
+    // Always use our clear template for fulfillmentType and pickupTime so we never show
+    // generic "what else?" / "ada lagi?" when we're actually waiting for pickup/delivery or time
+    if (missingField === "fulfillmentType" || missingField === "pickupTime") {
+      const questions: Record<string, string> = {
+        fulfillmentType:
+          "Apakah pesanan ini mau DIAMBIL di toko (pickup) atau DIKIRIM ke alamat Anda (delivery)?\n\nBalas dengan salah satu kata saja: \"pickup\" atau \"delivery\".",
+        pickupTime:
+          state.collectedData.fulfillmentType === "delivery"
+            ? "Jam berapa Anda ingin pesanan DIKIRIM? (contoh: jam 10 pagi, jam 3 sore)"
+            : state.collectedData.fulfillmentType === "pickup"
+            ? "Jam berapa Anda ingin MENGAMBIL pesanan di toko? (contoh: jam 10 pagi, jam 3 sore)"
+            : "Jam berapa Anda ingin pesanan siap? (contoh: jam 10 pagi, jam 3 sore)",
+      };
+      return questions[missingField];
+    }
+
+    // Use AI suggestion if available for other fields
     if (aiSuggestedQuestion) {
       return aiSuggestedQuestion;
     }
@@ -563,6 +665,14 @@ export class ConversationManager {
         "Kapan Anda ingin pesanan dikirim? (contoh: besok, 15 Februari, atau tanggal lainnya)",
       deliveryAddress:
         "Bisa berikan alamat pengiriman yang lengkap? (termasuk nama jalan, nomor, dan kota)",
+      fulfillmentType:
+        "Apakah pesanan ini mau DIAMBIL di toko (pickup) atau DIKIRIM ke alamat Anda (delivery)?\n\nBalas dengan salah satu kata saja: \"pickup\" atau \"delivery\".",
+      pickupTime:
+        state.collectedData.fulfillmentType === "delivery"
+          ? "Jam berapa Anda ingin pesanan DIKIRIM? (contoh: jam 10 pagi, jam 3 sore)"
+          : state.collectedData.fulfillmentType === "pickup"
+          ? "Jam berapa Anda ingin MENGAMBIL pesanan di toko? (contoh: jam 10 pagi, jam 3 sore)"
+          : "Jam berapa Anda ingin pesanan siap? (contoh: jam 10 pagi, jam 3 sore)",
     };
 
     return questions[missingField] || "Mohon lengkapi informasi pesanan Anda.";

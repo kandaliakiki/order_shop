@@ -11,9 +11,26 @@ export interface ConversationStateData {
     }>;
     deliveryDate?: string; // YYYY-MM-DD
     deliveryAddress?: string;
+    /**
+     * pickup vs delivery choice:
+     * - "pickup": customer will collect at the shop
+     * - "delivery": order will be delivered to an address
+     */
+    fulfillmentType?: "pickup" | "delivery";
+    /**
+     * Time of pickup or delivery, free‑form string in Indonesian, e.g. "jam 3 sore"
+     */
+    pickupTime?: string;
     customerName?: string;
   };
-  missingFields: Array<"products" | "quantities" | "deliveryDate" | "deliveryAddress">;
+  missingFields: Array<
+    | "products"
+    | "quantities"
+    | "deliveryDate"
+    | "deliveryAddress"
+    | "fulfillmentType"
+    | "pickupTime"
+  >;
   pendingQuestion?: {
     type: "missing_field" | "product_clarification";
     field?: string;
@@ -53,13 +70,22 @@ const conversationStateSchema = new mongoose.Schema<ConversationStateData>(
         ],
         deliveryDate: String,
         deliveryAddress: String,
+        fulfillmentType: String,
+        pickupTime: String,
         customerName: String,
       },
       default: {},
     },
     missingFields: {
       type: [String],
-      default: ["products", "quantities", "deliveryDate", "deliveryAddress"],
+      default: [
+        "products",
+        "quantities",
+        "deliveryDate",
+        "fulfillmentType",
+        "deliveryAddress",
+        "pickupTime",
+      ],
     },
     pendingQuestion: {
       type: {

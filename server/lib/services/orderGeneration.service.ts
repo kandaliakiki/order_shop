@@ -138,6 +138,20 @@ export class OrderGenerationService {
       notes = notes ? `${notes}\n${addressNote}` : addressNote;
     }
 
+    // Build fulfillment info notes if provided
+    if (aiAnalysis.fulfillmentType) {
+      const typeNote =
+        aiAnalysis.fulfillmentType === "pickup"
+          ? "Metode pemenuhan: Pickup (ambil di toko)."
+          : "Metode pemenuhan: Delivery (dikirim ke alamat).";
+      notes = notes ? `${notes}\n${typeNote}` : typeNote;
+    }
+
+    if (aiAnalysis.pickupTime) {
+      const timeNote = `Waktu pick up / kirim yang diminta: ${aiAnalysis.pickupTime}`;
+      notes = notes ? `${notes}\n${timeNote}` : timeNote;
+    }
+
     // Create order data
     const orderData: OrderData = {
       customerName,
@@ -149,6 +163,9 @@ export class OrderGenerationService {
       status: "New Order",
       createdAt: new Date(),
       pickupDate, // Will default to createdAt if not provided
+       // Structured fulfillment info (optional, mostly for display)
+      fulfillmentType: aiAnalysis.fulfillmentType,
+      pickupTime: aiAnalysis.pickupTime,
       source: "whatsapp",
       whatsappNumber,
       whatsappMessageId: new mongoose.Types.ObjectId(whatsappMessageId),

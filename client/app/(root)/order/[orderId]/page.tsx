@@ -23,6 +23,9 @@ interface OrderDetail {
   pickupDate?: string; // Optional pickup/delivery date
   source?: string;
   whatsappNumber?: string;
+  deliveryAddress?: string;
+  fulfillmentType?: "pickup" | "delivery";
+  pickupTime?: string;
 }
 
 interface IngredientRequirement {
@@ -205,17 +208,28 @@ export default function OrderDetailPage() {
             <p>
               <strong>Phone:</strong> {order.phoneNumber}
             </p>
-            {order.whatsappNumber && (
-              <p>
-                <strong>WhatsApp:</strong> {order.whatsappNumber}
-              </p>
-            )}
             <p>
               <strong>Order Date:</strong> {format(new Date(order.createdAt), "PPpp")}
             </p>
             {order.pickupDate && (
               <p>
-                <strong>Pickup Date:</strong> {format(new Date(order.pickupDate), "PPpp")}
+                <strong>Pickup Date:</strong> {format(new Date(order.pickupDate), "PPP")}
+              </p>
+            )}
+            {order.fulfillmentType && (
+              <p>
+                <strong>Fulfillment:</strong>{" "}
+                {order.fulfillmentType === "pickup" ? "Pickup (ambil di toko)" : "Delivery (dikirim)"}
+              </p>
+            )}
+            {order.pickupTime && (
+              <p>
+                <strong>Pickup/Delivery Time:</strong> {order.pickupTime}
+              </p>
+            )}
+            {order.deliveryAddress && (
+              <p>
+                <strong>Delivery Address:</strong> {order.deliveryAddress}
               </p>
             )}
             <p>

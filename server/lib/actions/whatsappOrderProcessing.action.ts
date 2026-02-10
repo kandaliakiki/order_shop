@@ -22,23 +22,52 @@ export interface ProcessWhatsAppMessageResult {
   whatsappResponse?: string; // The message to send back to customer
 }
 
+/** Structured data from conversational flow; when provided, order is built from this instead of re-parsing message */
+export interface ConversationalCollectedData {
+  products: Array<{ name: string; quantity: number }>;
+  deliveryDate?: string;
+  deliveryAddress?: string;
+  fulfillmentType?: "pickup" | "delivery";
+  pickupTime?: string;
+}
+
 /**
- * Process WhatsApp message: Analyze with AI, generate order, check stock, and respond
+ * Process WhatsApp message: Analyze with AI, generate order, check stock, and respond.
+ * When collectedData is provided (from conversational flow), order is built from it so pickupTime/fulfillmentType are persisted.
  */
 export async function processWhatsAppMessageForOrder(
   messageBody: string,
   whatsappNumber: string,
   whatsappMessageMongoId: string, // MongoDB _id (for order generation)
   twilioMessageId: string, // Twilio messageId/SID (for message updates)
-  skipStockCheck: boolean = false // If true, just create order without stock checks/reservations
+  skipStockCheck: boolean = false, // If true, just create order without stock checks/reservations
+  collectedData?: ConversationalCollectedData // When set, use this for order instead of AI-parsing messageBody
 ): Promise<ProcessWhatsAppMessageResult> {
   try {
-    // Step 1: AI Analysis
-    const availableProducts = await fetchProductsForAI();
-    const aiAnalysis = await analyzeMessageWithAI(
-      messageBody,
-      availableProducts
-    );
+    let aiAnalysis: ExtractedOrderData;
+
+    if (collectedData && collectedData.products && collectedData.products.length > 0) {
+      // Build order from conversational collected data so pickupTime, fulfillmentType, etc. are persisted
+      aiAnalysis = {
+        products: collectedData.products.map((p) => ({
+          name: p.name,
+          quantity: p.quantity,
+          confidence: 1,
+        })),
+        deliveryDate: collectedData.deliveryDate,
+        deliveryAddress: collectedData.deliveryAddress,
+        fulfillmentType: collectedData.fulfillmentType,
+        pickupTime: collectedData.pickupTime,
+        confidence: 1,
+      };
+    } else {
+      // Step 1: AI Analysis
+      const availableProducts = await fetchProductsForAI();
+      aiAnalysis = await analyzeMessageWithAI(
+        messageBody,
+        availableProducts
+      );
+    }
 
     // Step 2: Generate Order (initially with "New Order" status)
     const orderResult = await generateOrderFromAnalysis(
@@ -146,11 +175,21 @@ export async function processWhatsAppMessageForOrder(
       const baseUrl = frontendBaseUrl ? frontendBaseUrl.replace(/\/$/, "") : null;
       const orderLink = baseUrl ? `${baseUrl}/order/${orderResult.order.orderId}` : null;
 
-      whatsappResponse =
+      let confirmLines =
         `✅ Pesanan Anda sudah kami terima.\n\n` +
-        `Order ID: *${orderResult.order.orderId}*.\n` +
-        (orderLink ? `📱 Lihat detail pesanan: ${orderLink}\n\n` : "\n") +
+        `Order ID: *${orderResult.order.orderId}*.\n`;
+      if (orderResult.order.fulfillmentType) {
+        confirmLines += orderResult.order.fulfillmentType === "pickup"
+          ? `📦 Ambil di toko (pickup).\n`
+          : `🚚 Dikirim (delivery).\n`;
+      }
+      if (orderResult.order.pickupTime) {
+        confirmLines += `🕐 Waktu: ${orderResult.order.pickupTime}\n`;
+      }
+      confirmLines += (orderLink ? `📱 Lihat detail pesanan: ${orderLink}\n\n` : "\n") +
         `Kami akan cek stok dan mengonfirmasi berikutnya bila diperlukan.`;
+
+      whatsappResponse = confirmLines;
       console.log("✅ Order created without stock checks (skipStockCheck=true)");
     }
 

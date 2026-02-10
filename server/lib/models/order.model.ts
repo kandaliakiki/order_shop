@@ -20,6 +20,17 @@ export interface OrderData {
   status: string;
   createdAt: Date;
   pickupDate?: Date; // When order should be ready/picked up (defaults to createdAt if not provided)
+  /**
+   * How this order will be fulfilled:
+   * - "pickup": customer collects at the shop
+   * - "delivery": order is delivered to an address
+   */
+  fulfillmentType?: "pickup" | "delivery";
+  /**
+   * Time of pickup or delivery, free‑form string (e.g. "jam 3 sore").
+   * This is for human reference in the UI; we are not parsing it into a Date.
+   */
+  pickupTime?: string;
   source?: string; // "manual" or "whatsapp"
   whatsappNumber?: string;
   whatsappMessageId?: mongoose.Types.ObjectId;
@@ -97,6 +108,13 @@ const orderSchema = new mongoose.Schema<OrderData>({
   pickupDate: {
     type: Date,
     // Optional - if not provided, will default to createdAt in pre-save hook
+  },
+  fulfillmentType: {
+    type: String,
+    enum: ["pickup", "delivery"],
+  },
+  pickupTime: {
+    type: String,
   },
   source: {
     type: String,
