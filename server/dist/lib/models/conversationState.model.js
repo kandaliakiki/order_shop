@@ -30,6 +30,7 @@ const conversationStateSchema = new mongoose_1.default.Schema({
             fulfillmentType: String,
             pickupTime: String,
             customerName: String,
+            productsToRemove: [String],
         },
         default: {},
     },
@@ -47,15 +48,11 @@ const conversationStateSchema = new mongoose_1.default.Schema({
     pendingQuestion: {
         type: {
             type: String,
-            enum: ["missing_field", "product_clarification"],
+            enum: ["missing_field", "product_clarification", "new_or_edit", "order_selection", "add_or_change", "edit_follow_up", "edit_change_delivery", "edit_confirm_items", "edit_confirm_delivery"],
             field: String,
-            similarProducts: [
-                {
-                    name: String,
-                    price: Number,
-                },
-            ],
+            similarProducts: [{ name: String, price: Number }],
             questionText: String,
+            orderList: [{ orderId: String, summary: String }],
         },
     },
     conversationHistory: [
@@ -69,9 +66,10 @@ const conversationStateSchema = new mongoose_1.default.Schema({
         },
     ],
     lastMessageId: String,
-    orderId: {
-        type: String,
-    },
+    orderId: { type: String },
+    orderIntent: { type: String, enum: ["new_order", "edit_order"] },
+    selectedOrderId: { type: String },
+    editMode: { type: String, enum: ["add_items", "change_items"] },
 }, {
     timestamps: true,
 });

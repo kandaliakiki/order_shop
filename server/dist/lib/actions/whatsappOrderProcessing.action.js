@@ -125,23 +125,15 @@ function processWhatsAppMessageForOrder(messageBody_1, whatsappNumber_1, whatsap
                 }
             }
             else {
-                // Skip all stock checks/reservations: just confirm order creation
+                // Skip all stock checks/reservations: confirm with customer-only message (no admin/stock wording)
+                const messageFormatter = new whatsappMessageFormatter_service_1.WhatsAppMessageFormatter();
                 const frontendBaseUrl = process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
-                const baseUrl = frontendBaseUrl ? frontendBaseUrl.replace(/\/$/, "") : null;
-                const orderLink = baseUrl ? `${baseUrl}/order/${orderResult.order.orderId}` : null;
-                let confirmLines = `✅ Pesanan Anda sudah kami terima.\n\n` +
-                    `Order ID: *${orderResult.order.orderId}*.\n`;
-                if (orderResult.order.fulfillmentType) {
-                    confirmLines += orderResult.order.fulfillmentType === "pickup"
-                        ? `📦 Ambil di toko (pickup).\n`
-                        : `🚚 Dikirim (delivery).\n`;
-                }
-                if (orderResult.order.pickupTime) {
-                    confirmLines += `🕐 Waktu: ${orderResult.order.pickupTime}\n`;
-                }
-                confirmLines += (orderLink ? `📱 Lihat detail pesanan: ${orderLink}\n\n` : "\n") +
-                    `Kami akan cek stok dan mengonfirmasi berikutnya bila diperlukan.`;
-                whatsappResponse = confirmLines;
+                whatsappResponse = messageFormatter.formatCustomerOrderConfirmation({
+                    orderId: orderResult.order.orderId,
+                    fulfillmentType: orderResult.order.fulfillmentType,
+                    pickupTime: orderResult.order.pickupTime,
+                    frontendBaseUrl,
+                });
                 console.log("✅ Order created without stock checks (skipStockCheck=true)");
             }
             // Step 6: Update message analysis

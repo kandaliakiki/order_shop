@@ -8,10 +8,11 @@ class MessageRouterService {
         this.greetingPatterns = ['hi', 'hello', 'hey', 'menu', 'help'];
         this.agentNameVariations = ['bakebot', 'bake bot', 'bakery bot'];
     }
-    isStockAdditionMessage(message) {
-        const keywords = ['received', 'stock', 'delivery', 'arrived', 'new stock', 'just got'];
-        return keywords.some(keyword => message.includes(keyword));
-    }
+    // COMMENTED OUT: was routing "delivery" (and other keywords) to /stock, so user reply "Delivery" was ignored in order flow
+    // private isStockAdditionMessage(message: string): boolean {
+    //   const keywords = ['received', 'stock', 'delivery', 'arrived', 'new stock', 'just got'];
+    //   return keywords.some(keyword => message.includes(keyword));
+    // }
     /**
      * Check if message is a greeting
      * Only returns true if:
@@ -58,30 +59,29 @@ class MessageRouterService {
                 shouldCallAI: true,
             };
         }
-        // 4. Check for slash commands
+        // 4. Check for slash commands (stock/addstock commented out so it doesn't interfere with order flow)
         if (body.startsWith('/')) {
             const [command, ...args] = body.slice(1).split(' ');
-            // Support both 'bakesheet' (new) and 'batch' (legacy) for backward compatibility
             const normalizedCommand = command === 'batch' ? 'bakesheet' : command;
-            if (['order', 'bakesheet', 'waste', 'expiry', 'stock', 'addstock'].includes(normalizedCommand)) {
-                const finalCommand = normalizedCommand === 'addstock' ? 'stock' : normalizedCommand;
+            const allowedCommands = ['order', 'bakesheet', 'waste', 'expiry']; // 'stock', 'addstock' disabled
+            if (allowedCommands.includes(normalizedCommand)) {
                 return {
                     type: 'command',
-                    command: finalCommand,
+                    command: normalizedCommand,
                     args: args.join(' '),
                     shouldCallAI: true
                 };
             }
         }
-        // 5. Check for natural language stock addition keywords
-        if (this.isStockAdditionMessage(normalizedBody)) {
-            return {
-                type: 'command',
-                command: 'stock',
-                args: body,
-                shouldCallAI: true
-            };
-        }
+        // 5. COMMENTED OUT: natural-language stock routing – "delivery" was wrongly sent to /stock and broke order flow
+        // if (this.isStockAdditionMessage(normalizedBody)) {
+        //   return {
+        //     type: 'command',
+        //     command: 'stock',
+        //     args: body,
+        //     shouldCallAI: true
+        //   };
+        // }
         // 6. Default: treat as order (existing behavior - no change)
         // This means if user just sends "chiffon 1 cheesecake 1" without any command,
         // it will be processed as a regular order (current behavior)

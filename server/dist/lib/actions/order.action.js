@@ -12,12 +12,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fetchOrderById = exports.calculateTotalItemsSold = exports.countTotalOrders = exports.fetchOverallRevenue = exports.searchOrdersByCustomerName = exports.updateOrderStatus = exports.createOrder = exports.fetchOrders = void 0;
+exports.removeItemsFromOrder = exports.addItemsToOrder = exports.fetchOrdersByWhatsappNumber = exports.fetchOrderById = exports.calculateTotalItemsSold = exports.countTotalOrders = exports.fetchOverallRevenue = exports.searchOrdersByCustomerName = exports.updateOrderStatus = exports.updateOrderDeliveryDetails = exports.createOrder = exports.fetchOrders = void 0;
 const mongoose_1 = require("../mongoose");
 const order_model_1 = __importDefault(require("../models/order.model"));
 const stockDeduction_service_1 = require("../services/stockDeduction.service");
 const stockReservation_service_1 = require("../services/stockReservation.service");
 const ingredientStockCalculation_service_1 = require("../services/ingredientStockCalculation.service");
+const product_action_1 = require("./product.action");
 // Function to fetch all orders
 const fetchOrders = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (limit = 0, dateRange) {
     yield (0, mongoose_1.connectToDB)();
@@ -57,6 +58,33 @@ const createOrder = (orderData) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.createOrder = createOrder;
+/** Update delivery/pickup details of an existing order (for edit flow). */
+const updateOrderDeliveryDetails = (orderId, updates) => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, mongoose_1.connectToDB)();
+    try {
+        const order = yield order_model_1.default.findOne({ orderId });
+        if (!order)
+            return { success: false, error: "Order not found" };
+        const set = {};
+        if (updates.deliveryAddress !== undefined)
+            set.deliveryAddress = updates.deliveryAddress;
+        if (updates.pickupDate !== undefined)
+            set.pickupDate = updates.pickupDate;
+        if (updates.fulfillmentType !== undefined)
+            set.fulfillmentType = updates.fulfillmentType;
+        if (updates.pickupTime !== undefined)
+            set.pickupTime = updates.pickupTime;
+        if (Object.keys(set).length === 0)
+            return { success: true };
+        yield order_model_1.default.findOneAndUpdate({ orderId }, set, { new: true });
+        return { success: true };
+    }
+    catch (e) {
+        console.error("updateOrderDeliveryDetails:", e);
+        return { success: false, error: e.message };
+    }
+});
+exports.updateOrderDeliveryDetails = updateOrderDeliveryDetails;
 // Function to update the status of an order
 const updateOrderStatus = (orderId, newStatus) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, mongoose_1.connectToDB)();
@@ -210,3 +238,105 @@ const fetchOrderById = (orderId) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.fetchOrderById = fetchOrderById;
+/** Fetch orders for a WhatsApp number (for "edit order" flow). Recent first, non-cancelled. */
+const fetchOrdersByWhatsappNumber = (whatsappNumber, options) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    yield (0, mongoose_1.connectToDB)();
+    const limit = (_a = options === null || options === void 0 ? void 0 : options.limit) !== null && _a !== void 0 ? _a : 20;
+    const statuses = (_b = options === null || options === void 0 ? void 0 : options.statuses) !== null && _b !== void 0 ? _b : ["New Order", "Pending", "On Process", "Completed"];
+    // Match as stored: Twilio sends "whatsapp:+62..."
+    const orders = yield order_model_1.default.find({
+        whatsappNumber,
+        status: { $in: statuses },
+    })
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .lean();
+    return orders;
+});
+exports.fetchOrdersByWhatsappNumber = fetchOrdersByWhatsappNumber;
+const TAX_RATE = 0.1;
+/** Add items to an existing order (merge by product name, recalc totals). */
+const addItemsToOrder = (orderId, newItems) => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, mongoose_1.connectToDB)();
+    try {
+        const order = yield order_model_1.default.findOne({ orderId });
+        if (!order) {
+            return { success: false, error: "Order not found" };
+        }
+        const products = yield (0, product_action_1.fetchProducts)();
+        const findPrice = (name) => {
+            const n = name.toLowerCase().trim();
+            const p = products.find((x) => x.name.toLowerCase().trim() === n);
+            return p ? p.price : null;
+        };
+        const existingItems = order.items || [];
+        const norm = (s) => s.toLowerCase().trim();
+        // Ensure existing items have a valid price (look up from products if missing/NaN)
+        const byName = new Map();
+        for (const i of existingItems) {
+            const price = typeof i.price === "number" && !Number.isNaN(i.price)
+                ? i.price
+                : findPrice(i.name);
+            const numPrice = price != null ? Number(price) : 0;
+            byName.set(norm(i.name), { name: i.name, quantity: i.quantity, price: numPrice });
+        }
+        for (const item of newItems) {
+            const price = findPrice(item.name);
+            if (price == null) {
+                console.warn(`addItemsToOrder: product not found "${item.name}", skipping`);
+                continue;
+            }
+            const key = norm(item.name);
+            const existing = byName.get(key);
+            if (existing) {
+                existing.quantity += item.quantity;
+            }
+            else {
+                // Use product name from catalog for consistency
+                const product = products.find((x) => norm(x.name) === key);
+                byName.set(key, {
+                    name: product ? product.name : item.name,
+                    quantity: item.quantity,
+                    price,
+                });
+            }
+        }
+        const mergedItems = Array.from(byName.values());
+        const subtotal = Math.max(0, mergedItems.reduce((sum, i) => sum + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0));
+        const tax = subtotal * TAX_RATE;
+        const total = subtotal + tax;
+        const updated = yield order_model_1.default.findOneAndUpdate({ orderId }, { items: mergedItems, subtotal, tax, total }, { new: true });
+        return { success: true, order: updated };
+    }
+    catch (error) {
+        console.error("Error adding items to order:", error);
+        return { success: false, error: error.message };
+    }
+});
+exports.addItemsToOrder = addItemsToOrder;
+/** Remove items from an existing order by product name (case-insensitive). Recalc totals. */
+const removeItemsFromOrder = (orderId, productNamesToRemove) => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, mongoose_1.connectToDB)();
+    try {
+        const order = yield order_model_1.default.findOne({ orderId });
+        if (!order) {
+            return { success: false, error: "Order not found" };
+        }
+        const toRemoveSet = new Set(productNamesToRemove.map((n) => n.toLowerCase().trim()));
+        const remainingItems = (order.items || []).filter((i) => !toRemoveSet.has(i.name.toLowerCase().trim()));
+        if (remainingItems.length === 0) {
+            return { success: false, error: "Cannot remove all items from order" };
+        }
+        const subtotal = Math.max(0, remainingItems.reduce((sum, i) => sum + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0));
+        const tax = subtotal * TAX_RATE;
+        const total = subtotal + tax;
+        const updated = yield order_model_1.default.findOneAndUpdate({ orderId }, { items: remainingItems, subtotal, tax, total }, { new: true });
+        return { success: true, order: updated };
+    }
+    catch (error) {
+        console.error("Error removing items from order:", error);
+        return { success: false, error: error.message };
+    }
+});
+exports.removeItemsFromOrder = removeItemsFromOrder;

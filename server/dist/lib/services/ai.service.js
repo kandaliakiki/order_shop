@@ -77,6 +77,11 @@ Besok: ${tomorrowStr} (YYYY-MM-DD)
 
 PESAN TERBARU DARI PELANGGAN:
 "${messageBody}"
+${(currentState === null || currentState === void 0 ? void 0 : currentState.editOrderContext) ? `
+KONTEKS: Pelanggan sedang MENGEDIT pesanan yang sudah ada (orderId: ${currentState.editOrderContext.orderId}). Dari pesan terbaru, ekstrak juga:
+- products/quantities = item yang mau DITAMBAH (nama produk exact dari katalog, jumlah).
+- productsToRemove = nama produk (exact dari katalog) yang mau dihapus/dikurangi, jika pelanggan bilang "hapus X", "remove X", "batalkan X", "tidak usah X", dll. Return array of exact product names.
+` : ""}
 
 TUGAS ANDA:
 1. Ekstrak informasi dari pesan terbaru:
@@ -109,7 +114,8 @@ RESPOND DENGAN JSON:
     "fulfillmentType": "pickup" | "delivery" | null,
     "pickupTime": "string or null",
     "notes": "string or null",
-    "confidence": 0.85
+    "confidence": 0.85,
+    "productsToRemove": []
   },
   "missingFields": ["products", "quantities", "deliveryDate", "deliveryAddress", "fulfillmentType", "pickupTime"],
   "ambiguousProducts": [
@@ -130,6 +136,7 @@ RULES:
 - Quantities harus positive integers
 - deliveryDate: "besok" = ${tomorrowStr}, "hari ini" = ${todayStr}
 - Return null untuk field yang tidak ditemukan
+- productsToRemove: Hanya isi jika konteks edit order dan pelanggan menyebut hapus/remove/batalkan item. Gunakan nama produk EXACT dari katalog.
 - missingFields: List field yang BELUM lengkap (gunakan hanya nilai: "products", "quantities", "deliveryDate", "deliveryAddress", "fulfillmentType", "pickupTime")
 - ambiguousProducts: WAJIB diisi jika ada kata dari pelanggan yang bisa cocok ke >= 2 produk (misal "cake" cocok ke Sweet Cake dan Cheesecake), bahkan jika pada pesan yang sama juga ada produk lain yang sudah jelas.
 - Jika sebuah mention dianggap ambigu, JANGAN memasukkan produk hasil tebakannya ke "extractedData.products" sebelum pelanggan menjawab klarifikasi.
