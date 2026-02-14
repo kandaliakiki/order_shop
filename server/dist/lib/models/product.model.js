@@ -27,7 +27,7 @@ const productSchema = new mongoose_1.default.Schema({
         type: String,
         unique: true,
     },
-    name: { type: String, required: true, minlength: 3, maxlength: 30 },
+    name: { type: String, required: true, minlength: 3 },
     price: { type: Number, required: true, min: 0 },
     category: {
         type: mongoose_1.default.Schema.Types.ObjectId,

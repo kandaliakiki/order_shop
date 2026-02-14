@@ -29,7 +29,7 @@ const productSchema = new mongoose.Schema({
     type: String,
     unique: true,
   },
-  name: { type: String, required: true, minlength: 3, maxlength: 30 },
+  name: { type: String, required: true, minlength: 3 },
   price: { type: Number, required: true, min: 0 },
   category: {
     type: mongoose.Schema.Types.ObjectId,
