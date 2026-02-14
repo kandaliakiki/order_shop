@@ -1,7 +1,7 @@
-import Image from "next/image";
 import React from "react";
 import { Checkbox } from "../ui/checkbox";
 import { Product, useProducts } from "./ProductContext";
+import ProductImage from "./ProductImage";
 import ProductCardDropdown from "./ProductCardDropdown";
 import ProductIngredientsModal from "./ProductIngredientsModal";
 import { Card, CardContent } from "../ui/card";
@@ -39,10 +39,10 @@ const ProductCard: React.FC<Product> = ({
         <div className="absolute top-2 right-2 z-10">
           <ProductCardDropdown _id={_id} />
         </div>
-        <div className="aspect-square w-full overflow-hidden">
-          <Image
-            alt="product image"
-            src={imageUrl}
+        <div className="aspect-square w-full overflow-hidden relative">
+          <ProductImage
+            imageUrl={imageUrl}
+            alt={name}
             width={300}
             height={300}
             className="h-full w-full object-cover"

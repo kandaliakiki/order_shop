@@ -1,7 +1,7 @@
-import Image from "next/image";
 import React, { useState } from "react";
 import { Checkbox } from "../ui/checkbox";
 import { Product, useProducts } from "../product_component/ProductContext";
+import ProductImage from "../product_component/ProductImage";
 import ProductCardDropdown from "../product_component/ProductCardDropdown";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useCart } from "./CartContext";
@@ -35,8 +35,8 @@ const ProductCard: React.FC<Product> = ({
     <Card key={productId} className="overflow-hidden">
       <div className="relative">
         <div className="aspect-square w-full overflow-hidden">
-          <Image
-            src={imageUrl}
+          <ProductImage
+            imageUrl={imageUrl}
             alt={name}
             width={300}
             height={300}

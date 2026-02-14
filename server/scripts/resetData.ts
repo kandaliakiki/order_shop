@@ -10,16 +10,16 @@ import Product from "../lib/models/product.model";
 
 dotenv.config({ path: ".env.local" });
 
-const PLACEHOLDER_IMAGE = "/assets/placeholder.png";
+const CATEGORY_DEFAULT_IMAGE = "/assets/bakeries.svg";
 
 const categoriesData: { name: string; imageUrl: string }[] = [
-  { name: "Sourdough Breads", imageUrl: PLACEHOLDER_IMAGE },
-  { name: "Viennoiseries", imageUrl: PLACEHOLDER_IMAGE },
-  { name: "Breads & Buns", imageUrl: PLACEHOLDER_IMAGE },
-  { name: "Buns", imageUrl: PLACEHOLDER_IMAGE },
-  { name: "Cheesecakes", imageUrl: PLACEHOLDER_IMAGE },
-  { name: "Cakes", imageUrl: PLACEHOLDER_IMAGE },
-  { name: "Brownies", imageUrl: PLACEHOLDER_IMAGE },
+  { name: "Sourdough Breads", imageUrl: CATEGORY_DEFAULT_IMAGE },
+  { name: "Viennoiseries", imageUrl: CATEGORY_DEFAULT_IMAGE },
+  { name: "Breads & Buns", imageUrl: CATEGORY_DEFAULT_IMAGE },
+  { name: "Buns", imageUrl: CATEGORY_DEFAULT_IMAGE },
+  { name: "Cheesecakes", imageUrl: CATEGORY_DEFAULT_IMAGE },
+  { name: "Cakes", imageUrl: CATEGORY_DEFAULT_IMAGE },
+  { name: "Brownies", imageUrl: CATEGORY_DEFAULT_IMAGE },
 ];
 
 const productsData: { name: string; price: number; categoryName: string }[] = [
@@ -103,7 +103,7 @@ async function resetData() {
     for (const cat of categoriesData) {
       const created = await Category.create({
         name: cat.name,
-        imageUrl: cat.imageUrl || PLACEHOLDER_IMAGE,
+        imageUrl: cat.imageUrl || CATEGORY_DEFAULT_IMAGE,
       });
       categoryIds.set(cat.name, created._id as mongoose.Types.ObjectId);
       console.log(`  ✅ Category: ${cat.name}`);

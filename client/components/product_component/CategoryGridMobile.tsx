@@ -57,7 +57,7 @@ const CategoryGridMobile = ({ isAdmin }: { isAdmin: boolean }) => {
             )}
           >
             <Image
-              src="/assets/bakeries.png"
+              src="/assets/bakeries.svg"
               alt="category icon"
               width={20}
               height={20}
@@ -93,8 +93,10 @@ const CategoryGridMobile = ({ isAdmin }: { isAdmin: boolean }) => {
             >
               <Image
                 src={
-                  category.imageUrl === ""
-                    ? "/assets/bakeries.png"
+                  !category.imageUrl ||
+                  category.imageUrl.trim() === "" ||
+                  category.imageUrl.includes("placeholder")
+                    ? "/assets/bakeries.svg"
                     : category.imageUrl
                 }
                 alt="category icon"

@@ -1,7 +1,7 @@
 import React from "react";
 import { Product, useProducts } from "./ProductContext";
 import { Checkbox } from "../ui/checkbox";
-import Image from "next/image";
+import ProductImage from "./ProductImage";
 import ProductTableCheckbox from "./ProductTableCheckbox";
 import EditButtonProductTable from "./EditButtonProductTable";
 import ProductIngredientsPopover from "./ProductIngredientsPopover";
@@ -22,12 +22,13 @@ const FetchedProductRowsDesktop = () => {
           </td>
           <td className="px-4 py-4">
             <div className="h-16 w-16 rounded-lg overflow-hidden">
-              <Image
-                src={product.imageUrl}
+              <ProductImage
+                imageUrl={product.imageUrl}
                 alt={product.name}
                 width={64}
                 height={64}
                 className="h-full w-full object-cover"
+                placeholderClassName="h-full w-full object-contain p-2"
               />
             </div>
           </td>

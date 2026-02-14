@@ -44,8 +44,14 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
       }}
     >
       <Image
-        src={imageUrl === "" ? "/assets/bakeries.png" : imageUrl}
-        alt="cateogry icon"
+        src={
+          !imageUrl ||
+          imageUrl.trim() === "" ||
+          imageUrl.includes("placeholder")
+            ? "/assets/bakeries.svg"
+            : imageUrl
+        }
+        alt="category icon"
         width={20}
         height={20}
         className="mr-2"

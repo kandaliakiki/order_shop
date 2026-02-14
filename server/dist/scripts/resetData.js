@@ -21,15 +21,15 @@ const mongoose_1 = require("../lib/mongoose");
 const category_model_1 = __importDefault(require("../lib/models/category.model"));
 const product_model_1 = __importDefault(require("../lib/models/product.model"));
 dotenv_1.default.config({ path: ".env.local" });
-const PLACEHOLDER_IMAGE = "/assets/placeholder.png";
+const CATEGORY_DEFAULT_IMAGE = "/assets/bakeries.svg";
 const categoriesData = [
-    { name: "Sourdough Breads", imageUrl: PLACEHOLDER_IMAGE },
-    { name: "Viennoiseries", imageUrl: PLACEHOLDER_IMAGE },
-    { name: "Breads & Buns", imageUrl: PLACEHOLDER_IMAGE },
-    { name: "Buns", imageUrl: PLACEHOLDER_IMAGE },
-    { name: "Cheesecakes", imageUrl: PLACEHOLDER_IMAGE },
-    { name: "Cakes", imageUrl: PLACEHOLDER_IMAGE },
-    { name: "Brownies", imageUrl: PLACEHOLDER_IMAGE },
+    { name: "Sourdough Breads", imageUrl: CATEGORY_DEFAULT_IMAGE },
+    { name: "Viennoiseries", imageUrl: CATEGORY_DEFAULT_IMAGE },
+    { name: "Breads & Buns", imageUrl: CATEGORY_DEFAULT_IMAGE },
+    { name: "Buns", imageUrl: CATEGORY_DEFAULT_IMAGE },
+    { name: "Cheesecakes", imageUrl: CATEGORY_DEFAULT_IMAGE },
+    { name: "Cakes", imageUrl: CATEGORY_DEFAULT_IMAGE },
+    { name: "Brownies", imageUrl: CATEGORY_DEFAULT_IMAGE },
 ];
 const productsData = [
     { name: "Classic Sourdough", price: 21000, categoryName: "Sourdough Breads" },
@@ -108,7 +108,7 @@ function resetData() {
             for (const cat of categoriesData) {
                 const created = yield category_model_1.default.create({
                     name: cat.name,
-                    imageUrl: cat.imageUrl || PLACEHOLDER_IMAGE,
+                    imageUrl: cat.imageUrl || CATEGORY_DEFAULT_IMAGE,
                 });
                 categoryIds.set(cat.name, created._id);
                 console.log(`  ✅ Category: ${cat.name}`);

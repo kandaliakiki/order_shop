@@ -10,7 +10,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
+import ProductImage from "../product_component/ProductImage";
 import { useCart } from "./CartContext";
 import { Input } from "../ui/input";
 import CustomerInfoModal from "./CustomerInfoModal";
@@ -142,12 +142,13 @@ const CartItemSection = () => {
                   className="flex gap-3 mb-4 pb-4 border-b border-zinc-700"
                 >
                   <div className="w-16 h-16 bg-zinc-700 rounded-lg overflow-hidden">
-                    <Image
-                      src={item.imageUrl}
+                    <ProductImage
+                      imageUrl={item.imageUrl}
                       alt={item.name}
                       width={64}
                       height={64}
                       className="w-full h-full object-cover"
+                      placeholderClassName="w-full h-full object-contain p-1.5"
                     />
                   </div>
                   <div className="flex-1">
