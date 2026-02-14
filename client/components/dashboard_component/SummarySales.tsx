@@ -14,7 +14,7 @@ const SummarySales = () => {
         colorTheme="blue"
         backgroundImageSrc="/assets/backgroundcard-blue.svg"
         title="Overall Revenue"
-        value={formatPrice(metrics.overallRevenue ?? 0)}
+        value={formatPrice(Number(metrics.overallRevenue) || 0)}
         iconSrc="/assets/dollar.svg"
         iconBackgroundColor="green"
       />
@@ -38,7 +38,7 @@ const SummarySales = () => {
         colorTheme="green"
         backgroundImageSrc="/assets/backgroundcard-green.svg"
         title="Profit"
-        value={formatPrice(metrics.profit ?? 0)}
+        value={formatPrice(Number(metrics.profit) || 0)}
         iconSrc="/assets/profit.svg"
         iconBackgroundColor="yellow"
       />
