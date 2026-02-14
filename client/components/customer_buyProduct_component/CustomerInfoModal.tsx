@@ -20,6 +20,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { formatPrice } from "@/constants";
 
 // Define the validation schema
 const formSchema = z.object({
@@ -61,20 +62,20 @@ const CustomerInfoModal = ({
           <span>
             {item.name} x {item.quantity}
           </span>
-          <span>${(item.price * item.quantity).toFixed(2)}</span>
+          <span>{formatPrice(item.price * item.quantity)}</span>
         </div>
       ))}
       <div className="flex justify-between mt-5">
         <span>Subtotal</span>
-        <span>${subtotal.toFixed(2)}</span>
+        <span>{formatPrice(subtotal)}</span>
       </div>
       <div className="flex justify-between">
         <span>Tax</span>
-        <span>${tax.toFixed(2)}</span>
+        <span>{formatPrice(tax)}</span>
       </div>
       <div className="flex justify-between font-bold">
         <span>Total</span>
-        <span>${total.toFixed(2)}</span>
+        <span>{formatPrice(total)}</span>
       </div>
     </div>
   );

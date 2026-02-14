@@ -12,6 +12,7 @@ import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "../ui/button";
 import { useProducts } from "./ProductContext";
+import { formatPrice } from "@/constants";
 
 const ProductFilterDropdown = () => {
   const { setMaxPrice, isApplied, setIsApplied } = useProducts();
@@ -103,7 +104,7 @@ const ProductFilterDropdown = () => {
                     className="w-full custom-slider dark:bg-gray-800"
                     ref={setSliderElement}
                   />
-                  <p className="text-center flex dark:text-gray-300">$&nbsp;{sliderValue}</p>
+                  <p className="text-center flex dark:text-gray-300">{formatPrice(sliderValue)}</p>
                 </div>
                 <div className="w-full flex justify-center items-center  gap-3 mt-2">
                   <Button

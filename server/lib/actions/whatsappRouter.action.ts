@@ -1,11 +1,11 @@
 import { BakeSheetService } from "../services/bakeSheet.service";
 import { WasteLoggingService } from "../services/wasteLogging.service";
 import { ExpiryCheckService } from "../services/expiryCheck.service";
-import { StockAdditionService } from "../services/stockAddition.service";
+// import { StockAdditionService } from "../services/stockAddition.service"; // COMMENTED: /stock disabled to avoid "delivery" etc. breaking order flow
 import { processWhatsAppMessageForOrder } from "./whatsappOrderProcessing.action";
 
 export async function handleCommand(
-  command: "bakesheet" | "waste" | "expiry" | "stock",
+  command: "bakesheet" | "waste" | "expiry",
   args: string,
   whatsappNumber: string,
   messageId: string
@@ -35,13 +35,14 @@ export async function handleCommand(
         );
         return expiryResult.message;
 
-      case "stock":
-        const stockService = new StockAdditionService();
-        const stockResult = await stockService.processStockAddition(
-          args,
-          whatsappNumber
-        );
-        return stockResult.message;
+      // COMMENTED OUT: /stock was intercepting "Delivery" and other messages; re-enable when needed
+      // case "stock":
+      //   const stockService = new StockAdditionService();
+      //   const stockResult = await stockService.processStockAddition(
+      //     args,
+      //     whatsappNumber
+      //   );
+      //   return stockResult.message;
 
       default:
         return '❌ Unknown command. Type "menu" to see options.';

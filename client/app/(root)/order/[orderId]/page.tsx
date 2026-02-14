@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { formatPrice } from "@/constants";
 
 interface OrderDetail {
   _id: string;
@@ -250,15 +251,15 @@ export default function OrderDetailPage() {
           <CardContent className="space-y-2">
             <div className="flex justify-between">
               <span>Subtotal:</span>
-              <span>${order.subtotal.toFixed(2)}</span>
+              <span>{formatPrice(order.subtotal)}</span>
             </div>
             <div className="flex justify-between">
               <span>Tax:</span>
-              <span>${order.tax.toFixed(2)}</span>
+              <span>{formatPrice(order.tax)}</span>
             </div>
             <div className="flex justify-between font-bold text-lg border-t pt-2">
               <span>Total:</span>
-              <span>${order.total.toFixed(2)}</span>
+              <span>{formatPrice(order.total)}</span>
             </div>
           </CardContent>
         </Card>
@@ -283,7 +284,7 @@ export default function OrderDetailPage() {
                   </p>
                 </div>
                 <p className="font-bold">
-                  ${(item.price * item.quantity).toFixed(2)}
+                  {formatPrice(item.price * item.quantity)}
                 </p>
               </div>
             ))}

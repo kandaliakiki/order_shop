@@ -4,6 +4,7 @@ import { Checkbox } from "../ui/checkbox";
 import Image from "next/image";
 import ProductTableCheckbox from "./ProductTableCheckbox";
 import EditButtonProductTable from "./EditButtonProductTable";
+import { formatPrice } from "@/constants";
 
 const FetchedProductRowsMobile = () => {
   const { products } = useProducts(); // Use the context to get products
@@ -35,7 +36,7 @@ const FetchedProductRowsMobile = () => {
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">{product.category.name}</p>
               <p className="text-lg font-bold text-gray-900 dark:text-gray-300 mt-1">
-                ${product.price.toFixed(2)}
+                {formatPrice(product.price)}
               </p>
             </div>
           </div>

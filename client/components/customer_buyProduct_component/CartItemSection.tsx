@@ -14,6 +14,7 @@ import Image from "next/image";
 import { useCart } from "./CartContext";
 import { Input } from "../ui/input";
 import CustomerInfoModal from "./CustomerInfoModal";
+import { formatPrice } from "@/constants";
 
 const CartItemSection = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -153,7 +154,7 @@ const CartItemSection = () => {
                     <div className="flex justify-between">
                       <h3 className="font-medium">{item.name}</h3>
                       <span className="font-bold">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        {formatPrice(item.price * item.quantity)}
                       </span>
                     </div>
 
@@ -197,16 +198,16 @@ const CartItemSection = () => {
           <div className="mt-4">
             <div className="flex justify-between mb-2">
               <span className="text-zinc-400">Sub Total</span>
-              <span className="font-bold">${subtotal.toFixed(2)}</span>
+              <span className="font-bold">{formatPrice(subtotal)}</span>
             </div>
             <div className="flex justify-between mb-2">
               <span className="text-zinc-400">Tax ( 10% )</span>
-              <span>${tax.toFixed(2)}</span>
+              <span>{formatPrice(tax)}</span>
             </div>
             <div className="border-t border-zinc-700 my-4"></div>
             <div className="flex justify-between mb-6">
               <span>Total</span>
-              <span className="font-bold">${total.toFixed(2)}</span>
+              <span className="font-bold">{formatPrice(total)}</span>
             </div>
             <Button
               className="w-full bg-teal-600 hover:bg-teal-700"

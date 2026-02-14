@@ -1,4 +1,4 @@
-import { getStatusColor, Order, OrderStatus } from "@/constants";
+import { getStatusColor, Order, OrderStatus, formatPrice } from "@/constants";
 import Image from "next/image";
 import React, { useState } from "react";
 import { format } from "date-fns";
@@ -254,10 +254,9 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onStatusChange }) => {
       <div className="w-full flex justify-between">
         <p className="font-semibold dark:text-white">{order.items.length} Items</p>
         <p className="font-bold text-blue-500 dark:text-blue-400">
-          $
-          {order.items
-            .reduce((total, item) => total + item.price * item.quantity, 0)
-            .toFixed(2)}
+          {formatPrice(
+            order.items.reduce((total, item) => total + item.price * item.quantity, 0)
+          )}
         </p>
       </div>
       <div className="w-full flex flex-col gap-2 mt-2 text-sm">
@@ -266,7 +265,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onStatusChange }) => {
             <p className="text-neutral-400 dark:text-gray-400">
               {item.quantity} {item.name}
             </p>
-            <p className="font-semibold dark:text-white">${item.price.toFixed(2)}</p>
+            <p className="font-semibold dark:text-white">{formatPrice(item.price)}</p>
           </div>
         ))}
       </div>

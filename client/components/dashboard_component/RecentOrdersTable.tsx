@@ -1,6 +1,6 @@
 import React from "react";
 
-import { getStatusColor, Order } from "@/constants";
+import { getStatusColor, Order, formatPrice } from "@/constants";
 
 const RecentOrdersTable: React.FC<{ orders: Order[] }> = ({ orders }) => {
   return (
@@ -29,7 +29,7 @@ const RecentOrdersTable: React.FC<{ orders: Order[] }> = ({ orders }) => {
                 {order.items.length} items
               </td>
               <td className="py-4 px-4 border-b text-center dark:text-gray-300">
-                ${order.total.toFixed(2)}
+                {formatPrice(order.total)}
               </td>
               <td className="py-4 px-4 border-b text-center dark:text-gray-300">
                 {new Date(order.createdAt).toLocaleDateString()}

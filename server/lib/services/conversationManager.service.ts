@@ -1,10 +1,11 @@
 import { connectToDB } from "../mongoose";
 import ConversationState, { ConversationStateData } from "../models/conversationState.model";
-import { AIService, ConversationAnalysisResult } from "./ai.service";
+import { AIService, ConversationAnalysisResult, ExtractedOrderData } from "./ai.service";
 import { ProductSimilarityService } from "./productSimilarity.service";
 import { fetchProducts } from "../actions/product.action";
 import { processWhatsAppMessageForOrder } from "../actions/whatsappOrderProcessing.action";
-import { ExtractedOrderData } from "./ai.service";
+import { fetchOrdersByWhatsappNumber, addItemsToOrder, removeItemsFromOrder, fetchOrderById, updateOrderDeliveryDetails } from "../actions/order.action";
+import { WhatsAppMessageFormatter } from "./whatsappMessageFormatter.service";
 
 export interface ProcessConversationResult {
   success: boolean;
@@ -70,6 +71,9 @@ export class ConversationManager {
         state.conversationHistory = [];
         state.lastMessageId = undefined;
         state.orderId = undefined;
+        state.orderIntent = undefined;
+        state.selectedOrderId = undefined;
+        state.editMode = undefined;
         await state.save();
       }
 
@@ -79,6 +83,283 @@ export class ConversationManager {
         message: messageBody,
         timestamp: new Date(),
       });
+
+      // 2b. New vs edit order: if user has existing orders and we haven't chosen yet, ask or handle reply
+      const existingOrders = await fetchOrdersByWhatsappNumber(phoneNumber, { limit: 10 });
+      const hasOrders = existingOrders && existingOrders.length > 0;
+
+      // Only ask "new or edit?" when we're not already waiting for that answer (otherwise we'd re-ask on every message)
+      if (hasOrders && state.orderIntent == null && state.pendingQuestion?.type !== "new_or_edit") {
+        const askNewOrEdit =
+          "Anda sudah punya pesanan. Mau *pesan baru* atau *edit pesanan* yang sudah ada?\n\nBalas: \"pesan baru\" atau \"edit\".";
+        state.pendingQuestion = {
+          type: "new_or_edit",
+          questionText: askNewOrEdit,
+        };
+        state.conversationHistory.push({ role: "assistant", message: askNewOrEdit, timestamp: new Date() });
+        state.lastMessageId = twilioMessageId;
+        await state.save();
+        return { success: true, whatsappResponse: askNewOrEdit, shouldCreateOrder: false };
+      }
+
+      if (state.pendingQuestion?.type === "new_or_edit") {
+        const normalized = messageBody.toLowerCase().trim();
+        const wantsNew =
+          /^(pesan\s*baru|order\s*baru|baru|new|tambah\s*pesanan|new\s*order)$/.test(normalized) ||
+          normalized.includes("pesan baru") ||
+          normalized.includes("order baru");
+        const wantsEdit =
+          /^(edit|ubah|edit\s*pesanan|edit\s*order)$/.test(normalized) ||
+          normalized.includes("edit pesanan") ||
+          normalized.includes("ubah pesanan");
+
+        if (wantsNew) {
+          state.orderIntent = "new_order";
+          state.pendingQuestion = undefined;
+          await state.save();
+          // Fall through to normal flow (will run AI analysis below)
+        } else if (wantsEdit) {
+          state.orderIntent = "edit_order";
+          const orderList = existingOrders.slice(0, 10).map((o: any) => ({
+            orderId: o.orderId,
+            summary: (o.items || []).map((i: any) => `${i.name} ${i.quantity}`).join(", ") || "(no items)",
+          }));
+          const lines = ["Pesanan Anda:\n"];
+          orderList.forEach((o: { orderId: string; summary: string }, i: number) => {
+            lines.push(`${i + 1}. *${o.orderId}* – ${o.summary}`);
+          });
+          lines.push("\nPesanan mana yang mau diedit? Balas dengan nomor (1, 2, ...) atau ID pesanan (misal O-0501).");
+          const orderSelectionText = lines.join("\n");
+          state.pendingQuestion = {
+            type: "order_selection",
+            questionText: orderSelectionText,
+            orderList,
+          };
+          state.conversationHistory.push({ role: "assistant", message: orderSelectionText, timestamp: new Date() });
+          state.lastMessageId = twilioMessageId;
+          await state.save();
+          return { success: true, whatsappResponse: orderSelectionText, shouldCreateOrder: false };
+        } else {
+          const retry = "Maaf, pilih salah satu: balas *pesan baru* atau *edit*.";
+          state.conversationHistory.push({ role: "assistant", message: retry, timestamp: new Date() });
+          state.lastMessageId = twilioMessageId;
+          await state.save();
+          return { success: true, whatsappResponse: retry, shouldCreateOrder: false };
+        }
+      }
+
+      if (state.pendingQuestion?.type === "order_selection") {
+        let list: Array<{ orderId: string; summary: string }> =
+          (state.pendingQuestion.orderList as Array<{ orderId: string; summary: string }>) || [];
+        if (list.length === 0) {
+          const refetched = await fetchOrdersByWhatsappNumber(phoneNumber, { limit: 10 });
+          list = (refetched || []).map((o: any) => ({
+            orderId: o.orderId,
+            summary: (o.items || []).map((i: any) => `${i.name} ${i.quantity}`).join(", ") || "(no items)",
+          }));
+        }
+        const trimmed = messageBody.trim();
+        const normalized = trimmed.toLowerCase();
+        let chosenId: string | null = null;
+        const num = parseInt(trimmed, 10);
+        if (!isNaN(num) && num >= 1 && num <= list.length) {
+          chosenId = list[num - 1].orderId;
+        }
+        if (!chosenId && /^O-\d+$/i.test(trimmed)) {
+          chosenId = trimmed;
+        }
+        if (!chosenId && list.length > 0 && (normalized === "pertama" || normalized === "first" || normalized === "1")) {
+          chosenId = list[0].orderId;
+        }
+        if (chosenId) {
+          state.selectedOrderId = chosenId;
+          state.editMode = "add_items";
+          state.pendingQuestion = undefined;
+          state.missingFields = ["products", "quantities"];
+          state.collectedData = {};
+          const askEdit =
+            `Baik, pesanan *${chosenId}*. Mau tambah atau ubah apa?\n\n` +
+            `Sebutkan produk dan jumlah (contoh: Chiffon 2, Cheesecake 1), atau item yang mau dihapus (contoh: hapus Cheesecake).`;
+          state.conversationHistory.push({ role: "assistant", message: askEdit, timestamp: new Date() });
+          state.lastMessageId = twilioMessageId;
+          await state.save();
+          return { success: true, whatsappResponse: askEdit, shouldCreateOrder: false };
+        }
+        const retry = "Mohon pilih pesanan dengan nomor (1, 2, ...) atau ID pesanan (misal O-0501).";
+        state.conversationHistory.push({ role: "assistant", message: retry, timestamp: new Date() });
+        state.lastMessageId = twilioMessageId;
+        await state.save();
+        return { success: true, whatsappResponse: retry, shouldCreateOrder: false };
+      }
+
+      // 2c. Edit: user confirming items (back-and-forth until they say ya/betul)
+      if (state.pendingQuestion?.type === "edit_confirm_items" && state.selectedOrderId) {
+        const normalized = messageBody.toLowerCase().trim();
+        const confirmed =
+          /^(ya|betul|benar|sudah benar|ok|oke|correct|yes|konfirmasi)$/.test(normalized) ||
+          normalized === "ya" || normalized === "betul";
+        if (confirmed) {
+          const askDelivery =
+            "Tanggal, alamat, dan jam pengambilan/pengiriman tetap sama dengan pesanan ini atau mau diubah?\n\nBalas *sama* atau *ubah*.";
+          state.pendingQuestion = { type: "edit_confirm_delivery", questionText: askDelivery };
+          state.conversationHistory.push({ role: "assistant", message: askDelivery, timestamp: new Date() });
+          state.lastMessageId = twilioMessageId;
+          await state.save();
+          return { success: true, whatsappResponse: askDelivery, shouldCreateOrder: false };
+        }
+        // User sent more changes: re-analyze and show proposed again
+        const productsForAI = (await fetchProducts()).map((p) => ({ name: p.name, price: p.price }));
+        const analysis = await this.aiService.analyzeWithContext(
+          messageBody,
+          productsForAI,
+          state.conversationHistory.map((h: { role: string; message: string }) => ({ role: h.role, message: h.message })),
+          {
+            collectedData: state.collectedData,
+            missingFields: ["products", "quantities"],
+            ...(state.selectedOrderId ? { editOrderContext: { orderId: state.selectedOrderId } } : {}),
+          }
+        );
+        this.updateCollectedData(state, analysis.extractedData);
+        const msg = await this.buildProposedEditSummary(state.selectedOrderId, state);
+        state.pendingQuestion = { type: "edit_confirm_items", questionText: msg };
+        state.conversationHistory.push({ role: "assistant", message: msg, timestamp: new Date() });
+        state.lastMessageId = twilioMessageId;
+        await state.save();
+        return { success: true, whatsappResponse: msg, shouldCreateOrder: false };
+      }
+
+      // 2c2. Edit: user confirming delivery (sama = apply and save; ubah = ask for new detail)
+      if (state.pendingQuestion?.type === "edit_confirm_delivery" && state.selectedOrderId) {
+        const normalized = messageBody.toLowerCase().trim();
+        const same = /^(sama|tetap|ya|betul|ok|oke|tidak|no)$/.test(normalized) || normalized.includes("sama") || normalized.includes("tetap");
+        const wantChange = /^(ubah|change|ubah alamat|ubah tanggal|ubah jam)$/.test(normalized) || normalized.includes("ubah");
+        if (same && !wantChange) {
+          const oid = state.selectedOrderId;
+          const toRemove = state.collectedData.productsToRemove || [];
+          const toAdd = (state.collectedData.products || []).map((p: { name: string; quantity: number }) => ({ name: p.name, quantity: p.quantity }));
+          if (toRemove.length > 0) {
+            const removeResult = await removeItemsFromOrder(oid, toRemove);
+            if (!removeResult.success) {
+              state.conversationHistory.push({ role: "assistant", message: removeResult.error || "❌ Gagal menghapus item.", timestamp: new Date() });
+              await state.save();
+              return { success: false, whatsappResponse: removeResult.error || "❌ Gagal menghapus item.", shouldCreateOrder: false };
+            }
+          }
+          if (toAdd.length > 0) {
+            const addResult = await addItemsToOrder(oid, toAdd);
+            if (!addResult.success) {
+              state.conversationHistory.push({ role: "assistant", message: addResult.error || "❌ Gagal menambah item.", timestamp: new Date() });
+              await state.save();
+              return { success: false, whatsappResponse: addResult.error || "❌ Gagal menambah item.", shouldCreateOrder: false };
+            }
+          }
+          state.status = "completed";
+          state.pendingQuestion = undefined;
+          state.lastMessageId = twilioMessageId;
+          state.orderId = oid;
+          await state.save();
+          const formatter = new WhatsAppMessageFormatter();
+          const frontendBaseUrl = process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
+          const updatedOrder = await fetchOrderById(oid);
+          const finalMsg = formatter.formatCustomerOrderConfirmation({
+            orderId: oid,
+            fulfillmentType: updatedOrder?.fulfillmentType,
+            pickupTime: updatedOrder?.pickupTime,
+            frontendBaseUrl,
+          });
+          state.conversationHistory.push({ role: "assistant", message: finalMsg, timestamp: new Date() });
+          await state.save();
+          return { success: true, whatsappResponse: finalMsg, orderId: oid, shouldCreateOrder: false };
+        }
+        if (wantChange) {
+          const askDetail = "Baik. Sebutkan alamat baru, tanggal pengambilan/pengiriman, atau jam.\n\nContoh: jam 4 sore, besok, Jl. Merdeka No 1.";
+          state.pendingQuestion = { type: "edit_change_delivery", questionText: askDetail };
+          state.conversationHistory.push({ role: "assistant", message: askDetail, timestamp: new Date() });
+          state.lastMessageId = twilioMessageId;
+          await state.save();
+          return { success: true, whatsappResponse: askDetail, shouldCreateOrder: false };
+        }
+        const askAgain = "Balas *sama* (tanggal/alamat/jam tetap) atau *ubah* (mau ubah alamat/tanggal/jam).";
+        state.conversationHistory.push({ role: "assistant", message: askAgain, timestamp: new Date() });
+        state.lastMessageId = twilioMessageId;
+        await state.save();
+        return { success: true, whatsappResponse: askAgain, shouldCreateOrder: false };
+      }
+
+      // 2c3. After editing: ask add more or change delivery (legacy; new flow uses confirm items -> confirm delivery -> save)
+      if (state.pendingQuestion?.type === "edit_follow_up") {
+        const normalized = messageBody.toLowerCase().trim();
+        const wantsAdd = /tambah|add/i.test(normalized) || /^[\d\s\w]+\s+\d+\s*(pcs)?$/i.test(normalized);
+        const wantsChange = /ubah|change|alamat|tanggal|jam|delivery|pickup|dikirim|ambil/i.test(normalized);
+        if (wantsAdd && !wantsChange) {
+          state.collectedData.products = [];
+          state.collectedData.productsToRemove = undefined;
+          state.missingFields = ["products", "quantities"];
+          state.pendingQuestion = undefined;
+          await state.save();
+          // Fall through to AI analysis so "tambah cheesecake 2" gets extracted
+        } else if (wantsChange) {
+          const askDetail =
+            "Baik. Sebutkan alamat baru, tanggal pengambilan/pengiriman, atau jam.\n\nContoh: jam 4 sore, besok, Jl. Merdeka No 1.";
+          state.pendingQuestion = { type: "edit_change_delivery", questionText: askDetail };
+          state.conversationHistory.push({ role: "assistant", message: askDetail, timestamp: new Date() });
+          state.lastMessageId = twilioMessageId;
+          await state.save();
+          return { success: true, whatsappResponse: askDetail, shouldCreateOrder: false };
+        } else {
+          const askAgain =
+            "Mau tambah item lagi atau ubah detail pengiriman? Balas *tambah* (sebutkan item) atau *ubah* (alamat/tanggal/jam).";
+          state.pendingQuestion = { type: "edit_follow_up", questionText: askAgain };
+          state.conversationHistory.push({ role: "assistant", message: askAgain, timestamp: new Date() });
+          state.lastMessageId = twilioMessageId;
+          await state.save();
+          return { success: true, whatsappResponse: askAgain, shouldCreateOrder: false };
+        }
+      }
+
+      // 2d. Edit: user sent new delivery details -> update delivery, apply item changes, then send final confirmation
+      if (state.pendingQuestion?.type === "edit_change_delivery" && state.selectedOrderId) {
+        const oid = state.selectedOrderId;
+        const analysis = await this.aiService.analyzeWithContext(
+          messageBody,
+          (await fetchProducts()).map((p) => ({ name: p.name, price: p.price })),
+          state.conversationHistory.map((h: { role: string; message: string }) => ({ role: h.role, message: h.message })),
+          { collectedData: state.collectedData, missingFields: [] }
+        );
+        const u = analysis.extractedData;
+        const updates: { deliveryAddress?: string; pickupDate?: Date; fulfillmentType?: "pickup" | "delivery"; pickupTime?: string } = {};
+        if (u.deliveryAddress) updates.deliveryAddress = u.deliveryAddress;
+        if (u.pickupTime) updates.pickupTime = u.pickupTime;
+        if (u.fulfillmentType) updates.fulfillmentType = u.fulfillmentType;
+        if (u.deliveryDate) {
+          try {
+            const parsed = new Date(u.deliveryDate);
+            if (!isNaN(parsed.getTime())) updates.pickupDate = parsed;
+          } catch (_) {}
+        }
+        await updateOrderDeliveryDetails(oid, updates);
+        const toRemove = state.collectedData.productsToRemove || [];
+        const toAdd = (state.collectedData.products || []).map((p: { name: string; quantity: number }) => ({ name: p.name, quantity: p.quantity }));
+        if (toRemove.length > 0) await removeItemsFromOrder(oid, toRemove);
+        if (toAdd.length > 0) await addItemsToOrder(oid, toAdd);
+        state.status = "completed";
+        state.pendingQuestion = undefined;
+        state.lastMessageId = twilioMessageId;
+        state.orderId = oid;
+        await state.save();
+        const formatter = new WhatsAppMessageFormatter();
+        const frontendBaseUrl = process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
+        const updatedOrder = await fetchOrderById(oid);
+        const finalMsg = formatter.formatCustomerOrderConfirmation({
+          orderId: oid,
+          fulfillmentType: updatedOrder?.fulfillmentType,
+          pickupTime: updatedOrder?.pickupTime,
+          frontendBaseUrl,
+        });
+        state.conversationHistory.push({ role: "assistant", message: finalMsg, timestamp: new Date() });
+        await state.save();
+        return { success: true, whatsappResponse: finalMsg, orderId: oid, shouldCreateOrder: false };
+      }
 
       // 3. Get available products
       const availableProducts = await fetchProducts();
@@ -218,6 +499,18 @@ export class ConversationManager {
           };
         }
 
+        // Edit order: show proposed items and ask for confirmation (no DB write yet)
+        if (state.orderIntent === "edit_order" && state.selectedOrderId && state.editMode === "add_items") {
+          const oid = state.selectedOrderId;
+          const msg = await this.buildProposedEditSummary(oid, state);
+          state.pendingQuestion = { type: "edit_confirm_items", questionText: msg };
+          state.lastMessageId = twilioMessageId;
+          state.orderId = oid;
+          state.conversationHistory.push({ role: "assistant", message: msg, timestamp: new Date() });
+          await state.save();
+          return { success: true, whatsappResponse: msg, orderId: oid, shouldCreateOrder: false };
+        }
+
         const orderMessage = this.buildOrderMessageFromCollectedData(state.collectedData);
         const collectedForOrder = {
           products: (state.collectedData.products || []).map((p: { name: string; quantity: number }) => ({
@@ -271,6 +564,9 @@ export class ConversationManager {
         {
           collectedData: state.collectedData,
           missingFields: state.missingFields,
+          ...(state.orderIntent === "edit_order" && state.selectedOrderId
+            ? { editOrderContext: { orderId: state.selectedOrderId } }
+            : {}),
         }
       );
 
@@ -288,6 +584,9 @@ export class ConversationManager {
         state.pendingQuestion = undefined;
         state.status = "collecting";
         state.orderId = undefined;
+        state.orderIntent = undefined;
+        state.selectedOrderId = undefined;
+        state.editMode = undefined;
         // Clear history so old orders are not re-used in context
         state.conversationHistory = [];
 
@@ -436,7 +735,18 @@ export class ConversationManager {
         };
       }
 
-      // 8. All data complete! Create order from structured collected data so pickupTime/fulfillmentType are persisted
+      // 8. All data complete! New order: create. Edit: show proposed items and ask confirm (no DB write yet)
+      if (state.orderIntent === "edit_order" && state.selectedOrderId && state.editMode === "add_items") {
+        const oid = state.selectedOrderId;
+        const msg = await this.buildProposedEditSummary(oid, state);
+        state.pendingQuestion = { type: "edit_confirm_items", questionText: msg };
+        state.lastMessageId = twilioMessageId;
+        state.orderId = oid;
+        state.conversationHistory.push({ role: "assistant", message: msg, timestamp: new Date() });
+        await state.save();
+        return { success: true, whatsappResponse: msg, orderId: oid, shouldCreateOrder: false };
+      }
+
       const orderMessage = this.buildOrderMessageFromCollectedData(state.collectedData);
       const collectedForOrder = {
         products: (state.collectedData.products || []).map((p: { name: string; quantity: number }) => ({
@@ -459,8 +769,6 @@ export class ConversationManager {
       );
 
       if (orderResult.success && orderResult.orderId) {
-        // Mark conversation as completed and store orderId,
-        // but keep this single ConversationState reusable for future orders.
         state.status = "completed";
         state.lastMessageId = twilioMessageId;
         state.orderId = orderResult.orderId;
@@ -473,7 +781,6 @@ export class ConversationManager {
           shouldCreateOrder: true,
         };
       } else {
-        // Keep status as "collecting" so user can retry with the same data
         state.status = "collecting";
         await state.save();
 
@@ -550,6 +857,11 @@ export class ConversationManager {
     if (extractedData.customerName) {
       state.collectedData.customerName = extractedData.customerName;
     }
+
+    // When editing: products to remove (from "hapus X", etc.)
+    if (extractedData.productsToRemove && extractedData.productsToRemove.length > 0) {
+      state.collectedData.productsToRemove = extractedData.productsToRemove;
+    }
   }
 
   /**
@@ -575,43 +887,45 @@ export class ConversationManager {
       | "pickupTime"
     > = [];
 
-    // Check products
-    if (
-      !state.collectedData.products ||
-      state.collectedData.products.length === 0
-    ) {
-      missing.push("products");
-    } else {
-      // Check quantities (all products must have quantity > 0)
-      const hasInvalidQuantity = state.collectedData.products.some(
-        (p) => !p.quantity || p.quantity <= 0
-      );
-      if (hasInvalidQuantity) {
-        missing.push("quantities");
+    const isEditAddItems =
+      state.orderIntent === "edit_order" && state.editMode === "add_items";
+    const hasRemovals = !!(state.collectedData.productsToRemove && state.collectedData.productsToRemove.length > 0);
+
+    // Check products (when editing, we can have only removals and no products to add)
+    if (!isEditAddItems || !hasRemovals) {
+      if (
+        !state.collectedData.products ||
+        state.collectedData.products.length === 0
+      ) {
+        missing.push("products");
+      } else {
+        const hasInvalidQuantity = state.collectedData.products.some(
+          (p) => !p.quantity || p.quantity <= 0
+        );
+        if (hasInvalidQuantity) {
+          missing.push("quantities");
+        }
       }
+    } else if (isEditAddItems && hasRemovals) {
+      // Edit with only removals: no products required
     }
 
-    // Check delivery date
-    if (!state.collectedData.deliveryDate) {
-      missing.push("deliveryDate");
-    }
-
-    // Check fulfillment type (pickup vs delivery)
-    if (!state.collectedData.fulfillmentType) {
-      missing.push("fulfillmentType");
-    }
-
-    // Check delivery address – only required if fulfillmentType is delivery
-    if (
-      state.collectedData.fulfillmentType === "delivery" &&
-      !state.collectedData.deliveryAddress
-    ) {
-      missing.push("deliveryAddress");
-    }
-
-    // Check pickup / delivery time – always ask for a time
-    if (!state.collectedData.pickupTime) {
-      missing.push("pickupTime");
+    if (!isEditAddItems) {
+      if (!state.collectedData.deliveryDate) {
+        missing.push("deliveryDate");
+      }
+      if (!state.collectedData.fulfillmentType) {
+        missing.push("fulfillmentType");
+      }
+      if (
+        state.collectedData.fulfillmentType === "delivery" &&
+        !state.collectedData.deliveryAddress
+      ) {
+        missing.push("deliveryAddress");
+      }
+      if (!state.collectedData.pickupTime) {
+        missing.push("pickupTime");
+      }
     }
 
     return {
@@ -648,6 +962,14 @@ export class ConversationManager {
             : "Jam berapa Anda ingin pesanan siap? (contoh: jam 10 pagi, jam 3 sore)",
       };
       return questions[missingField];
+    }
+
+    // In edit mode we only need products/quantities – never use AI suggestion (it often asks about date/address and causes a loop)
+    const isEditAddItems =
+      state.orderIntent === "edit_order" && state.editMode === "add_items";
+    if (isEditAddItems && (missingField === "products" || missingField === "quantities")) {
+      const oid = state.selectedOrderId || "";
+      return `Mau tambah atau ubah apa ke pesanan *${oid}*? Sebutkan produk dan jumlah (contoh: Chiffon 2, Cheesecake 1), atau item yang mau dihapus (contoh: hapus Cheesecake).`;
     }
 
     // Use AI suggestion if available for other fields
@@ -698,6 +1020,39 @@ export class ConversationManager {
       phoneNumber,
       status: "collecting",
     });
+  }
+
+  /**
+   * Build proposed order summary for edit flow (no DB write).
+   * Order items + additions - removals = proposed list. Returns message text.
+   */
+  private async buildProposedEditSummary(
+    orderId: string,
+    state: ConversationStateData
+  ): Promise<string> {
+    const order = await fetchOrderById(orderId);
+    if (!order || !order.items) return "Pesanan tidak ditemukan.";
+    const norm = (s: string) => s.toLowerCase().trim();
+    const proposed = new Map<string, { name: string; quantity: number }>();
+    for (const i of order.items) {
+      proposed.set(norm(i.name), { name: i.name, quantity: i.quantity });
+    }
+    for (const name of state.collectedData.productsToRemove || []) {
+      const key = Array.from(proposed.keys()).find((k) => k === norm(name));
+      if (key) proposed.delete(key);
+    }
+    for (const p of state.collectedData.products || []) {
+      proposed.set(norm(p.name), { name: p.name, quantity: p.quantity });
+    }
+    const lines = Array.from(proposed.values()).map(
+      (v) => `• ${v.name}: ${v.quantity} pcs`
+    );
+    if (lines.length === 0) return "Pesanan kosong. Sebutkan item yang mau ditambah.";
+    return (
+      `Pesanan Anda saat ini (*${orderId}*):\n\n` +
+      lines.join("\n") +
+      `\n\nApakah item pesanan sudah benar? Balas *ya* atau *betul* untuk konfirmasi, atau sebutkan yang mau diubah.`
+    );
   }
 
   /**

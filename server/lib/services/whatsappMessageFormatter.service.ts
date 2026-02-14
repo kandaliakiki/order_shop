@@ -1,10 +1,42 @@
 import { IngredientRequirement } from "./ingredientStockCalculation.service";
 import { LotUsageInfo } from "./lotDeduction.service";
 
+export interface CustomerOrderConfirmationOptions {
+  orderId: string;
+  fulfillmentType?: "pickup" | "delivery";
+  pickupTime?: string;
+  frontendBaseUrl?: string;
+}
+
 export class WhatsAppMessageFormatter {
   /**
+   * Format order confirmation for the *customer* (WhatsApp reply).
+   * No admin/stock wording. Use this for new orders and edit completions.
+   */
+  formatCustomerOrderConfirmation(options: CustomerOrderConfirmationOptions): string {
+    const { orderId, fulfillmentType, pickupTime, frontendBaseUrl } = options;
+    let message =
+      `✅ Pesanan Anda sudah kami terima.\n\n` +
+      `Order ID: *${orderId}*.\n`;
+    if (fulfillmentType) {
+      message += fulfillmentType === "pickup"
+        ? `📦 Ambil di toko (pickup).\n`
+        : `🚚 Dikirim (delivery).\n`;
+    }
+    if (pickupTime) {
+      message += `🕐 Waktu: ${pickupTime}\n`;
+    }
+    if (frontendBaseUrl) {
+      const baseUrl = frontendBaseUrl.replace(/\/$/, "");
+      message += `📱 Lihat detail pesanan: ${baseUrl}/order/${orderId}\n\n`;
+    }
+    message += `Kami akan cek stok dan mengonfirmasi berikutnya bila diperlukan`;
+    return message;
+  }
+
+  /**
    * Format order confirmation message (when all ingredients are sufficient)
-   * Message for store owner/bakery manager
+   * Message for store owner/bakery manager – do not use for customer WhatsApp.
    * Includes lot usage details if available
    */
   formatOrderConfirmationMessage(

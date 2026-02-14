@@ -3,6 +3,7 @@
 import React from "react";
 import CardSummary from "./CardSummary";
 import { useDashboardContext } from "@/components/dashboard_component/DashboardContext";
+import { formatPrice } from "@/constants";
 
 const SummarySales = () => {
   const { metrics } = useDashboardContext();
@@ -13,7 +14,7 @@ const SummarySales = () => {
         colorTheme="blue"
         backgroundImageSrc="/assets/backgroundcard-blue.svg"
         title="Overall Revenue"
-        value={`$${metrics.overallRevenue}`}
+        value={formatPrice(metrics.overallRevenue ?? 0)}
         iconSrc="/assets/dollar.svg"
         iconBackgroundColor="green"
       />
@@ -37,7 +38,7 @@ const SummarySales = () => {
         colorTheme="green"
         backgroundImageSrc="/assets/backgroundcard-green.svg"
         title="Profit"
-        value={`$${metrics.profit}`}
+        value={formatPrice(metrics.profit ?? 0)}
         iconSrc="/assets/profit.svg"
         iconBackgroundColor="yellow"
       />

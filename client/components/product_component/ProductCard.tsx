@@ -5,6 +5,7 @@ import { Product, useProducts } from "./ProductContext";
 import ProductCardDropdown from "./ProductCardDropdown";
 import ProductIngredientsModal from "./ProductIngredientsModal";
 import { Card, CardContent } from "../ui/card";
+import { formatPrice } from "@/constants";
 
 const ProductCard: React.FC<Product> = ({
   productId,
@@ -54,7 +55,7 @@ const ProductCard: React.FC<Product> = ({
           {name}
         </div>
         <div className="text-base md:text-lg font-bold mb-2 dark:text-white">
-          ${price.toFixed(2)}
+          {formatPrice(price)}
         </div>
         <ProductIngredientsModal
           product={{

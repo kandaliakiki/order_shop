@@ -1,3 +1,13 @@
+/** Format amount as Indonesian Rupiah (IDR). */
+export function formatPrice(amount: number): string {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
 export interface OrderItem {
   name: string;
   quantity: number;

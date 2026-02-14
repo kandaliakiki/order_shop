@@ -7,6 +7,7 @@ import { Minus, Plus, Trash2 } from "lucide-react";
 import { useCart } from "./CartContext";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
+import { formatPrice } from "@/constants";
 
 const ProductCard: React.FC<Product> = ({
   productId,
@@ -85,7 +86,7 @@ const ProductCard: React.FC<Product> = ({
       <CardContent className="p-3">
         <div className="text-xs text-gray-500">{category.name}</div>
         <div className="font-medium">{name}</div>
-        <div className="mt-1 text-lg font-bold">${price.toFixed(2)}</div>
+        <div className="mt-1 text-lg font-bold">{formatPrice(price)}</div>
       </CardContent>
     </Card>
   );

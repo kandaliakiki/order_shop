@@ -3,6 +3,7 @@ import Order, { OrderData } from "../models/order.model";
 import { StockDeductionService } from "../services/stockDeduction.service";
 import { StockReservationService } from "../services/stockReservation.service";
 import { IngredientStockCalculationService } from "../services/ingredientStockCalculation.service";
+import { fetchProducts } from "./product.action";
 // Function to fetch all orders
 export const fetchOrders = async (
   limit: number = 0,
@@ -45,6 +46,29 @@ export const createOrder = async (orderData: OrderData) => {
   } catch (error) {
     console.error("Error creating order:", error);
     throw error;
+  }
+};
+
+/** Update delivery/pickup details of an existing order (for edit flow). */
+export const updateOrderDeliveryDetails = async (
+  orderId: string,
+  updates: { deliveryAddress?: string; pickupDate?: Date; fulfillmentType?: "pickup" | "delivery"; pickupTime?: string }
+): Promise<{ success: boolean; error?: string }> => {
+  await connectToDB();
+  try {
+    const order = await Order.findOne({ orderId });
+    if (!order) return { success: false, error: "Order not found" };
+    const set: Record<string, unknown> = {};
+    if (updates.deliveryAddress !== undefined) set.deliveryAddress = updates.deliveryAddress;
+    if (updates.pickupDate !== undefined) set.pickupDate = updates.pickupDate;
+    if (updates.fulfillmentType !== undefined) set.fulfillmentType = updates.fulfillmentType;
+    if (updates.pickupTime !== undefined) set.pickupTime = updates.pickupTime;
+    if (Object.keys(set).length === 0) return { success: true };
+    await Order.findOneAndUpdate({ orderId }, set, { new: true });
+    return { success: true };
+  } catch (e: any) {
+    console.error("updateOrderDeliveryDetails:", e);
+    return { success: false, error: e.message };
   }
 };
 
@@ -242,5 +266,143 @@ export const fetchOrderById = async (orderId: string) => {
   } catch (error) {
     console.error("Error fetching order by ID:", error);
     throw error;
+  }
+};
+
+/** Fetch orders for a WhatsApp number (for "edit order" flow). Recent first, non-cancelled. */
+export const fetchOrdersByWhatsappNumber = async (
+  whatsappNumber: string,
+  options?: { limit?: number; statuses?: string[] }
+) => {
+  await connectToDB();
+  const limit = options?.limit ?? 20;
+  const statuses = options?.statuses ?? ["New Order", "Pending", "On Process", "Completed"];
+
+  // Match as stored: Twilio sends "whatsapp:+62..."
+  const orders = await Order.find({
+    whatsappNumber,
+    status: { $in: statuses },
+  })
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .lean();
+
+  return orders;
+};
+
+const TAX_RATE = 0.1;
+
+/** Add items to an existing order (merge by product name, recalc totals). */
+export const addItemsToOrder = async (
+  orderId: string,
+  newItems: Array<{ name: string; quantity: number }>
+): Promise<{ success: boolean; order?: any; error?: string }> => {
+  await connectToDB();
+
+  try {
+    const order = await Order.findOne({ orderId });
+    if (!order) {
+      return { success: false, error: "Order not found" };
+    }
+
+    const products = await fetchProducts();
+    const findPrice = (name: string): number | null => {
+      const n = name.toLowerCase().trim();
+      const p = products.find((x) => x.name.toLowerCase().trim() === n);
+      return p ? p.price : null;
+    };
+
+    const existingItems = order.items || [];
+    const norm = (s: string) => s.toLowerCase().trim();
+    // Ensure existing items have a valid price (look up from products if missing/NaN)
+    const byName = new Map<string, { name: string; quantity: number; price: number }>();
+    for (const i of existingItems) {
+      const price = typeof i.price === "number" && !Number.isNaN(i.price)
+        ? i.price
+        : findPrice(i.name);
+      const numPrice = price != null ? Number(price) : 0;
+      byName.set(norm(i.name), { name: i.name, quantity: i.quantity, price: numPrice });
+    }
+
+    for (const item of newItems) {
+      const price = findPrice(item.name);
+      if (price == null) {
+        console.warn(`addItemsToOrder: product not found "${item.name}", skipping`);
+        continue;
+      }
+      const key = norm(item.name);
+      const existing = byName.get(key);
+      if (existing) {
+        existing.quantity += item.quantity;
+      } else {
+        // Use product name from catalog for consistency
+        const product = products.find((x) => norm(x.name) === key);
+        byName.set(key, {
+          name: product ? product.name : item.name,
+          quantity: item.quantity,
+          price,
+        });
+      }
+    }
+
+    const mergedItems = Array.from(byName.values());
+    const subtotal = Math.max(0, mergedItems.reduce((sum, i) => sum + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0));
+    const tax = subtotal * TAX_RATE;
+    const total = subtotal + tax;
+
+    const updated = await Order.findOneAndUpdate(
+      { orderId },
+      { items: mergedItems, subtotal, tax, total },
+      { new: true }
+    );
+
+    return { success: true, order: updated };
+  } catch (error: any) {
+    console.error("Error adding items to order:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+/** Remove items from an existing order by product name (case-insensitive). Recalc totals. */
+export const removeItemsFromOrder = async (
+  orderId: string,
+  productNamesToRemove: string[]
+): Promise<{ success: boolean; order?: any; error?: string }> => {
+  await connectToDB();
+
+  try {
+    const order = await Order.findOne({ orderId });
+    if (!order) {
+      return { success: false, error: "Order not found" };
+    }
+
+    const toRemoveSet = new Set(
+      productNamesToRemove.map((n) => n.toLowerCase().trim())
+    );
+    const remainingItems = (order.items || []).filter(
+      (i) => !toRemoveSet.has(i.name.toLowerCase().trim())
+    );
+
+    if (remainingItems.length === 0) {
+      return { success: false, error: "Cannot remove all items from order" };
+    }
+
+    const subtotal = Math.max(0, remainingItems.reduce(
+      (sum, i) => sum + (Number(i.price) || 0) * (Number(i.quantity) || 0),
+      0
+    ));
+    const tax = subtotal * TAX_RATE;
+    const total = subtotal + tax;
+
+    const updated = await Order.findOneAndUpdate(
+      { orderId },
+      { items: remainingItems, subtotal, tax, total },
+      { new: true }
+    );
+
+    return { success: true, order: updated };
+  } catch (error: any) {
+    console.error("Error removing items from order:", error);
+    return { success: false, error: error.message };
   }
 };

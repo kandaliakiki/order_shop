@@ -5,6 +5,7 @@ import Image from "next/image";
 import ProductTableCheckbox from "./ProductTableCheckbox";
 import EditButtonProductTable from "./EditButtonProductTable";
 import ProductIngredientsPopover from "./ProductIngredientsPopover";
+import { formatPrice } from "@/constants";
 
 const FetchedProductRowsDesktop = () => {
   const { products } = useProducts(); // Use the context to get products
@@ -38,7 +39,7 @@ const FetchedProductRowsDesktop = () => {
             <ProductIngredientsPopover product={product} />
           </td>
           <td className="px-4 py-4 font-bold text-gray-900 dark:text-gray-300">
-            ${product.price.toFixed(2)}
+            {formatPrice(product.price)}
           </td>
           <td className="px-4 py-4">
             <EditButtonProductTable _id={product._id} />
