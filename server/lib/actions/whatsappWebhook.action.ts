@@ -1,10 +1,7 @@
 import { Request, Response } from "express";
 import { MessageRouterService } from "../services/messageRouter.service";
-import { getGreetingMenu } from "../utils/menuHelpers";
-import { handleCommand } from "./whatsappRouter.action";
 import { createCommandLog } from "./commandLog.action";
 import { createWhatsAppMessage } from "./whatsappMessage.action";
-import { processWhatsAppMessageForOrder } from "./whatsappOrderProcessing.action";
 import { ConversationManager } from "../services/conversationManager.service";
 
 /**
@@ -69,33 +66,21 @@ export async function processWhatsAppWebhook(
         shouldCreateOrder: processResult.shouldCreateOrder,
       });
     } else if (route.type === "command") {
-      // Commands like /order, /bakesheet, /waste, /expiry
+      // Customer bot: only /order is routed as command; all go to ConversationManager
       shouldLogCommand = true;
       commandName = route.command;
       aiUsed = route.shouldCallAI || false;
 
-      if (route.command === "order") {
-        // /order command uses conversational flow
-        const orderText = route.args || Body || "";
-        const conversationManager = new ConversationManager();
-        const processResult = await conversationManager.processMessage(
-          orderText,
-          From,
-          MessageSid,
-          savedMessage._id.toString()
-        );
-        responseMessage = processResult.whatsappResponse || "Order received.";
-        console.log(`✅ /order command processed (conversational)`);
-      } else {
-        // Other commands (bakesheet, waste, expiry)
-        responseMessage = await handleCommand(
-          route.command,
-          route.args,
-          From,
-          savedMessage._id.toString()
-        );
-        console.log(`✅ /${route.command} command processed`);
-      }
+      const orderText = route.args || Body || "";
+      const conversationManager = new ConversationManager();
+      const processResult = await conversationManager.processMessage(
+        orderText,
+        From,
+        MessageSid,
+        savedMessage._id.toString()
+      );
+      responseMessage = processResult.whatsappResponse || "Order received.";
+      console.log(`✅ /order command processed (conversational)`);
     }
 
     // Log command interaction (for logs page)
@@ -127,7 +112,26 @@ export async function processWhatsAppWebhook(
         .replace(/'/g, "&apos;");
     };
 
+    const safeMaxChars = 1500; // Twilio WhatsApp limit 1600; stay under for safety
     const escapedMessage = escapeXml(responseMessage);
+
+    let messageXml: string;
+    if (responseMessage.length <= safeMaxChars) {
+      messageXml = `<Message>${escapedMessage}</Message>`;
+    } else {
+      const parts: string[] = [];
+      let remaining = responseMessage;
+      while (remaining.length > 0) {
+        let chunk = remaining.substring(0, safeMaxChars);
+        const lastNewline = chunk.lastIndexOf("\n");
+        if (lastNewline > safeMaxChars * 0.5) {
+          chunk = remaining.substring(0, lastNewline + 1);
+        }
+        parts.push(escapeXml(chunk));
+        remaining = remaining.substring(chunk.length);
+      }
+      messageXml = parts.map((p) => `<Message>${p}</Message>`).join("\n");
+    }
 
     // Log the response being sent
     console.log("📤 Sending WhatsApp response:", {
@@ -136,11 +140,11 @@ export async function processWhatsAppWebhook(
       preview: responseMessage.substring(0, 100),
     });
 
-    // Respond to Twilio with properly escaped XML
+    // Respond to Twilio with properly escaped XML (multiple <Message> if over limit)
     res.status(200).type("text/xml").send(
       `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Message>${escapedMessage}</Message>
+${messageXml}
 </Response>`
     );
   } catch (error) {

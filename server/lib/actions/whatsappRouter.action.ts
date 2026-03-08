@@ -1,54 +1,16 @@
-import { BakeSheetService } from "../services/bakeSheet.service";
-import { WasteLoggingService } from "../services/wasteLogging.service";
-import { ExpiryCheckService } from "../services/expiryCheck.service";
-// import { StockAdditionService } from "../services/stockAddition.service"; // COMMENTED: /stock disabled to avoid "delivery" etc. breaking order flow
+/**
+ * Customer bot: only /order is routed here. Bakesheet, waste, expiry, add stock
+ * are disabled (see lib/ADMIN_LOGIC_README.md). All order flow uses ConversationManager in webhook.
+ */
 import { processWhatsAppMessageForOrder } from "./whatsappOrderProcessing.action";
 
 export async function handleCommand(
-  command: "bakesheet" | "waste" | "expiry",
+  _command: "order",
   args: string,
-  whatsappNumber: string,
-  messageId: string
+  _whatsappNumber: string,
+  _messageId: string
 ): Promise<string> {
-  try {
-    switch (command) {
-      case "bakesheet":
-        const bakeSheetService = new BakeSheetService();
-        const bakeSheetResult = await bakeSheetService.processBakeSheetCommand(
-          args,
-          whatsappNumber
-        );
-        return bakeSheetResult.message;
-
-      case "waste":
-        const wasteService = new WasteLoggingService();
-        const wasteResult = await wasteService.processWasteCommand(
-          args,
-          whatsappNumber
-        );
-        return wasteResult.message;
-
-      case "expiry":
-        const expiryService = new ExpiryCheckService();
-        const expiryResult = await expiryService.processExpiryCommand(
-          args.trim() || undefined
-        );
-        return expiryResult.message;
-
-      // COMMENTED OUT: /stock was intercepting "Delivery" and other messages; re-enable when needed
-      // case "stock":
-      //   const stockService = new StockAdditionService();
-      //   const stockResult = await stockService.processStockAddition(
-      //     args,
-      //     whatsappNumber
-      //   );
-      //   return stockResult.message;
-
-      default:
-        return '❌ Unknown command. Type "menu" to see options.';
-    }
-  } catch (error: any) {
-    console.error(`Error handling /${command} command:`, error);
-    return `❌ Error processing /${command} command: ${error.message}`;
-  }
+  // Only "order" is used for customer bot; handled via ConversationManager in webhook.
+  // Admin commands (bakesheet, waste, expiry, stock) are in adminLogic/ and disabled.
+  return '❌ Unknown command. Balas "menu" atau "hi" untuk memesan.';
 }

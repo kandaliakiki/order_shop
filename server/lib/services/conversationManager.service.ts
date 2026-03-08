@@ -1,10 +1,10 @@
 import { connectToDB } from "../mongoose";
 import ConversationState, { ConversationStateData } from "../models/conversationState.model";
-import { AIService, ConversationAnalysisResult, ExtractedOrderData } from "./ai.service";
+import { AIService, ConversationAnalysisResult, ExtractedOrderData, ProductEditIntent } from "./ai.service";
 import { ProductSimilarityService } from "./productSimilarity.service";
 import { fetchProducts } from "../actions/product.action";
 import { processWhatsAppMessageForOrder } from "../actions/whatsappOrderProcessing.action";
-import { fetchOrdersByWhatsappNumber, addItemsToOrder, removeItemsFromOrder, fetchOrderById, updateOrderDeliveryDetails } from "../actions/order.action";
+import { fetchOrdersByWhatsappNumber, addItemsToOrder, removeItemsFromOrder, fetchOrderById, updateOrderDeliveryDetails, normalizeOrderId } from "../actions/order.action";
 import { WhatsAppMessageFormatter } from "./whatsappMessageFormatter.service";
 
 export interface ProcessConversationResult {
@@ -172,18 +172,38 @@ export class ConversationManager {
           chosenId = list[0].orderId;
         }
         if (chosenId) {
-          state.selectedOrderId = chosenId;
+          const normalizedId = normalizeOrderId(chosenId);
+          state.selectedOrderId = normalizedId;
           state.editMode = "add_items";
           state.pendingQuestion = undefined;
           state.missingFields = ["products", "quantities"];
           state.collectedData = {};
+          const order = await fetchOrderById(normalizedId);
+          const itemsList =
+            order?.items?.length ?
+              "Isi pesanan saat ini:\n" +
+              order.items.map((i: any) => `• ${i.name}: ${i.quantity} pcs`).join("\n") + "\n\n"
+              : "";
           const askEdit =
-            `Baik, pesanan *${chosenId}*. Mau tambah atau ubah apa?\n\n` +
-            `Sebutkan produk dan jumlah (contoh: Chiffon 2, Cheesecake 1), atau item yang mau dihapus (contoh: hapus Cheesecake).`;
+            `Baik, pesanan *${normalizedId}*.\n\n${itemsList}Mau tambah atau ubah apa? Sebutkan produk dan jumlah (contoh: Chiffon 2, Cheesecake 1), atau item yang mau dihapus (contoh: hapus Cheesecake).`;
           state.conversationHistory.push({ role: "assistant", message: askEdit, timestamp: new Date() });
           state.lastMessageId = twilioMessageId;
           await state.save();
           return { success: true, whatsappResponse: askEdit, shouldCreateOrder: false };
+        }
+        if (this.isShowMenuRequest(messageBody)) {
+          const products = await fetchProducts();
+          const menuList = this.formatMenuList(products.map((p: any) => ({ name: p.name, price: p.price })));
+          const orderListLines = ["Pesanan Anda:\n"];
+          list.forEach((o: { orderId: string; summary: string }, i: number) => {
+            orderListLines.push(`${i + 1}. *${o.orderId}* – ${o.summary}`);
+          });
+          orderListLines.push("\nPesanan mana yang mau diedit? Balas dengan nomor (1, 2, ...) atau ID pesanan (misal O-0501).");
+          const withMenu = `*Daftar menu lengkap:*\n\n${menuList}\n\n——\n\n${orderListLines.join("\n")}`;
+          state.conversationHistory.push({ role: "assistant", message: withMenu, timestamp: new Date() });
+          state.lastMessageId = twilioMessageId;
+          await state.save();
+          return { success: true, whatsappResponse: withMenu, shouldCreateOrder: false };
         }
         const retry = "Mohon pilih pesanan dengan nomor (1, 2, ...) atau ID pesanan (misal O-0501).";
         state.conversationHistory.push({ role: "assistant", message: retry, timestamp: new Date() });
@@ -192,12 +212,56 @@ export class ConversationManager {
         return { success: true, whatsappResponse: retry, shouldCreateOrder: false };
       }
 
+      // Edit flow: when waiting for "what to add/change?" (add_items, no pendingQuestion), handle "show menu" and "no changes"
+      if (
+        state.orderIntent === "edit_order" &&
+        state.selectedOrderId &&
+        state.editMode === "add_items" &&
+        !state.pendingQuestion
+      ) {
+        if (this.isShowMenuRequest(messageBody)) {
+          const products = await fetchProducts();
+          const menuList = this.formatMenuList(products.map((p: any) => ({ name: p.name, price: p.price })));
+          const order = await fetchOrderById(state.selectedOrderId);
+          const itemsList =
+            order?.items?.length
+              ? "Isi pesanan saat ini:\n" +
+                order.items.map((i: any) => `• ${i.name}: ${i.quantity} pcs`).join("\n") + "\n\n"
+              : "";
+          const oid = state.selectedOrderId;
+          const withMenu =
+            `*Daftar menu lengkap:*\n\n${menuList}\n\n——\n\nBaik, pesanan *${oid}*.\n\n${itemsList}Mau tambah atau ubah apa? Sebutkan produk dan jumlah (contoh: Chiffon 2, Cheesecake 1), atau item yang mau dihapus (contoh: hapus Cheesecake).`;
+          state.conversationHistory.push({ role: "assistant", message: withMenu, timestamp: new Date() });
+          state.lastMessageId = twilioMessageId;
+          await state.save();
+          return { success: true, whatsappResponse: withMenu, shouldCreateOrder: false };
+        }
+        // "Done / no changes" in edit add_items is handled by AI intent "done_no_more_changes" in section 4c (no keyword shortcut)
+      }
+
+      // New order / greeting: when user asks for menu, return full menu list (not just "here is the menu" with no list)
+      if (
+        this.isShowMenuRequest(messageBody) &&
+        (state.orderIntent !== "edit_order" || !state.selectedOrderId) &&
+        state.pendingQuestion?.type !== "order_selection"
+      ) {
+        const products = await fetchProducts();
+        const menuList = this.formatMenuList(products.map((p: any) => ({ name: p.name, price: p.price })));
+        const menuResponse =
+          `Tentu, ini dia daftar menu lengkap kami:\n\n${menuList}\n\n——\n\nMana yang ingin Anda pesan? Sebutkan nama produk dan jumlah (contoh: Chiffon 2, Cheesecake 1).`;
+        state.conversationHistory.push({ role: "assistant", message: menuResponse, timestamp: new Date() });
+        state.lastMessageId = twilioMessageId;
+        await state.save();
+        return { success: true, whatsappResponse: menuResponse, shouldCreateOrder: false };
+      }
+
       // 2c. Edit: user confirming items (back-and-forth until they say ya/betul)
       if (state.pendingQuestion?.type === "edit_confirm_items" && state.selectedOrderId) {
         const normalized = messageBody.toLowerCase().trim();
         const confirmed =
           /^(ya|betul|benar|sudah benar|ok|oke|correct|yes|konfirmasi)$/.test(normalized) ||
-          normalized === "ya" || normalized === "betul";
+          normalized === "ya" || normalized === "betul" ||
+          this.isNoChangesRequest(messageBody);
         if (confirmed) {
           const askDelivery =
             "Tanggal, alamat, dan jam pengambilan/pengiriman tetap sama dengan pesanan ini atau mau diubah?\n\nBalas *sama* atau *ubah*.";
@@ -216,9 +280,32 @@ export class ConversationManager {
           {
             collectedData: state.collectedData,
             missingFields: ["products", "quantities"],
+            userMightIndicateDone: this.isNoChangesRequest(messageBody),
             ...(state.selectedOrderId ? { editOrderContext: { orderId: state.selectedOrderId } } : {}),
           }
         );
+        if (analysis.intent === "done_no_more_changes") {
+          const askDelivery =
+            "Tanggal, alamat, dan jam pengambilan/pengiriman tetap sama dengan pesanan ini atau mau diubah?\n\nBalas *sama* atau *ubah*.";
+          state.pendingQuestion = { type: "edit_confirm_delivery", questionText: askDelivery };
+          state.conversationHistory.push({ role: "assistant", message: askDelivery, timestamp: new Date() });
+          state.lastMessageId = twilioMessageId;
+          await state.save();
+          return { success: true, whatsappResponse: askDelivery, shouldCreateOrder: false };
+        }
+        if (analysis.extractedData.products?.length && state.selectedOrderId) {
+          const order = await fetchOrderById(state.selectedOrderId);
+          if (order?.items?.length) {
+            const currentProposed = this.buildCurrentProposedOrderItems(
+              order.items,
+              state.collectedData.products
+            );
+            this.applyEditIntents(
+              analysis.extractedData.products,
+              currentProposed
+            );
+          }
+        }
         this.updateCollectedData(state, analysis.extractedData);
         const msg = await this.buildProposedEditSummary(state.selectedOrderId, state);
         state.pendingQuestion = { type: "edit_confirm_items", questionText: msg };
@@ -234,7 +321,7 @@ export class ConversationManager {
         const same = /^(sama|tetap|ya|betul|ok|oke|tidak|no)$/.test(normalized) || normalized.includes("sama") || normalized.includes("tetap");
         const wantChange = /^(ubah|change|ubah alamat|ubah tanggal|ubah jam)$/.test(normalized) || normalized.includes("ubah");
         if (same && !wantChange) {
-          const oid = state.selectedOrderId;
+          const oid = normalizeOrderId(state.selectedOrderId);
           const toRemove = state.collectedData.productsToRemove || [];
           const toAdd = (state.collectedData.products || []).map((p: { name: string; quantity: number }) => ({ name: p.name, quantity: p.quantity }));
           if (toRemove.length > 0) {
@@ -319,7 +406,7 @@ export class ConversationManager {
 
       // 2d. Edit: user sent new delivery details -> update delivery, apply item changes, then send final confirmation
       if (state.pendingQuestion?.type === "edit_change_delivery" && state.selectedOrderId) {
-        const oid = state.selectedOrderId;
+        const oid = normalizeOrderId(state.selectedOrderId);
         const analysis = await this.aiService.analyzeWithContext(
           messageBody,
           (await fetchProducts()).map((p) => ({ name: p.name, price: p.price })),
@@ -473,7 +560,7 @@ export class ConversationManager {
           : "";
 
         if (!completeness.isComplete) {
-          const question = this.generateFollowUpQuestion(
+          const question = await this.generateFollowUpQuestion(
             completeness.missingFields[0],
             state,
             undefined
@@ -564,6 +651,7 @@ export class ConversationManager {
         {
           collectedData: state.collectedData,
           missingFields: state.missingFields,
+          userMightIndicateDone: this.isNoChangesRequest(messageBody),
           ...(state.orderIntent === "edit_order" && state.selectedOrderId
             ? { editOrderContext: { orderId: state.selectedOrderId } }
             : {}),
@@ -604,6 +692,61 @@ export class ConversationManager {
           whatsappResponse: resetMessage,
           shouldCreateOrder: false,
         };
+      }
+
+      // 4c. AI says user is done adding/changing items -> ask for delivery (new order) or go to delivery confirm (edit)
+      if (analysis.intent === "done_no_more_changes") {
+        const completeness = this.checkCompleteness(state);
+        const deliveryOnlyMissing =
+          completeness.missingFields.length > 0 &&
+          !completeness.missingFields.includes("products") &&
+          !completeness.missingFields.includes("quantities");
+
+        if (!state.selectedOrderId && state.collectedData.products?.length > 0 && !completeness.isComplete && deliveryOnlyMissing) {
+          const question = await this.generateFollowUpQuestion(
+            completeness.missingFields[0],
+            state,
+            undefined
+          );
+          state.pendingQuestion = {
+            type: "missing_field",
+            field: completeness.missingFields[0],
+            questionText: question,
+          };
+          state.conversationHistory.push({
+            role: "assistant",
+            message: question,
+            timestamp: new Date(),
+          });
+          state.missingFields = completeness.missingFields;
+          state.lastMessageId = twilioMessageId;
+          await state.save();
+          return {
+            success: true,
+            whatsappResponse: question,
+            shouldCreateOrder: false,
+          };
+        }
+
+        if (
+          state.orderIntent === "edit_order" &&
+          state.editMode === "add_items" &&
+          state.selectedOrderId
+        ) {
+          state.collectedData.products = [];
+          state.collectedData.productsToRemove = undefined;
+          const askDelivery =
+            "Tanggal, alamat, dan jam pengambilan/pengiriman tetap sama dengan pesanan ini atau mau diubah?\n\nBalas *sama* atau *ubah*.";
+          state.pendingQuestion = { type: "edit_confirm_delivery", questionText: askDelivery };
+          state.conversationHistory.push({
+            role: "assistant",
+            message: askDelivery,
+            timestamp: new Date(),
+          });
+          state.lastMessageId = twilioMessageId;
+          await state.save();
+          return { success: true, whatsappResponse: askDelivery, shouldCreateOrder: false };
+        }
       }
 
       // 5. Check for ambiguous products FIRST (before updating collected data)
@@ -698,15 +841,34 @@ export class ConversationManager {
         }
       }
 
-      // 6. Update collected data from analysis
+      // 6. Edit mode: resolve add/subtract/replace from AI editIntent before merging into state
+      if (
+        state.orderIntent === "edit_order" &&
+        state.selectedOrderId &&
+        analysis.extractedData.products?.length
+      ) {
+        const order = await fetchOrderById(state.selectedOrderId);
+        if (order?.items?.length) {
+          const currentProposed = this.buildCurrentProposedOrderItems(
+            order.items,
+            state.collectedData.products
+          );
+          this.applyEditIntents(
+            analysis.extractedData.products,
+            currentProposed
+          );
+        }
+      }
+
+      // 7. Update collected data from analysis
       this.updateCollectedData(state, analysis.extractedData);
 
-      // 7. Check completeness
+      // 8. Check completeness
       const completeness = this.checkCompleteness(state);
 
       if (!completeness.isComplete) {
         // Generate follow-up question for first missing field
-        const question = this.generateFollowUpQuestion(
+        const question = await this.generateFollowUpQuestion(
           completeness.missingFields[0],
           state,
           analysis.suggestedQuestion
@@ -864,6 +1026,46 @@ export class ConversationManager {
     }
   }
 
+  /** Build current proposed quantities: order items overwritten by collectedData.products (for edit flow). */
+  private buildCurrentProposedOrderItems(
+    orderItems: Array<{ name: string; quantity: number }>,
+    collectedProducts?: Array<{ name: string; quantity: number }>
+  ): Map<string, number> {
+    const norm = (s: string) => s.toLowerCase().trim();
+    const map = new Map<string, number>();
+    for (const i of orderItems) {
+      map.set(norm(i.name), i.quantity);
+    }
+    if (collectedProducts?.length) {
+      for (const p of collectedProducts) {
+        map.set(norm(p.name), p.quantity);
+      }
+    }
+    return map;
+  }
+
+  /**
+   * Apply AI editIntent (add/subtract/replace) to compute final quantity. Mutates products in place.
+   * Uses currentProposed so "tambah 2" after "nya 3 aja" uses 3 as base → 5.
+   */
+  private applyEditIntents(
+    products: Array<{ name: string; quantity: number; editIntent?: ProductEditIntent }>,
+    currentProposed: Map<string, number>
+  ): void {
+    const norm = (s: string) => s.toLowerCase().trim();
+    for (const p of products) {
+      const intent = p.editIntent || "replace";
+      const key = norm(p.name);
+      const current = currentProposed.get(key) ?? 0;
+      if (intent === "add") {
+        p.quantity = current + p.quantity;
+      } else if (intent === "subtract") {
+        p.quantity = Math.max(0, current - p.quantity);
+      }
+      // "replace": keep p.quantity as-is (already the new total)
+    }
+  }
+
   /**
    * Check if all required fields are complete
    */
@@ -937,7 +1139,7 @@ export class ConversationManager {
   /**
    * Generate follow-up question for missing field
    */
-  private generateFollowUpQuestion(
+  private async generateFollowUpQuestion(
     missingField:
       | "products"
       | "quantities"
@@ -947,7 +1149,7 @@ export class ConversationManager {
       | "pickupTime",
     state: ConversationStateData,
     aiSuggestedQuestion?: string
-  ): string {
+  ): Promise<string> {
     // Always use our clear template for fulfillmentType and pickupTime so we never show
     // generic "what else?" / "ada lagi?" when we're actually waiting for pickup/delivery or time
     if (missingField === "fulfillmentType" || missingField === "pickupTime") {
@@ -964,12 +1166,18 @@ export class ConversationManager {
       return questions[missingField];
     }
 
-    // In edit mode we only need products/quantities – never use AI suggestion (it often asks about date/address and causes a loop)
+    // In edit mode we only need products/quantities – show current order items so user knows what's in O-xxx
     const isEditAddItems =
       state.orderIntent === "edit_order" && state.editMode === "add_items";
     if (isEditAddItems && (missingField === "products" || missingField === "quantities")) {
       const oid = state.selectedOrderId || "";
-      return `Mau tambah atau ubah apa ke pesanan *${oid}*? Sebutkan produk dan jumlah (contoh: Chiffon 2, Cheesecake 1), atau item yang mau dihapus (contoh: hapus Cheesecake).`;
+      const order = await fetchOrderById(oid);
+      const itemsList =
+        order?.items?.length
+          ? "Isi pesanan saat ini:\n" +
+            order.items.map((i: any) => `• ${i.name}: ${i.quantity} pcs`).join("\n") + "\n\n"
+          : "";
+      return `${itemsList}Mau tambah atau ubah apa ke pesanan *${oid}*? Sebutkan produk dan jumlah (contoh: Chiffon 2, Cheesecake 1), atau item yang mau dihapus (contoh: hapus Cheesecake).`;
     }
 
     // Use AI suggestion if available for other fields
@@ -1053,6 +1261,69 @@ export class ConversationManager {
       lines.join("\n") +
       `\n\nApakah item pesanan sudah benar? Balas *ya* atau *betul* untuk konfirmasi, atau sebutkan yang mau diubah.`
     );
+  }
+
+  /** Format product list as menu text (name + price in IDR). */
+  private formatMenuList(products: Array<{ name: string; price: number }>): string {
+    return products
+      .map((p) => `• ${p.name} - Rp ${p.price.toLocaleString("id-ID")}`)
+      .join("\n");
+  }
+
+  /** True if user is asking to see the full menu. */
+  private isShowMenuRequest(message: string): boolean {
+    const n = message.toLowerCase().trim().replace(/\s+/g, " ");
+    const patterns = [
+      /lihat\s+menu/,
+      /mau\s+lihat\s+menu/,
+      /tampilkan\s+menu/,
+      /daftar\s+menu/,
+      /semua\s+menu/,
+      /lihat\s+semua\s+menu/,
+      /show\s+menu/,
+      /menu\s+dong/,
+      /mau\s+lihat\s+semua\s+menunya/,
+      /lihat\s+menunya/,
+      /^\s*menu\s*$/,
+    ];
+    return patterns.some((re) => re.test(n));
+  }
+
+  /** True if user says no changes / already correct (edit flow) or "that's all" / "done" (new order). */
+  private isNoChangesRequest(message: string): boolean {
+    const n = message.toLowerCase().trim().replace(/\s+/g, " ");
+    const patterns = [
+      /^sudah\s+benar$/,
+      /^tidak\s+ada$/,
+      /tidak\s+jadi/,
+      /ga\s+jadi/,
+      /gak\s+jadi/,
+      /sudah\s+oke/,
+      /oke\s+aja/,
+      /tidak\s+usah\s+ubah/,
+      /gak\s+usah\s+ubah/,
+      /sudah\s+cukup/,
+      /tidak\s+jadi\s+di\s+ubah/,
+      /no\s+change/,
+      /already\s+ok/,
+      /sudah\s+ok/,
+      /tetap\s+aja/,
+      /ga\s+perlu\s+ubah/,
+      /tidak\s+perlu\s+ubah/,
+      /^sudah$/,
+      /^done$/,
+      /^udah$/,
+      /sudah\s+selesai/,
+      /that'?s\s+it$/,
+      /tidak\s+ada\s+lagi/,
+      /ga\s+ada\s+lagi/,
+      /gak\s+ada\s+lagi/,
+      /sudah\s+lengkap/,
+      /that'?s\s+all$/,
+      /^sip$/,
+      /oke\s+sudah/,
+    ];
+    return patterns.some((re) => re.test(n));
   }
 
   /**

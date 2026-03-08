@@ -55,8 +55,9 @@ export const updateOrderDeliveryDetails = async (
   updates: { deliveryAddress?: string; pickupDate?: Date; fulfillmentType?: "pickup" | "delivery"; pickupTime?: string }
 ): Promise<{ success: boolean; error?: string }> => {
   await connectToDB();
+  const id = normalizeOrderId(orderId);
   try {
-    const order = await Order.findOne({ orderId });
+    const order = await Order.findOne({ orderId: id });
     if (!order) return { success: false, error: "Order not found" };
     const set: Record<string, unknown> = {};
     if (updates.deliveryAddress !== undefined) set.deliveryAddress = updates.deliveryAddress;
@@ -64,7 +65,7 @@ export const updateOrderDeliveryDetails = async (
     if (updates.fulfillmentType !== undefined) set.fulfillmentType = updates.fulfillmentType;
     if (updates.pickupTime !== undefined) set.pickupTime = updates.pickupTime;
     if (Object.keys(set).length === 0) return { success: true };
-    await Order.findOneAndUpdate({ orderId }, set, { new: true });
+    await Order.findOneAndUpdate({ orderId: id }, set, { new: true });
     return { success: true };
   } catch (e: any) {
     console.error("updateOrderDeliveryDetails:", e);
@@ -75,9 +76,10 @@ export const updateOrderDeliveryDetails = async (
 // Function to update the status of an order
 export const updateOrderStatus = async (orderId: string, newStatus: string) => {
   await connectToDB();
+  const id = normalizeOrderId(orderId);
 
   try {
-    const order = await Order.findOne({ orderId });
+    const order = await Order.findOne({ orderId: id });
     if (!order) {
       throw new Error("Order not found");
     }
@@ -86,7 +88,7 @@ export const updateOrderStatus = async (orderId: string, newStatus: string) => {
 
     // Update order status
     const updatedOrder = await Order.findOneAndUpdate(
-      { orderId },
+      { orderId: id },
       { status: newStatus },
       { new: true }
     );
@@ -111,7 +113,7 @@ export const updateOrderStatus = async (orderId: string, newStatus: string) => {
           // Store lot usage metadata if available
           if (deductionResult.lotUsageMetadata) {
             await Order.findOneAndUpdate(
-              { orderId },
+              { orderId: id },
               { lotUsageMetadata: deductionResult.lotUsageMetadata },
               { new: true }
             );
@@ -249,19 +251,24 @@ export const calculateTotalItemsSold = async (dateRange?: {
   }
 };
 
+/** Normalize orderId to stored format: O-<4 digits> (e.g. O-500 → O-0500). Export for use in conversation flow. */
+export function normalizeOrderId(orderId: string): string {
+  const match = /^O-(\d+)$/i.exec(orderId.trim());
+  if (!match) return orderId;
+  const num = match[1];
+  return `O-${num.padStart(4, "0")}`;
+}
+
 // Function to fetch order by orderId with populated product data
 export const fetchOrderById = async (orderId: string) => {
   await connectToDB();
+  const id = normalizeOrderId(orderId);
 
   try {
-    const order = await Order.findOne({ orderId }).populate(
-      "whatsappMessageId"
-    );
-
+    const order = await Order.findOne({ orderId: id }).populate("whatsappMessageId");
     if (!order) {
       throw new Error("Order not found");
     }
-
     return order;
   } catch (error) {
     console.error("Error fetching order by ID:", error);
@@ -298,9 +305,10 @@ export const addItemsToOrder = async (
   newItems: Array<{ name: string; quantity: number }>
 ): Promise<{ success: boolean; order?: any; error?: string }> => {
   await connectToDB();
+  const id = normalizeOrderId(orderId);
 
   try {
-    const order = await Order.findOne({ orderId });
+    const order = await Order.findOne({ orderId: id });
     if (!order) {
       return { success: false, error: "Order not found" };
     }
@@ -351,7 +359,7 @@ export const addItemsToOrder = async (
     const total = subtotal + tax;
 
     const updated = await Order.findOneAndUpdate(
-      { orderId },
+      { orderId: id },
       { items: mergedItems, subtotal, tax, total },
       { new: true }
     );
@@ -369,9 +377,10 @@ export const removeItemsFromOrder = async (
   productNamesToRemove: string[]
 ): Promise<{ success: boolean; order?: any; error?: string }> => {
   await connectToDB();
+  const id = normalizeOrderId(orderId);
 
   try {
-    const order = await Order.findOne({ orderId });
+    const order = await Order.findOne({ orderId: id });
     if (!order) {
       return { success: false, error: "Order not found" };
     }
@@ -395,7 +404,7 @@ export const removeItemsFromOrder = async (
     const total = subtotal + tax;
 
     const updated = await Order.findOneAndUpdate(
-      { orderId },
+      { orderId: id },
       { items: remainingItems, subtotal, tax, total },
       { new: true }
     );

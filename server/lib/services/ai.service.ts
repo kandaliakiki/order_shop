@@ -3,11 +3,16 @@ import OpenAI from "openai";
 
 type AIProvider = "openai" | "gemini";
 
+/** When editing an order: how to apply the quantity. "replace" = set to quantity; "add" = current + quantity; "subtract" = current - quantity (min 0). */
+export type ProductEditIntent = "add" | "subtract" | "replace";
+
 export interface ExtractedOrderData {
   products: Array<{
     name: string; // e.g., "chiffon", "cheesecake"
-    quantity: number; // e.g., 1, 2
+    quantity: number; // e.g., 1, 2 (for add/subtract this is the delta; for replace this is the new total)
     confidence: number; // 0-1, how confident AI is about this match
+    /** Only in edit order context: "add" (tambah N), "subtract" (kurangin N), "replace" (set to N, e.g. "nya 3 aja"). Omit = "replace". */
+    editIntent?: ProductEditIntent;
   }>;
   customerName?: string;
   phoneNumber?: string;
@@ -44,9 +49,10 @@ export interface ConversationAnalysisResult {
    * High-level intent for the latest message:
    * - "reset": user clearly wants to start over / cancel / reset the order
    * - "order": normal order-related message
+   * - "done_no_more_changes": user indicates they are done adding/changing items (no more items to add, order is correct as-is)
    * - "other": small talk or non-order questions
    */
-  intent?: "reset" | "order" | "other";
+  intent?: "reset" | "order" | "done_no_more_changes" | "other";
 }
 
 export class AIService {
@@ -92,6 +98,8 @@ export class AIService {
       missingFields?: string[];
       /** When set, AI also extracts productsToRemove (e.g. from "hapus Cheesecake") */
       editOrderContext?: { orderId: string };
+      /** When true, the user said something that often means "I'm done" (e.g. "sudah", "done") – ask AI to confirm if that is the intent */
+      userMightIndicateDone?: boolean;
     }
   ): Promise<ConversationAnalysisResult> {
     await this.checkGeminiRateLimit();
@@ -129,10 +137,16 @@ Besok: ${tomorrowStr} (YYYY-MM-DD)
 
 PESAN TERBARU DARI PELANGGAN:
 "${messageBody}"
+${currentState?.userMightIndicateDone ? `
+PETUNJUK: Pelanggan mengirim pesan yang sering berarti "sudah selesai / tidak ada lagi / tidak ada yang diubah" (misal: "sudah", "done", "tidak ada lagi", "sudah benar"). Tentukan apakah pesan ini BENAR-BENAR hanya mengindikasikan itu (tidak ada produk/alamat/tanggal baru). Jika ya, set intent ke "done_no_more_changes". Jika pesan juga berisi produk baru, alamat, atau tanggal, tetap gunakan "order" dan ekstrak datanya.
+` : ""}
 ${currentState?.editOrderContext ? `
-KONTEKS: Pelanggan sedang MENGEDIT pesanan yang sudah ada (orderId: ${currentState.editOrderContext.orderId}). Dari pesan terbaru, ekstrak juga:
-- products/quantities = item yang mau DITAMBAH (nama produk exact dari katalog, jumlah).
-- productsToRemove = nama produk (exact dari katalog) yang mau dihapus/dikurangi, jika pelanggan bilang "hapus X", "remove X", "batalkan X", "tidak usah X", dll. Return array of exact product names.
+KONTEKS EDIT PESANAN: Pelanggan sedang mengubah pesanan yang sudah ada (orderId: ${currentState.editOrderContext.orderId}).
+Untuk setiap produk yang disebutkan, tentukan editIntent dan quantity:
+- "add": pelanggan mau TAMBAH jumlah (tambah N, add N) → quantity = N yang ditambah. Contoh: "sweet cake tambah 2" → { name: "Sweet Cake", quantity: 2, editIntent: "add" }
+- "subtract": pelanggan mau KURANGI jumlah (kurangin N, reduce by N) → quantity = N yang dikurangi. Contoh: "kurangin 2 sweetcakenya" → { name: "Sweet Cake", quantity: 2, editIntent: "subtract" }
+- "replace": pelanggan mau GANTI/set jumlah jadi N (e.g. "nya 3 aja", "jadi 3", "sweet cake 3") → quantity = N baru. Contoh: "sweetcake nya 3 aja deh" → { name: "Sweet Cake", quantity: 3, editIntent: "replace" }
+Jika tidak jelas, gunakan "replace". productsToRemove = untuk item yang mau dihapus seluruhnya (hapus X, remove X).
 ` : ""}
 
 TUGAS ANDA:
@@ -160,7 +174,7 @@ TUGAS ANDA:
 RESPOND DENGAN JSON:
 {
   "extractedData": {
-    "products": [{"name": "exact product name", "quantity": 1, "confidence": 0.9}],
+    "products": [{"name": "exact product name", "quantity": 1, "confidence": 0.9${currentState?.editOrderContext ? ', "editIntent": "add" | "subtract" | "replace"' : ''}}],
     "deliveryDate": "YYYY-MM-DD or null",
     "deliveryAddress": "string or null",
     "fulfillmentType": "pickup" | "delivery" | null,
@@ -180,22 +194,24 @@ RESPOND DENGAN JSON:
     }
   ],
   "suggestedQuestion": "Pertanyaan follow-up dalam Bahasa Indonesia yang ramah",
-  "intent": "reset" | "order" | "other"
+  "intent": "reset" | "order" | "done_no_more_changes" | "other"
 }
 
 RULES:
 - Product names harus cocok EXACTLY dengan produk yang tersedia
-- Quantities harus positive integers
+- Quantities: positive integers. Dalam konteks edit, untuk editIntent "add"/"subtract" quantity = angka yang ditambah/dikurangi; untuk "replace" quantity = jumlah baru.
 - deliveryDate: "besok" = ${tomorrowStr}, "hari ini" = ${todayStr}
 - Return null untuk field yang tidak ditemukan
-- productsToRemove: Hanya isi jika konteks edit order dan pelanggan menyebut hapus/remove/batalkan item. Gunakan nama produk EXACT dari katalog.
+- productsToRemove: Hanya isi jika konteks edit order dan pelanggan menyebut hapus/remove/batalkan item (hapus seluruh item). Gunakan nama produk EXACT dari katalog.
+- editIntent (hanya saat edit): "add" = tambah N, "subtract" = kurangin N, "replace" = set jadi N. Wajib isi saat edit order.
 - missingFields: List field yang BELUM lengkap (gunakan hanya nilai: "products", "quantities", "deliveryDate", "deliveryAddress", "fulfillmentType", "pickupTime")
 - ambiguousProducts: WAJIB diisi jika ada kata dari pelanggan yang bisa cocok ke >= 2 produk (misal "cake" cocok ke Sweet Cake dan Cheesecake), bahkan jika pada pesan yang sama juga ada produk lain yang sudah jelas.
 - Jika sebuah mention dianggap ambigu, JANGAN memasukkan produk hasil tebakannya ke "extractedData.products" sebelum pelanggan menjawab klarifikasi.
 - suggestedQuestion: Pertanyaan natural dalam Bahasa Indonesia
 - intent:
   - "reset" jika pelanggan dengan jelas meminta untuk mengulang / reset / mulai dari awal / batalkan semua pesanan sebelumnya (contoh: "saya mau pesan dari awal lagi", "reset pesanan", "hapus semua pesanan yang sudah dicatat").
-  - "order" jika pesan ini bagian normal dari percakapan pesanan.
+  - "done_no_more_changes" jika pelanggan HANYA mengindikasikan bahwa pesanan sudah selesai / tidak ada yang mau ditambah atau diubah / sudah benar (contoh: "sudah", "done", "tidak ada lagi", "sudah benar", "ga ada", "that's it", "udah"). Jangan set ini jika pesan juga berisi produk baru, jumlah, alamat, atau tanggal.
+  - "order" jika pesan ini bagian normal dari percakapan pesanan (termasuk bila ada produk/alamat/tanggal).
   - "other" jika pesan bukan tentang pesanan (small talk, pertanyaan lain, dsb).
 
 Return ONLY valid JSON, no other text.`;
