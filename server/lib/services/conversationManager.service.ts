@@ -91,7 +91,7 @@ export class ConversationManager {
       // Only ask "new or edit?" when we're not already waiting for that answer (otherwise we'd re-ask on every message)
       if (hasOrders && state.orderIntent == null && state.pendingQuestion?.type !== "new_or_edit") {
         const askNewOrEdit =
-          "Anda sudah punya pesanan. Mau *pesan baru* atau *edit pesanan* yang sudah ada?\n\nBalas: \"pesan baru\" atau \"edit\".";
+          "Kamu udah punya pesanan nih. Mau pesan baru atau edit yang ada?";
         state.pendingQuestion = {
           type: "new_or_edit",
           questionText: askNewOrEdit,
@@ -124,11 +124,11 @@ export class ConversationManager {
             orderId: o.orderId,
             summary: (o.items || []).map((i: any) => `${i.name} ${i.quantity}`).join(", ") || "(no items)",
           }));
-          const lines = ["Pesanan Anda:\n"];
+          const lines = ["Pesanan kamu:\n"];
           orderList.forEach((o: { orderId: string; summary: string }, i: number) => {
             lines.push(`${i + 1}. *${o.orderId}* – ${o.summary}`);
           });
-          lines.push("\nPesanan mana yang mau diedit? Balas dengan nomor (1, 2, ...) atau ID pesanan (misal O-0501).");
+          lines.push("\nMau edit yang mana? Balas nomor (1, 2, ...) atau ID pesanan (misal O-0501).");
           const orderSelectionText = lines.join("\n");
           state.pendingQuestion = {
             type: "order_selection",
@@ -140,7 +140,7 @@ export class ConversationManager {
           await state.save();
           return { success: true, whatsappResponse: orderSelectionText, shouldCreateOrder: false };
         } else {
-          const retry = "Maaf, pilih salah satu: balas *pesan baru* atau *edit*.";
+          const retry = "Pilih satu aja ya: *pesan baru* atau *edit*.";
           state.conversationHistory.push({ role: "assistant", message: retry, timestamp: new Date() });
           state.lastMessageId = twilioMessageId;
           await state.save();
@@ -181,11 +181,11 @@ export class ConversationManager {
           const order = await fetchOrderById(normalizedId);
           const itemsList =
             order?.items?.length ?
-              "Isi pesanan saat ini:\n" +
+              "Isi pesanan sekarang:\n" +
               order.items.map((i: any) => `• ${i.name}: ${i.quantity} pcs`).join("\n") + "\n\n"
               : "";
           const askEdit =
-            `Baik, pesanan *${normalizedId}*.\n\n${itemsList}Mau tambah atau ubah apa? Sebutkan produk dan jumlah (contoh: Chiffon 2, Cheesecake 1), atau item yang mau dihapus (contoh: hapus Cheesecake).`;
+            `Oke, pesanan *${normalizedId}*.\n\n${itemsList}Mau tambah atau ubah apa? Tulis aja produk + jumlah (misal: Chiffon 2, Cheesecake 1), atau mau hapus item (misal: hapus Cheesecake).`;
           state.conversationHistory.push({ role: "assistant", message: askEdit, timestamp: new Date() });
           state.lastMessageId = twilioMessageId;
           await state.save();
@@ -194,18 +194,18 @@ export class ConversationManager {
         if (this.isShowMenuRequest(messageBody)) {
           const products = await fetchProducts();
           const menuList = this.formatMenuList(products.map((p: any) => ({ name: p.name, price: p.price })));
-          const orderListLines = ["Pesanan Anda:\n"];
+          const orderListLines = ["Pesanan kamu:\n"];
           list.forEach((o: { orderId: string; summary: string }, i: number) => {
             orderListLines.push(`${i + 1}. *${o.orderId}* – ${o.summary}`);
           });
-          orderListLines.push("\nPesanan mana yang mau diedit? Balas dengan nomor (1, 2, ...) atau ID pesanan (misal O-0501).");
+          orderListLines.push("\nMau edit yang mana? Balas nomor (1, 2, ...) atau ID pesanan (misal O-0501).");
           const withMenu = `*Daftar menu lengkap:*\n\n${menuList}\n\n——\n\n${orderListLines.join("\n")}`;
           state.conversationHistory.push({ role: "assistant", message: withMenu, timestamp: new Date() });
           state.lastMessageId = twilioMessageId;
           await state.save();
           return { success: true, whatsappResponse: withMenu, shouldCreateOrder: false };
         }
-        const retry = "Mohon pilih pesanan dengan nomor (1, 2, ...) atau ID pesanan (misal O-0501).";
+        const retry = "Pilih pesanan ya: nomor (1, 2, ...) atau ID (misal O-0501).";
         state.conversationHistory.push({ role: "assistant", message: retry, timestamp: new Date() });
         state.lastMessageId = twilioMessageId;
         await state.save();
@@ -225,12 +225,12 @@ export class ConversationManager {
           const order = await fetchOrderById(state.selectedOrderId);
           const itemsList =
             order?.items?.length
-              ? "Isi pesanan saat ini:\n" +
+              ? "Isi pesanan sekarang:\n" +
                 order.items.map((i: any) => `• ${i.name}: ${i.quantity} pcs`).join("\n") + "\n\n"
               : "";
           const oid = state.selectedOrderId;
           const withMenu =
-            `*Daftar menu lengkap:*\n\n${menuList}\n\n——\n\nBaik, pesanan *${oid}*.\n\n${itemsList}Mau tambah atau ubah apa? Sebutkan produk dan jumlah (contoh: Chiffon 2, Cheesecake 1), atau item yang mau dihapus (contoh: hapus Cheesecake).`;
+            `*Daftar menu lengkap:*\n\n${menuList}\n\n——\n\nOke, pesanan *${oid}*.\n\n${itemsList}Mau tambah atau ubah apa? Tulis aja produk + jumlah (misal: Chiffon 2, Cheesecake 1), atau mau hapus item (misal: hapus Cheesecake).`;
           state.conversationHistory.push({ role: "assistant", message: withMenu, timestamp: new Date() });
           state.lastMessageId = twilioMessageId;
           await state.save();
@@ -248,7 +248,7 @@ export class ConversationManager {
         const products = await fetchProducts();
         const menuList = this.formatMenuList(products.map((p: any) => ({ name: p.name, price: p.price })));
         const menuResponse =
-          `Tentu, ini dia daftar menu lengkap kami:\n\n${menuList}\n\n——\n\nMana yang ingin Anda pesan? Sebutkan nama produk dan jumlah (contoh: Chiffon 2, Cheesecake 1).`;
+          `Ini nih menunya:\n\n${menuList}\n\n——\n\nMau pesan apa? Tulis nama + jumlah (misal: Chiffon 2, Cheesecake 1).`;
         state.conversationHistory.push({ role: "assistant", message: menuResponse, timestamp: new Date() });
         state.lastMessageId = twilioMessageId;
         await state.save();
@@ -264,7 +264,7 @@ export class ConversationManager {
           this.isNoChangesRequest(messageBody);
         if (confirmed) {
           const askDelivery =
-            "Tanggal, alamat, dan jam pengambilan/pengiriman tetap sama dengan pesanan ini atau mau diubah?\n\nBalas *sama* atau *ubah*.";
+            "Tanggal, alamat, jam mau *sama* aja atau mau *ubah*?\n\nBalas: sama / ubah";
           state.pendingQuestion = { type: "edit_confirm_delivery", questionText: askDelivery };
           state.conversationHistory.push({ role: "assistant", message: askDelivery, timestamp: new Date() });
           state.lastMessageId = twilioMessageId;
@@ -286,7 +286,7 @@ export class ConversationManager {
         );
         if (analysis.intent === "done_no_more_changes") {
           const askDelivery =
-            "Tanggal, alamat, dan jam pengambilan/pengiriman tetap sama dengan pesanan ini atau mau diubah?\n\nBalas *sama* atau *ubah*.";
+            "Tanggal, alamat, jam mau *sama* aja atau mau *ubah*?\n\nBalas: sama / ubah";
           state.pendingQuestion = { type: "edit_confirm_delivery", questionText: askDelivery };
           state.conversationHistory.push({ role: "assistant", message: askDelivery, timestamp: new Date() });
           state.lastMessageId = twilioMessageId;
@@ -359,14 +359,14 @@ export class ConversationManager {
           return { success: true, whatsappResponse: finalMsg, orderId: oid, shouldCreateOrder: false };
         }
         if (wantChange) {
-          const askDetail = "Baik. Sebutkan alamat baru, tanggal pengambilan/pengiriman, atau jam.\n\nContoh: jam 4 sore, besok, Jl. Merdeka No 1.";
+          const askDetail = "Oke. Kirim aja alamat baru / tanggal / jam.\n\nMisal: jam 4 sore, besok, Jl. Merdeka No 1.";
           state.pendingQuestion = { type: "edit_change_delivery", questionText: askDetail };
           state.conversationHistory.push({ role: "assistant", message: askDetail, timestamp: new Date() });
           state.lastMessageId = twilioMessageId;
           await state.save();
           return { success: true, whatsappResponse: askDetail, shouldCreateOrder: false };
         }
-        const askAgain = "Balas *sama* (tanggal/alamat/jam tetap) atau *ubah* (mau ubah alamat/tanggal/jam).";
+        const askAgain = "*Sama* aja atau mau *ubah*? Balas salah satu.";
         state.conversationHistory.push({ role: "assistant", message: askAgain, timestamp: new Date() });
         state.lastMessageId = twilioMessageId;
         await state.save();
@@ -387,7 +387,7 @@ export class ConversationManager {
           // Fall through to AI analysis so "tambah cheesecake 2" gets extracted
         } else if (wantsChange) {
           const askDetail =
-            "Baik. Sebutkan alamat baru, tanggal pengambilan/pengiriman, atau jam.\n\nContoh: jam 4 sore, besok, Jl. Merdeka No 1.";
+            "Oke. Kirim aja alamat baru / tanggal / jam.\n\nMisal: jam 4 sore, besok, Jl. Merdeka No 1.";
           state.pendingQuestion = { type: "edit_change_delivery", questionText: askDetail };
           state.conversationHistory.push({ role: "assistant", message: askDetail, timestamp: new Date() });
           state.lastMessageId = twilioMessageId;
@@ -395,7 +395,7 @@ export class ConversationManager {
           return { success: true, whatsappResponse: askDetail, shouldCreateOrder: false };
         } else {
           const askAgain =
-            "Mau tambah item lagi atau ubah detail pengiriman? Balas *tambah* (sebutkan item) atau *ubah* (alamat/tanggal/jam).";
+            "Mau *tambah* item lagi atau *ubah* alamat/tanggal/jam? Balas: tambah / ubah";
           state.pendingQuestion = { type: "edit_follow_up", questionText: askAgain };
           state.conversationHistory.push({ role: "assistant", message: askAgain, timestamp: new Date() });
           state.lastMessageId = twilioMessageId;
@@ -506,12 +506,12 @@ export class ConversationManager {
         if (stillAmbiguous.length > 0) {
           const lines: string[] = [];
           lines.push(
-            "Saya melihat beberapa kata yang bisa berarti beberapa produk berbeda. Berikut daftar kemungkinan produknya:"
+            "Ada beberapa kata yang bisa maksudnya beda produk nih. Kemungkinannya:"
           );
 
           // Tampilkan juga produk yang sudah pasti supaya konteks pesanan jelas
           if (state.collectedData.products && state.collectedData.products.length > 0) {
-            lines.push("\nSaat ini pesanan yang sudah kami catat:");
+            lines.push("\nYang udah kami catat:");
             for (const p of state.collectedData.products as any[]) {
               const qty =
                 typeof (p as any).quantity === "number" && (p as any).quantity > 0
@@ -528,8 +528,7 @@ export class ConversationManager {
             }
           }
           lines.push(
-            "\nMohon sebutkan nama lengkap dari daftar di atas untuk kata-kata tersebut (dan jumlahnya).\n" +
-              'Contoh: "Chocolate Chip Cookie 2 pcs, pain au chocolate 1 pcs".'
+            "\nTulis aja nama lengkap dari list di atas + jumlah.\nContoh: Chocolate Chip Cookie 2, pain au chocolate 1."
           );
           const combinedQuestion = lines.join("\n");
           state.pendingQuestion = { type: "product_clarification", questionText: combinedQuestion };
@@ -556,7 +555,7 @@ export class ConversationManager {
                 .join(", ")
             : "";
         const prefix = confirmedSummary
-          ? `Baik, jadi ${confirmedSummary} ya.\n\n`
+          ? `Oke, jadi ${confirmedSummary} ya.\n\n`
           : "";
 
         if (!completeness.isComplete) {
@@ -624,7 +623,7 @@ export class ConversationManager {
           await state.save();
           return {
             success: true,
-            whatsappResponse: orderResult.whatsappResponse || "✅ Pesanan Anda telah diterima!",
+            whatsappResponse: orderResult.whatsappResponse || "✅ Pesanan kamu udah kami terima!",
             orderId: orderResult.orderId,
             shouldCreateOrder: true,
           };
@@ -633,7 +632,7 @@ export class ConversationManager {
           await state.save();
           return {
             success: false,
-            whatsappResponse: orderResult.whatsappResponse || "❌ Maaf, terjadi kesalahan. Silakan coba lagi.",
+            whatsappResponse: orderResult.whatsappResponse || "❌ Maaf, ada error. Coba lagi ya.",
             shouldCreateOrder: false,
             error: orderResult.error,
           };
@@ -679,7 +678,7 @@ export class ConversationManager {
         state.conversationHistory = [];
 
         const resetMessage =
-          "Baik, semua pesanan sebelumnya sudah saya hapus. Jadi, mau pesan apa saja kali ini? Berapa banyak untuk masing-masing kue, dan kapan mau dikirim?";
+          "Oke, pesanan tadi udah saya hapus. Mau pesan apa sekarang? Sebutin aja item + jumlah + kapan mau dikirim.";
         state.conversationHistory.push({
           role: "assistant",
           message: resetMessage,
@@ -736,7 +735,7 @@ export class ConversationManager {
           state.collectedData.products = [];
           state.collectedData.productsToRemove = undefined;
           const askDelivery =
-            "Tanggal, alamat, dan jam pengambilan/pengiriman tetap sama dengan pesanan ini atau mau diubah?\n\nBalas *sama* atau *ubah*.";
+            "Tanggal, alamat, jam mau *sama* aja atau mau *ubah*?\n\nBalas: sama / ubah";
           state.pendingQuestion = { type: "edit_confirm_delivery", questionText: askDelivery };
           state.conversationHistory.push({
             role: "assistant",
@@ -761,12 +760,12 @@ export class ConversationManager {
 
         const lines: string[] = [];
         lines.push(
-          "Saya melihat beberapa kata yang bisa berarti beberapa produk berbeda. Berikut daftar kemungkinan produknya:"
+          "Ada beberapa kata yang bisa maksudnya beda produk nih. Kemungkinannya:"
         );
 
         // Tampilkan juga produk yang sudah pasti (sudah kami catat) supaya pelanggan tahu apa yang sudah fix
         if (state.collectedData.products && state.collectedData.products.length > 0) {
-          lines.push("\nSaat ini pesanan yang sudah kami catat:");
+          lines.push("\nYang udah kami catat:");
           for (const p of state.collectedData.products as any[]) {
             const qty =
               typeof (p as any).quantity === "number" && (p as any).quantity > 0
@@ -811,8 +810,7 @@ export class ConversationManager {
         }
 
         lines.push(
-          "\nMohon tuliskan ulang pesanan dengan nama produk lengkap dan jumlah dari daftar di atas.\n" +
-            'Contoh: "Cheesecake 2 pcs, Sweet Cake 3 pcs, Cheese Biscuit 1 pcs".'
+          "\nTulis ulang aja dengan nama lengkap + jumlah dari list di atas.\nContoh: Cheesecake 2, Sweet Cake 3, Cheese Biscuit 1."
         );
 
         const combinedQuestion = lines.join("\n");
@@ -950,7 +948,7 @@ export class ConversationManager {
           success: false,
           whatsappResponse:
             orderResult.whatsappResponse ||
-            "❌ Maaf, terjadi kesalahan saat memproses pesanan Anda. Silakan coba lagi.",
+            "❌ Maaf, ada error waktu proses pesanan. Coba lagi ya.",
           shouldCreateOrder: false,
           error: orderResult.error,
         };
@@ -960,7 +958,7 @@ export class ConversationManager {
       return {
         success: false,
         whatsappResponse:
-          "❌ Maaf, terjadi kesalahan. Silakan coba lagi atau hubungi kami langsung.",
+          "❌ Maaf, ada error. Coba lagi atau hubungi kami langsung ya.",
         shouldCreateOrder: false,
         error: error.message,
       };
@@ -1155,13 +1153,13 @@ export class ConversationManager {
     if (missingField === "fulfillmentType" || missingField === "pickupTime") {
       const questions: Record<string, string> = {
         fulfillmentType:
-          "Apakah pesanan ini mau DIAMBIL di toko (pickup) atau DIKIRIM ke alamat Anda (delivery)?\n\nBalas dengan salah satu kata saja: \"pickup\" atau \"delivery\".",
+          "Mau *ambil di toko* (pickup) atau *dikirim* (delivery)?\n\nBalas: pickup / delivery",
         pickupTime:
           state.collectedData.fulfillmentType === "delivery"
-            ? "Jam berapa Anda ingin pesanan DIKIRIM? (contoh: jam 10 pagi, jam 3 sore)"
+            ? "Jam berapa mau dikirim? (misal: jam 10 pagi, jam 3 sore)"
             : state.collectedData.fulfillmentType === "pickup"
-            ? "Jam berapa Anda ingin MENGAMBIL pesanan di toko? (contoh: jam 10 pagi, jam 3 sore)"
-            : "Jam berapa Anda ingin pesanan siap? (contoh: jam 10 pagi, jam 3 sore)",
+            ? "Jam berapa mau ambil di toko? (misal: jam 10 pagi, jam 3 sore)"
+            : "Jam berapa pesanan mau siap? (misal: jam 10 pagi, jam 3 sore)",
       };
       return questions[missingField];
     }
@@ -1174,10 +1172,10 @@ export class ConversationManager {
       const order = await fetchOrderById(oid);
       const itemsList =
         order?.items?.length
-          ? "Isi pesanan saat ini:\n" +
+          ? "Isi pesanan sekarang:\n" +
             order.items.map((i: any) => `• ${i.name}: ${i.quantity} pcs`).join("\n") + "\n\n"
           : "";
-      return `${itemsList}Mau tambah atau ubah apa ke pesanan *${oid}*? Sebutkan produk dan jumlah (contoh: Chiffon 2, Cheesecake 1), atau item yang mau dihapus (contoh: hapus Cheesecake).`;
+      return `${itemsList}Mau tambah/ubah apa ke pesanan *${oid}*? Tulis produk + jumlah (misal: Chiffon 2, Cheesecake 1) atau mau hapus (misal: hapus Cheesecake).`;
     }
 
     // Use AI suggestion if available for other fields
@@ -1187,25 +1185,25 @@ export class ConversationManager {
 
     // Fallback to template questions
     const questions: Record<string, string> = {
-      products: "Produk apa yang ingin Anda pesan? Silakan sebutkan nama produknya.",
+      products: "Mau pesan apa? Sebutin aja nama produknya.",
       quantities: state.collectedData.products
-        ? `Berapa jumlah ${state.collectedData.products.map((p) => p.name).join(" dan ")} yang Anda inginkan?`
-        : "Berapa jumlah yang Anda inginkan?",
+        ? `Berapa banyak ${state.collectedData.products.map((p) => p.name).join(" dan ")}?`
+        : "Berapa banyak?",
       deliveryDate:
-        "Kapan Anda ingin pesanan dikirim? (contoh: besok, 15 Februari, atau tanggal lainnya)",
+        "Kapan mau dikirim? (misal: besok, 15 Feb, atau tanggal lain)",
       deliveryAddress:
-        "Bisa berikan alamat pengiriman yang lengkap? (termasuk nama jalan, nomor, dan kota)",
+        "Alamat pengirimannya mana? (jalan, nomor, kota)",
       fulfillmentType:
-        "Apakah pesanan ini mau DIAMBIL di toko (pickup) atau DIKIRIM ke alamat Anda (delivery)?\n\nBalas dengan salah satu kata saja: \"pickup\" atau \"delivery\".",
+        "Mau *ambil di toko* (pickup) atau *dikirim* (delivery)?\n\nBalas: pickup / delivery",
       pickupTime:
         state.collectedData.fulfillmentType === "delivery"
-          ? "Jam berapa Anda ingin pesanan DIKIRIM? (contoh: jam 10 pagi, jam 3 sore)"
+          ? "Jam berapa mau dikirim? (misal: jam 10 pagi, jam 3 sore)"
           : state.collectedData.fulfillmentType === "pickup"
-          ? "Jam berapa Anda ingin MENGAMBIL pesanan di toko? (contoh: jam 10 pagi, jam 3 sore)"
-          : "Jam berapa Anda ingin pesanan siap? (contoh: jam 10 pagi, jam 3 sore)",
+          ? "Jam berapa mau ambil di toko? (misal: jam 10 pagi, jam 3 sore)"
+          : "Jam berapa pesanan mau siap? (misal: jam 10 pagi, jam 3 sore)",
     };
 
-    return questions[missingField] || "Mohon lengkapi informasi pesanan Anda.";
+    return questions[missingField] || "Lengkapi dulu ya datanya.";
   }
 
   /**
@@ -1239,7 +1237,7 @@ export class ConversationManager {
     state: ConversationStateData
   ): Promise<string> {
     const order = await fetchOrderById(orderId);
-    if (!order || !order.items) return "Pesanan tidak ditemukan.";
+    if (!order || !order.items) return "Pesanan ga ketemu.";
     const norm = (s: string) => s.toLowerCase().trim();
     const proposed = new Map<string, { name: string; quantity: number }>();
     for (const i of order.items) {
@@ -1255,11 +1253,11 @@ export class ConversationManager {
     const lines = Array.from(proposed.values()).map(
       (v) => `• ${v.name}: ${v.quantity} pcs`
     );
-    if (lines.length === 0) return "Pesanan kosong. Sebutkan item yang mau ditambah.";
+    if (lines.length === 0) return "Pesanan kosong. Mau tambah apa?";
     return (
-      `Pesanan Anda saat ini (*${orderId}*):\n\n` +
+      `Pesanan kamu saat ini (*${orderId}*):\n\n` +
       lines.join("\n") +
-      `\n\nApakah item pesanan sudah benar? Balas *ya* atau *betul* untuk konfirmasi, atau sebutkan yang mau diubah.`
+      `\n\nUdah benar belum? Balas *ya* / *betul* buat konfirmasi, atau sebutin yang mau diubah.`
     );
   }
 

@@ -16,7 +16,7 @@ export class WhatsAppMessageFormatter {
   formatCustomerOrderConfirmation(options: CustomerOrderConfirmationOptions): string {
     const { orderId, fulfillmentType, pickupTime, frontendBaseUrl } = options;
     let message =
-      `✅ Pesanan Anda sudah kami terima.\n\n` +
+      `✅ Pesanan kamu udah kami terima.\n\n` +
       `Order ID: *${orderId}*.\n`;
     if (fulfillmentType) {
       message += fulfillmentType === "pickup"
@@ -30,7 +30,7 @@ export class WhatsAppMessageFormatter {
       const baseUrl = frontendBaseUrl.replace(/\/$/, "");
       message += `📱 Lihat detail pesanan: ${baseUrl}/order/${orderId}\n\n`;
     }
-    message += `Kami akan cek stok dan mengonfirmasi berikutnya bila diperlukan`;
+    message += `Kami cek stok dulu ya, nanti konfirmasi lagi kalo perlu`;
     return message;
   }
 
