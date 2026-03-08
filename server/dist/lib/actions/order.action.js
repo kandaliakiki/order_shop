@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeItemsFromOrder = exports.addItemsToOrder = exports.fetchOrdersByWhatsappNumber = exports.fetchOrderById = exports.calculateTotalItemsSold = exports.countTotalOrders = exports.fetchOverallRevenue = exports.searchOrdersByCustomerName = exports.updateOrderStatus = exports.updateOrderDeliveryDetails = exports.createOrder = exports.fetchOrders = void 0;
+exports.removeItemsFromOrder = exports.addItemsToOrder = exports.fetchOrdersByWhatsappNumber = exports.fetchOrderById = exports.normalizeOrderId = exports.calculateTotalItemsSold = exports.countTotalOrders = exports.fetchOverallRevenue = exports.searchOrdersByCustomerName = exports.updateOrderStatus = exports.updateOrderDeliveryDetails = exports.createOrder = exports.fetchOrders = void 0;
 const mongoose_1 = require("../mongoose");
 const order_model_1 = __importDefault(require("../models/order.model"));
 const stockDeduction_service_1 = require("../services/stockDeduction.service");
@@ -61,8 +61,9 @@ exports.createOrder = createOrder;
 /** Update delivery/pickup details of an existing order (for edit flow). */
 const updateOrderDeliveryDetails = (orderId, updates) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, mongoose_1.connectToDB)();
+    const id = normalizeOrderId(orderId);
     try {
-        const order = yield order_model_1.default.findOne({ orderId });
+        const order = yield order_model_1.default.findOne({ orderId: id });
         if (!order)
             return { success: false, error: "Order not found" };
         const set = {};
@@ -76,7 +77,7 @@ const updateOrderDeliveryDetails = (orderId, updates) => __awaiter(void 0, void 
             set.pickupTime = updates.pickupTime;
         if (Object.keys(set).length === 0)
             return { success: true };
-        yield order_model_1.default.findOneAndUpdate({ orderId }, set, { new: true });
+        yield order_model_1.default.findOneAndUpdate({ orderId: id }, set, { new: true });
         return { success: true };
     }
     catch (e) {
@@ -88,14 +89,15 @@ exports.updateOrderDeliveryDetails = updateOrderDeliveryDetails;
 // Function to update the status of an order
 const updateOrderStatus = (orderId, newStatus) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, mongoose_1.connectToDB)();
+    const id = normalizeOrderId(orderId);
     try {
-        const order = yield order_model_1.default.findOne({ orderId });
+        const order = yield order_model_1.default.findOne({ orderId: id });
         if (!order) {
             throw new Error("Order not found");
         }
         const oldStatus = order.status;
         // Update order status
-        const updatedOrder = yield order_model_1.default.findOneAndUpdate({ orderId }, { status: newStatus }, { new: true });
+        const updatedOrder = yield order_model_1.default.findOneAndUpdate({ orderId: id }, { status: newStatus }, { new: true });
         // Handle stock operations based on status change
         if (oldStatus !== newStatus) {
             const stockCalculationService = new ingredientStockCalculation_service_1.IngredientStockCalculationService();
@@ -110,7 +112,7 @@ const updateOrderStatus = (orderId, newStatus) => __awaiter(void 0, void 0, void
                     yield stockReservationService.releaseReservedStock(stockCalculation.requirements);
                     // Store lot usage metadata if available
                     if (deductionResult.lotUsageMetadata) {
-                        yield order_model_1.default.findOneAndUpdate({ orderId }, { lotUsageMetadata: deductionResult.lotUsageMetadata }, { new: true });
+                        yield order_model_1.default.findOneAndUpdate({ orderId: id }, { lotUsageMetadata: deductionResult.lotUsageMetadata }, { new: true });
                     }
                     console.log(`✅ Order ${orderId} status changed to "On Process", stock deducted from reserved stock`);
                 }
@@ -222,11 +224,21 @@ const calculateTotalItemsSold = (dateRange) => __awaiter(void 0, void 0, void 0,
     }
 });
 exports.calculateTotalItemsSold = calculateTotalItemsSold;
+/** Normalize orderId to stored format: O-<4 digits> (e.g. O-500 → O-0500). Export for use in conversation flow. */
+function normalizeOrderId(orderId) {
+    const match = /^O-(\d+)$/i.exec(orderId.trim());
+    if (!match)
+        return orderId;
+    const num = match[1];
+    return `O-${num.padStart(4, "0")}`;
+}
+exports.normalizeOrderId = normalizeOrderId;
 // Function to fetch order by orderId with populated product data
 const fetchOrderById = (orderId) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, mongoose_1.connectToDB)();
+    const id = normalizeOrderId(orderId);
     try {
-        const order = yield order_model_1.default.findOne({ orderId }).populate("whatsappMessageId");
+        const order = yield order_model_1.default.findOne({ orderId: id }).populate("whatsappMessageId");
         if (!order) {
             throw new Error("Order not found");
         }
@@ -259,8 +271,9 @@ const TAX_RATE = 0.1;
 /** Add items to an existing order (merge by product name, recalc totals). */
 const addItemsToOrder = (orderId, newItems) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, mongoose_1.connectToDB)();
+    const id = normalizeOrderId(orderId);
     try {
-        const order = yield order_model_1.default.findOne({ orderId });
+        const order = yield order_model_1.default.findOne({ orderId: id });
         if (!order) {
             return { success: false, error: "Order not found" };
         }
@@ -306,7 +319,7 @@ const addItemsToOrder = (orderId, newItems) => __awaiter(void 0, void 0, void 0,
         const subtotal = Math.max(0, mergedItems.reduce((sum, i) => sum + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0));
         const tax = subtotal * TAX_RATE;
         const total = subtotal + tax;
-        const updated = yield order_model_1.default.findOneAndUpdate({ orderId }, { items: mergedItems, subtotal, tax, total }, { new: true });
+        const updated = yield order_model_1.default.findOneAndUpdate({ orderId: id }, { items: mergedItems, subtotal, tax, total }, { new: true });
         return { success: true, order: updated };
     }
     catch (error) {
@@ -318,8 +331,9 @@ exports.addItemsToOrder = addItemsToOrder;
 /** Remove items from an existing order by product name (case-insensitive). Recalc totals. */
 const removeItemsFromOrder = (orderId, productNamesToRemove) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, mongoose_1.connectToDB)();
+    const id = normalizeOrderId(orderId);
     try {
-        const order = yield order_model_1.default.findOne({ orderId });
+        const order = yield order_model_1.default.findOne({ orderId: id });
         if (!order) {
             return { success: false, error: "Order not found" };
         }
@@ -331,7 +345,7 @@ const removeItemsFromOrder = (orderId, productNamesToRemove) => __awaiter(void 0
         const subtotal = Math.max(0, remainingItems.reduce((sum, i) => sum + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0));
         const tax = subtotal * TAX_RATE;
         const total = subtotal + tax;
-        const updated = yield order_model_1.default.findOneAndUpdate({ orderId }, { items: remainingItems, subtotal, tax, total }, { new: true });
+        const updated = yield order_model_1.default.findOneAndUpdate({ orderId: id }, { items: remainingItems, subtotal, tax, total }, { new: true });
         return { success: true, order: updated };
     }
     catch (error) {

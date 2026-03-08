@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MessageRouterService = void 0;
+// Customer bot only: no bakesheet, waste, expiry, or stock – ordering and order updates only.
 class MessageRouterService {
     constructor() {
         // Bakery agent name - selected: 'BakeBot'
@@ -44,30 +45,17 @@ class MessageRouterService {
         if (this.isGreeting(body)) {
             return { type: 'greeting', shouldCallAI: false };
         }
-        // 3. Check for numbered menu responses (Option C - not selected but code ready)
-        if (/^[1-4]$/.test(normalizedBody)) {
-            const menuMap = {
-                '1': 'bakesheet',
-                '2': 'waste',
-                '3': 'expiry',
-                '4': 'order',
-            };
-            return {
-                type: 'command',
-                command: menuMap[normalizedBody],
-                args: '',
-                shouldCallAI: true,
-            };
-        }
-        // 4. Check for slash commands (stock/addstock commented out so it doesn't interfere with order flow)
+        // 3. REMOVED: numbered menu 1–4 (bakesheet, waste, expiry, order). Single digits like "2" or "3"
+        //    are now treated as order flow (e.g. selecting order #2 or #3 to edit). Customer bot = ordering only.
+        // 4. Slash commands: only /order for customer bot. /bakesheet, /waste, /expiry disabled.
         if (body.startsWith('/')) {
             const [command, ...args] = body.slice(1).split(' ');
             const normalizedCommand = command === 'batch' ? 'bakesheet' : command;
-            const allowedCommands = ['order', 'bakesheet', 'waste', 'expiry']; // 'stock', 'addstock' disabled
+            const allowedCommands = ['order'];
             if (allowedCommands.includes(normalizedCommand)) {
                 return {
                     type: 'command',
-                    command: normalizedCommand,
+                    command: 'order',
                     args: args.join(' '),
                     shouldCallAI: true
                 };

@@ -10,41 +10,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleCommand = void 0;
-const bakeSheet_service_1 = require("../services/bakeSheet.service");
-const wasteLogging_service_1 = require("../services/wasteLogging.service");
-const expiryCheck_service_1 = require("../services/expiryCheck.service");
-function handleCommand(command, args, whatsappNumber, messageId) {
+function handleCommand(_command, args, _whatsappNumber, _messageId) {
     return __awaiter(this, void 0, void 0, function* () {
-        try {
-            switch (command) {
-                case "bakesheet":
-                    const bakeSheetService = new bakeSheet_service_1.BakeSheetService();
-                    const bakeSheetResult = yield bakeSheetService.processBakeSheetCommand(args, whatsappNumber);
-                    return bakeSheetResult.message;
-                case "waste":
-                    const wasteService = new wasteLogging_service_1.WasteLoggingService();
-                    const wasteResult = yield wasteService.processWasteCommand(args, whatsappNumber);
-                    return wasteResult.message;
-                case "expiry":
-                    const expiryService = new expiryCheck_service_1.ExpiryCheckService();
-                    const expiryResult = yield expiryService.processExpiryCommand(args.trim() || undefined);
-                    return expiryResult.message;
-                // COMMENTED OUT: /stock was intercepting "Delivery" and other messages; re-enable when needed
-                // case "stock":
-                //   const stockService = new StockAdditionService();
-                //   const stockResult = await stockService.processStockAddition(
-                //     args,
-                //     whatsappNumber
-                //   );
-                //   return stockResult.message;
-                default:
-                    return '❌ Unknown command. Type "menu" to see options.';
-            }
-        }
-        catch (error) {
-            console.error(`Error handling /${command} command:`, error);
-            return `❌ Error processing /${command} command: ${error.message}`;
-        }
+        // Only "order" is used for customer bot; handled via ConversationManager in webhook.
+        // Admin commands (bakesheet, waste, expiry, stock) are in adminLogic/ and disabled.
+        return '❌ Unknown command. Balas "menu" atau "hi" untuk memesan.';
     });
 }
 exports.handleCommand = handleCommand;
