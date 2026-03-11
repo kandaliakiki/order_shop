@@ -678,7 +678,7 @@ export class ConversationManager {
         state.conversationHistory = [];
 
         const resetMessage =
-          "Oke, pesanan tadi udah saya hapus. Mau pesan apa sekarang? Sebutin aja item + jumlah + kapan mau dikirim.";
+          "Oke, pesanan sebelumnya tetap tersimpan ya. Sekarang kita mulai pesanan baru. Mau pesan apa? Sebutin aja item + jumlah + kapan mau dikirim.";
         state.conversationHistory.push({
           role: "assistant",
           message: resetMessage,
