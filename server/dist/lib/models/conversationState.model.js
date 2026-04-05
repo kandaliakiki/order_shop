@@ -23,6 +23,7 @@ const conversationStateSchema = new mongoose_1.default.Schema({
                     name: String,
                     quantity: Number,
                     confidence: Number,
+                    note: String,
                 },
             ],
             deliveryDate: String,
@@ -48,11 +49,12 @@ const conversationStateSchema = new mongoose_1.default.Schema({
     pendingQuestion: {
         type: {
             type: String,
-            enum: ["missing_field", "product_clarification", "new_or_edit", "order_selection", "add_or_change", "edit_follow_up", "edit_change_delivery", "edit_confirm_items", "edit_confirm_delivery"],
+            enum: ["missing_field", "product_clarification", "new_or_edit", "order_selection", "add_or_change", "edit_follow_up", "edit_change_delivery", "edit_confirm_items", "edit_confirm_delivery", "confirm_previous_address", "confirm_items_done"],
             field: String,
             similarProducts: [{ name: String, price: Number }],
             questionText: String,
             orderList: [{ orderId: String, summary: String }],
+            previousAddress: String,
         },
     },
     conversationHistory: [

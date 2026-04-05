@@ -27,6 +27,7 @@ const itemSchema = new mongoose_1.default.Schema({
     name: { type: String, required: true },
     quantity: { type: Number, required: true },
     price: { type: Number, required: true },
+    note: { type: String, required: false }, // Special requests for this item
 });
 // Define the schema for an order
 const orderSchema = new mongoose_1.default.Schema({

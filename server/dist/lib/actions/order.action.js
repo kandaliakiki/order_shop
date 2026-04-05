@@ -292,7 +292,7 @@ const addItemsToOrder = (orderId, newItems) => __awaiter(void 0, void 0, void 0,
                 ? i.price
                 : findPrice(i.name);
             const numPrice = price != null ? Number(price) : 0;
-            byName.set(norm(i.name), { name: i.name, quantity: i.quantity, price: numPrice });
+            byName.set(norm(i.name), { name: i.name, quantity: i.quantity, price: numPrice, note: i.note });
         }
         for (const item of newItems) {
             const price = findPrice(item.name);
@@ -304,6 +304,10 @@ const addItemsToOrder = (orderId, newItems) => __awaiter(void 0, void 0, void 0,
             const existing = byName.get(key);
             if (existing) {
                 existing.quantity += item.quantity;
+                // Update note if provided
+                if (item.note) {
+                    existing.note = item.note;
+                }
             }
             else {
                 // Use product name from catalog for consistency
@@ -312,6 +316,7 @@ const addItemsToOrder = (orderId, newItems) => __awaiter(void 0, void 0, void 0,
                     name: product ? product.name : item.name,
                     quantity: item.quantity,
                     price,
+                    note: item.note,
                 });
             }
         }

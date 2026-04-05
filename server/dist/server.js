@@ -50,6 +50,7 @@ const twilio_service_1 = require("./lib/services/twilio.service");
 const orderStockCalculation_action_1 = require("./lib/actions/orderStockCalculation.action");
 const orderStockNotification_action_1 = require("./lib/actions/orderStockNotification.action");
 const whatsappWebhook_action_1 = require("./lib/actions/whatsappWebhook.action");
+const testing_route_1 = __importDefault(require("./lib/routes/testing.route"));
 // Specify the path to your .env.local file
 dotenv_1.default.config({ path: ".env.local" });
 const app = (0, express_1.default)();
@@ -64,6 +65,10 @@ app.use("/api/twilio/webhook", express_1.default.urlencoded({ extended: true, li
 app.use(express_1.default.json({ limit: "10mb" }));
 app.use(express_1.default.urlencoded({ limit: "10mb", extended: true }));
 (0, mongoose_1.connectToDB)();
+if (process.env.ENABLE_TESTING_INTERFACE === "true") {
+    app.use("/api/testing", testing_route_1.default);
+    console.log(`✅ Testing interface enabled at /api/testing`);
+}
 // UNCOMMENT FOR SEEDING DATA
 // connectToDB().then(() => {
 //   seedOrders().catch((error) => {

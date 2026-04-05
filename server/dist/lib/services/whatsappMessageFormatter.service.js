@@ -1,19 +1,41 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WhatsAppMessageFormatter = void 0;
+// Payment configuration - can be moved to environment variables
+const PAYMENT_INFO = {
+    bankName: process.env.BANK_NAME || "BCA",
+    bankAccount: process.env.BANK_ACCOUNT || "1234567890",
+    bankAccountName: process.env.BANK_ACCOUNT_NAME || "Aldo Bakery",
+};
 class WhatsAppMessageFormatter {
     /**
      * Format order confirmation for the *customer* (WhatsApp reply).
      * No admin/stock wording. Use this for new orders and edit completions.
      */
     formatCustomerOrderConfirmation(options) {
-        const { orderId, fulfillmentType, pickupTime, frontendBaseUrl } = options;
+        const { orderId, fulfillmentType, pickupDate, pickupTime, frontendBaseUrl, items } = options;
         let message = `✅ Pesanan kamu udah kami terima.\n\n` +
             `Order ID: *${orderId}*.\n`;
+        // Show items with notes if available
+        if (items && items.length > 0) {
+            message += `\n📦 Pesanan:\n`;
+            for (const item of items) {
+                message += `• ${item.name}: ${item.quantity} pcs`;
+                if (item.note) {
+                    message += ` (${item.note})`;
+                }
+                message += `\n`;
+            }
+            message += `\n`;
+        }
         if (fulfillmentType) {
             message += fulfillmentType === "pickup"
                 ? `📦 Ambil di toko (pickup).\n`
                 : `🚚 Dikirim (delivery).\n`;
+        }
+        const formattedDate = this.formatDate(pickupDate);
+        if (formattedDate) {
+            message += `📅 Tanggal: ${formattedDate}\n`;
         }
         if (pickupTime) {
             message += `🕐 Waktu: ${pickupTime}\n`;
@@ -22,8 +44,26 @@ class WhatsAppMessageFormatter {
             const baseUrl = frontendBaseUrl.replace(/\/$/, "");
             message += `📱 Lihat detail pesanan: ${baseUrl}/order/${orderId}\n\n`;
         }
-        message += `Kami cek stok dulu ya, nanti konfirmasi lagi kalo perlu`;
+        // Add payment information
+        message += `💳 *Pembayaran:*\n`;
+        message += `Transfer ke:\n`;
+        message += `• Bank ${PAYMENT_INFO.bankName}: ${PAYMENT_INFO.bankAccount}\n`;
+        message += `• a.n. ${PAYMENT_INFO.bankAccountName}\n\n`;
+        message += `Konfirmasi setelah transfer ya! 🙏\n\n`;
+        message += `Kami cek stok dulu, nanti konfirmasi lagi kalo perlu.`;
         return message;
+    }
+    formatDate(value) {
+        if (!value)
+            return null;
+        const parsed = value instanceof Date ? value : new Date(value);
+        if (Number.isNaN(parsed.getTime()))
+            return null;
+        return parsed.toLocaleDateString("id-ID", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+        });
     }
     /**
      * Format order confirmation message (when all ingredients are sufficient)

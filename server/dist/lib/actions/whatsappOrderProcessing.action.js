@@ -33,7 +33,7 @@ function processWhatsAppMessageForOrder(messageBody_1, whatsappNumber_1, whatsap
     skipStockCheck = false, // If true, just create order without stock checks/reservations
     collectedData // When set, use this for order instead of AI-parsing messageBody
     ) {
-        var _a, _b;
+        var _a, _b, _c;
         try {
             let aiAnalysis;
             if (collectedData && collectedData.products && collectedData.products.length > 0) {
@@ -43,6 +43,7 @@ function processWhatsAppMessageForOrder(messageBody_1, whatsappNumber_1, whatsap
                         name: p.name,
                         quantity: p.quantity,
                         confidence: 1,
+                        itemNote: p.note,
                     })),
                     deliveryDate: collectedData.deliveryDate,
                     deliveryAddress: collectedData.deliveryAddress,
@@ -128,11 +129,19 @@ function processWhatsAppMessageForOrder(messageBody_1, whatsappNumber_1, whatsap
                 // Skip all stock checks/reservations: confirm with customer-only message (no admin/stock wording)
                 const messageFormatter = new whatsappMessageFormatter_service_1.WhatsAppMessageFormatter();
                 const frontendBaseUrl = process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
+                // Get items with notes from the order
+                const orderItems = (_c = orderResult.order.items) === null || _c === void 0 ? void 0 : _c.map((item) => ({
+                    name: item.name,
+                    quantity: item.quantity,
+                    note: item.note,
+                }));
                 whatsappResponse = messageFormatter.formatCustomerOrderConfirmation({
                     orderId: orderResult.order.orderId,
                     fulfillmentType: orderResult.order.fulfillmentType,
+                    pickupDate: orderResult.order.pickupDate,
                     pickupTime: orderResult.order.pickupTime,
                     frontendBaseUrl,
+                    items: orderItems,
                 });
                 console.log("✅ Order created without stock checks (skipStockCheck=true)");
             }

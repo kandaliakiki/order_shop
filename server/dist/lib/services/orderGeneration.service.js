@@ -54,6 +54,7 @@ class OrderGenerationService {
                         name: product.name,
                         quantity: extractedProduct.quantity,
                         price: product.price,
+                        note: extractedProduct.itemNote || undefined, // Include special requests if any
                     });
                 }
                 else {

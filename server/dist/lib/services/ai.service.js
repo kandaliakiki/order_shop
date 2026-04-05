@@ -46,6 +46,7 @@ class AIService {
      */
     analyzeWithContext(messageBody, availableProducts, conversationHistory, currentState) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a;
             yield this.checkGeminiRateLimit();
             const today = new Date();
             const todayStr = today.toISOString().split('T')[0];
@@ -80,19 +81,20 @@ PESAN TERBARU DARI PELANGGAN:
 ${(currentState === null || currentState === void 0 ? void 0 : currentState.userMightIndicateDone) ? `
 PETUNJUK: Pelanggan mengirim pesan yang sering berarti "sudah selesai / tidak ada lagi / tidak ada yang diubah" (misal: "sudah", "done", "tidak ada lagi", "sudah benar"). Tentukan apakah pesan ini BENAR-BENAR hanya mengindikasikan itu (tidak ada produk/alamat/tanggal baru). Jika ya, set intent ke "done_no_more_changes". Jika pesan juga berisi produk baru, alamat, atau tanggal, tetap gunakan "order" dan ekstrak datanya.
 ` : ""}
-${(currentState === null || currentState === void 0 ? void 0 : currentState.editOrderContext) ? `
-KONTEKS EDIT PESANAN: Pelanggan sedang mengubah pesanan yang sudah ada (orderId: ${currentState.editOrderContext.orderId}).
+${(currentState === null || currentState === void 0 ? void 0 : currentState.editOrderContext) || (currentState === null || currentState === void 0 ? void 0 : currentState.cartEditContext) ? `
+KONTEKS PERUBAHAN ITEM: Pelanggan sedang mengubah item pesanan ${((_a = currentState === null || currentState === void 0 ? void 0 : currentState.editOrderContext) === null || _a === void 0 ? void 0 : _a.orderId) ? `(orderId: ${currentState.editOrderContext.orderId})` : "(keranjang berjalan)"}.
 Untuk setiap produk yang disebutkan, tentukan editIntent dan quantity:
 - "add": pelanggan mau TAMBAH jumlah (tambah N, add N) → quantity = N yang ditambah. Contoh: "sweet cake tambah 2" → { name: "Sweet Cake", quantity: 2, editIntent: "add" }
 - "subtract": pelanggan mau KURANGI jumlah (kurangin N, reduce by N) → quantity = N yang dikurangi. Contoh: "kurangin 2 sweetcakenya" → { name: "Sweet Cake", quantity: 2, editIntent: "subtract" }
 - "replace": pelanggan mau GANTI/set jumlah jadi N (e.g. "nya 3 aja", "jadi 3", "sweet cake 3") → quantity = N baru. Contoh: "sweetcake nya 3 aja deh" → { name: "Sweet Cake", quantity: 3, editIntent: "replace" }
-Jika tidak jelas, gunakan "replace". productsToRemove = untuk item yang mau dihapus seluruhnya (hapus X, remove X).
+Jika tidak jelas, gunakan "replace". productsToRemove = untuk item yang mau dihapus seluruhnya (hapus X, remove X, batalin X, "X gak jadi", "X tidak jadi", "ganti X jadi Y" maka X masuk productsToRemove dan Y masuk products).
 ` : ""}
 
 TUGAS ANDA:
 1. Ekstrak informasi dari pesan terbaru:
    - products: Nama produk yang disebutkan (harus cocok dengan produk yang tersedia)
    - quantities: Jumlah untuk setiap produk
+   - itemNote: Permintaan khusus untuk produk tersebut (misal: "potong 8 bagian", "selai pisah", "tanpa gula", "jadi 8 bagian"). Jika pelanggan menyebutkan permintaan khusus seperti "dipotong", "dijadiin", "pisah", "tanpa", dsb., itu adalah itemNote BUKAN quantity. Return null jika tidak ada permintaan khusus.
    - deliveryDate: Tanggal pengiriman (format: YYYY-MM-DD atau null)
    - deliveryAddress: Alamat pengiriman lengkap (atau null)
    - fulfillmentType: "pickup" jika pelanggan ingin ambil sendiri di toko, atau "delivery" jika ingin dikirim (atau null jika belum jelas)
@@ -114,7 +116,7 @@ TUGAS ANDA:
 RESPOND DENGAN JSON:
 {
   "extractedData": {
-    "products": [{"name": "exact product name", "quantity": 1, "confidence": 0.9${(currentState === null || currentState === void 0 ? void 0 : currentState.editOrderContext) ? ', "editIntent": "add" | "subtract" | "replace"' : ''}}],
+    "products": [{"name": "exact product name", "quantity": 1, "confidence": 0.9, "itemNote": "slice into 8 pieces" | null${(currentState === null || currentState === void 0 ? void 0 : currentState.editOrderContext) || (currentState === null || currentState === void 0 ? void 0 : currentState.cartEditContext) ? ', "editIntent": "add" | "subtract" | "replace"' : ''}}],
     "deliveryDate": "YYYY-MM-DD or null",
     "deliveryAddress": "string or null",
     "fulfillmentType": "pickup" | "delivery" | null,
@@ -140,17 +142,18 @@ RESPOND DENGAN JSON:
 RULES:
 - Product names harus cocok EXACTLY dengan produk yang tersedia
 - Quantities: positive integers. Dalam konteks edit, untuk editIntent "add"/"subtract" quantity = angka yang ditambah/dikurangi; untuk "replace" quantity = jumlah baru.
+- itemNote: Permintaan khusus untuk produk (Bukan quantity!). Contoh: "strawberry cheesecake jadi 8 bagian" → itemNote: "jadi 8 bagian" (BUKAN quantity: 8). "cheesecake dipotong 8" → itemNote: "dipotong 8". "selai dipisah" → itemNote: "selai dipisah". Jika tidak ada permintaan khusus, return null.
 - deliveryDate: "besok" = ${tomorrowStr}, "hari ini" = ${todayStr}
 - Return null untuk field yang tidak ditemukan
-- productsToRemove: Hanya isi jika konteks edit order dan pelanggan menyebut hapus/remove/batalkan item (hapus seluruh item). Gunakan nama produk EXACT dari katalog.
-- editIntent (hanya saat edit): "add" = tambah N, "subtract" = kurangin N, "replace" = set jadi N. Wajib isi saat edit order.
+- productsToRemove: Saat konteks edit order ATAU cartEditContext, isi jika pelanggan menyebut hapus/remove/batalkan item (hapus seluruh item), termasuk pola "X gak jadi", "X tidak jadi", "batalin X". Untuk "ganti/ubah X jadi Y", masukkan X ke productsToRemove dan Y ke products.
+- editIntent (saat edit/cart edit): "add" = tambah N, "subtract" = kurangin N, "replace" = set jadi N. Isi saat ada sinyal perubahan item.
 - missingFields: List field yang BELUM lengkap (gunakan hanya nilai: "products", "quantities", "deliveryDate", "deliveryAddress", "fulfillmentType", "pickupTime")
 - ambiguousProducts: WAJIB diisi jika ada kata dari pelanggan yang bisa cocok ke >= 2 produk (misal "cake" cocok ke Sweet Cake dan Cheesecake), bahkan jika pada pesan yang sama juga ada produk lain yang sudah jelas.
 - Jika sebuah mention dianggap ambigu, JANGAN memasukkan produk hasil tebakannya ke "extractedData.products" sebelum pelanggan menjawab klarifikasi.
 - suggestedQuestion: Pertanyaan natural dalam Bahasa Indonesia
 - intent:
   - "reset" jika pelanggan dengan jelas meminta untuk mengulang / reset / mulai dari awal / batalkan semua pesanan sebelumnya (contoh: "saya mau pesan dari awal lagi", "reset pesanan", "hapus semua pesanan yang sudah dicatat").
-  - "done_no_more_changes" jika pelanggan HANYA mengindikasikan bahwa pesanan sudah selesai / tidak ada yang mau ditambah atau diubah / sudah benar (contoh: "sudah", "done", "tidak ada lagi", "sudah benar", "ga ada", "that's it", "udah"). Jangan set ini jika pesan juga berisi produk baru, jumlah, alamat, atau tanggal.
+  - "done_no_more_changes" jika pelanggan HANYA mengindikasikan bahwa pesanan sudah selesai / tidak ada yang mau ditambah atau diubah / sudah benar (contoh: "sudah", "done", "tidak ada lagi", "sudah benar", "ga ada", "that's it", "udah"). Jangan set ini jika pesan juga berisi produk baru, jumlah, alamat, tanggal, ATAU sinyal penghapusan/pergantian item (misal: "gak jadi", "batalin", "hapus", "ganti jadi").
   - "order" jika pesan ini bagian normal dari percakapan pesanan (termasuk bila ada produk/alamat/tanggal).
   - "other" jika pesan bukan tentang pesanan (small talk, pertanyaan lain, dsb).
 
@@ -161,6 +164,79 @@ Return ONLY valid JSON, no other text.`;
             else {
                 return yield this.analyzeWithContextOpenAI(prompt);
             }
+        });
+    }
+    classifyAddressConfirmation(messageBody, previousAddress) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b;
+            yield this.checkGeminiRateLimit();
+            const prompt = `Anda sedang mengklasifikasikan balasan pelanggan untuk pertanyaan:
+"Mau pakai alamat sebelumnya (${previousAddress}) atau kirim alamat baru?"
+
+Pesan pelanggan: "${messageBody}"
+
+Tugas:
+- "use_previous_address" jika maknanya menyetujui alamat lama (contoh makna: "ya", "oke sudah benar", "sesuai", "pakai yang itu", "semuanya sesuai mau saya", "mantap sudah cocok").
+- "provide_new_address" jika maknanya ingin ganti/alamat baru atau langsung menulis alamat baru.
+- "unclear" jika tidak jelas.
+
+PENTING:
+- Jika pesan bernada persetujuan/konfirmasi dan tidak memuat alamat baru yang jelas, pilih "use_previous_address".
+- Jangan terlalu literal keyword; pahami makna kalimat Indonesia informal.
+- Anggap typo/slang tetap valid (contoh: "smuanya" = "semuanya", "gajadi" = "ga jadi").
+
+Return ONLY valid JSON:
+{ "intent": "use_previous_address" | "provide_new_address" | "unclear" }`;
+            if (this.provider === "gemini") {
+                if (!this.geminiModel)
+                    throw new Error("Gemini model not initialized");
+                const result = yield this.geminiModel.generateContent(prompt);
+                const text = result.response.text();
+                const jsonMatch = text.match(/\{[\s\S]*\}/);
+                if (!jsonMatch)
+                    return "unclear";
+                let parsed = {};
+                try {
+                    parsed = JSON.parse(jsonMatch[0]);
+                }
+                catch (_c) {
+                    return "unclear";
+                }
+                if (parsed.intent === "use_previous_address" ||
+                    parsed.intent === "provide_new_address" ||
+                    parsed.intent === "unclear") {
+                    return parsed.intent;
+                }
+                return "unclear";
+            }
+            if (!this.openai)
+                throw new Error("OpenAI client not initialized");
+            const response = yield this.openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages: [
+                    {
+                        role: "system",
+                        content: "Classify intent for address confirmation. Return only JSON.",
+                    },
+                    { role: "user", content: prompt },
+                ],
+                response_format: { type: "json_object" },
+                temperature: 0.2,
+            });
+            const content = ((_b = (_a = response.choices[0]) === null || _a === void 0 ? void 0 : _a.message) === null || _b === void 0 ? void 0 : _b.content) || "{}";
+            let parsed = {};
+            try {
+                parsed = JSON.parse(content);
+            }
+            catch (_d) {
+                return "unclear";
+            }
+            if (parsed.intent === "use_previous_address" ||
+                parsed.intent === "provide_new_address" ||
+                parsed.intent === "unclear") {
+                return parsed.intent;
+            }
+            return "unclear";
         });
     }
     analyzeWithContextGemini(prompt) {
@@ -174,7 +250,8 @@ Return ONLY valid JSON, no other text.`;
             if (!jsonMatch) {
                 throw new Error("Failed to extract JSON from AI response");
             }
-            return JSON.parse(jsonMatch[0]);
+            const parsed = JSON.parse(jsonMatch[0]);
+            return this.sanitizeConversationAnalysis(parsed);
         });
     }
     analyzeWithContextOpenAI(prompt) {
@@ -195,8 +272,115 @@ Return ONLY valid JSON, no other text.`;
                 temperature: 0.3,
             });
             const content = ((_b = (_a = response.choices[0]) === null || _a === void 0 ? void 0 : _a.message) === null || _b === void 0 ? void 0 : _b.content) || "{}";
-            return JSON.parse(content);
+            const parsed = JSON.parse(content);
+            return this.sanitizeConversationAnalysis(parsed);
         });
+    }
+    sanitizeConversationAnalysis(raw) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
+        const allowedMissing = new Set([
+            "products",
+            "quantities",
+            "deliveryDate",
+            "deliveryAddress",
+            "fulfillmentType",
+            "pickupTime",
+        ]);
+        const normalizedProducts = Array.isArray((_a = raw === null || raw === void 0 ? void 0 : raw.extractedData) === null || _a === void 0 ? void 0 : _a.products)
+            ? raw.extractedData.products
+                .filter((p) => p && typeof p.name === "string" && p.name.trim())
+                .map((p) => ({
+                name: p.name.trim(),
+                quantity: typeof p.quantity === "number" && Number.isFinite(p.quantity)
+                    ? p.quantity
+                    : 0,
+                confidence: typeof p.confidence === "number" && Number.isFinite(p.confidence)
+                    ? Math.min(Math.max(p.confidence, 0), 1)
+                    : 1,
+                itemNote: typeof p.itemNote === "string" ? p.itemNote : undefined,
+                editIntent: p.editIntent === "add" ||
+                    p.editIntent === "subtract" ||
+                    p.editIntent === "replace"
+                    ? p.editIntent
+                    : undefined,
+            }))
+            : [];
+        const normalizedProductsToRemove = Array.isArray((_b = raw === null || raw === void 0 ? void 0 : raw.extractedData) === null || _b === void 0 ? void 0 : _b.productsToRemove)
+            ? raw.extractedData.productsToRemove
+                .map((entry) => {
+                if (typeof entry === "string")
+                    return entry.trim();
+                if (entry && typeof entry === "object" && typeof entry.name === "string")
+                    return entry.name.trim();
+                return "";
+            })
+                .filter((name) => !!name)
+            : [];
+        return {
+            extractedData: {
+                products: normalizedProducts,
+                customerName: typeof ((_c = raw === null || raw === void 0 ? void 0 : raw.extractedData) === null || _c === void 0 ? void 0 : _c.customerName) === "string"
+                    ? raw.extractedData.customerName
+                    : undefined,
+                phoneNumber: typeof ((_d = raw === null || raw === void 0 ? void 0 : raw.extractedData) === null || _d === void 0 ? void 0 : _d.phoneNumber) === "string"
+                    ? raw.extractedData.phoneNumber
+                    : undefined,
+                deliveryDate: typeof ((_e = raw === null || raw === void 0 ? void 0 : raw.extractedData) === null || _e === void 0 ? void 0 : _e.deliveryDate) === "string"
+                    ? raw.extractedData.deliveryDate
+                    : undefined,
+                deliveryAddress: typeof ((_f = raw === null || raw === void 0 ? void 0 : raw.extractedData) === null || _f === void 0 ? void 0 : _f.deliveryAddress) === "string"
+                    ? raw.extractedData.deliveryAddress
+                    : undefined,
+                fulfillmentType: ((_g = raw === null || raw === void 0 ? void 0 : raw.extractedData) === null || _g === void 0 ? void 0 : _g.fulfillmentType) === "pickup" ||
+                    ((_h = raw === null || raw === void 0 ? void 0 : raw.extractedData) === null || _h === void 0 ? void 0 : _h.fulfillmentType) === "delivery"
+                    ? raw.extractedData.fulfillmentType
+                    : undefined,
+                pickupTime: typeof ((_j = raw === null || raw === void 0 ? void 0 : raw.extractedData) === null || _j === void 0 ? void 0 : _j.pickupTime) === "string"
+                    ? raw.extractedData.pickupTime
+                    : undefined,
+                notes: typeof ((_k = raw === null || raw === void 0 ? void 0 : raw.extractedData) === null || _k === void 0 ? void 0 : _k.notes) === "string"
+                    ? raw.extractedData.notes
+                    : undefined,
+                confidence: typeof ((_l = raw === null || raw === void 0 ? void 0 : raw.extractedData) === null || _l === void 0 ? void 0 : _l.confidence) === "number" &&
+                    Number.isFinite(raw.extractedData.confidence)
+                    ? Math.min(Math.max(raw.extractedData.confidence, 0), 1)
+                    : 0.7,
+                productsToRemove: normalizedProductsToRemove,
+            },
+            missingFields: Array.isArray(raw === null || raw === void 0 ? void 0 : raw.missingFields)
+                ? raw.missingFields.filter((f) => typeof f === "string" && allowedMissing.has(f))
+                : [],
+            ambiguousProducts: Array.isArray(raw === null || raw === void 0 ? void 0 : raw.ambiguousProducts)
+                ? raw.ambiguousProducts
+                    .filter((a) => a && typeof a.userMention === "string")
+                    .map((a) => ({
+                    userMention: a.userMention,
+                    possibleMatches: Array.isArray(a.possibleMatches)
+                        ? a.possibleMatches
+                            .filter((m) => m && typeof m.name === "string")
+                            .map((m) => ({
+                            name: m.name,
+                            price: typeof m.price === "number" && Number.isFinite(m.price)
+                                ? m.price
+                                : 0,
+                            similarity: typeof m.similarity === "number" &&
+                                Number.isFinite(m.similarity)
+                                ? m.similarity
+                                : 0,
+                        }))
+                        : [],
+                }))
+                : [],
+            suggestedQuestion: typeof (raw === null || raw === void 0 ? void 0 : raw.suggestedQuestion) === "string"
+                ? raw.suggestedQuestion
+                : undefined,
+            intent: (raw === null || raw === void 0 ? void 0 : raw.intent) === "reset" ||
+                (raw === null || raw === void 0 ? void 0 : raw.intent) === "order" ||
+                (raw === null || raw === void 0 ? void 0 : raw.intent) === "done_no_more_changes" ||
+                (raw === null || raw === void 0 ? void 0 : raw.intent) === "other"
+                ? raw.intent
+                : "order",
+        };
     }
     /**
      * Extract product phrases and quantities from message as the user wrote them.
