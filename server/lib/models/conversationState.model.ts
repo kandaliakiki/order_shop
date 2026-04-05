@@ -8,6 +8,7 @@ export interface ConversationStateData {
       name: string;
       quantity: number;
       confidence: number;
+      note?: string; // Special requests for this item
     }>;
     deliveryDate?: string; // YYYY-MM-DD
     deliveryAddress?: string;
@@ -41,12 +42,14 @@ export interface ConversationStateData {
   editMode?: "add_items" | "change_items";
 
   pendingQuestion?: {
-    type: "missing_field" | "product_clarification" | "new_or_edit" | "order_selection" | "add_or_change" | "edit_follow_up" | "edit_change_delivery" | "edit_confirm_items" | "edit_confirm_delivery";
+    type: "missing_field" | "product_clarification" | "new_or_edit" | "order_selection" | "add_or_change" | "edit_follow_up" | "edit_change_delivery" | "edit_confirm_items" | "edit_confirm_delivery" | "confirm_previous_address" | "confirm_items_done";
     field?: string;
     similarProducts?: Array<{ name: string; price: number }>;
     questionText?: string;
     /** For order_selection: list of { orderId, summary } so we can parse "O-0501" or "first one". */
     orderList?: Array<{ orderId: string; summary: string }>;
+    /** Previous address being confirmed */
+    previousAddress?: string;
   };
   conversationHistory: Array<{
     role: "user" | "assistant";
@@ -77,6 +80,7 @@ const conversationStateSchema = new mongoose.Schema<ConversationStateData>(
             name: String,
             quantity: Number,
             confidence: Number,
+            note: String,
           },
         ],
         deliveryDate: String,
@@ -102,11 +106,12 @@ const conversationStateSchema = new mongoose.Schema<ConversationStateData>(
     pendingQuestion: {
       type: {
         type: String,
-        enum: ["missing_field", "product_clarification", "new_or_edit", "order_selection", "add_or_change", "edit_follow_up", "edit_change_delivery", "edit_confirm_items", "edit_confirm_delivery"],
+        enum: ["missing_field", "product_clarification", "new_or_edit", "order_selection", "add_or_change", "edit_follow_up", "edit_change_delivery", "edit_confirm_items", "edit_confirm_delivery", "confirm_previous_address", "confirm_items_done"],
         field: String,
         similarProducts: [{ name: String, price: Number }],
         questionText: String,
         orderList: [{ orderId: String, summary: String }],
+        previousAddress: String,
       },
     },
     conversationHistory: [

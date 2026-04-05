@@ -6,6 +6,7 @@ interface Item {
   name: string;
   quantity: number;
   price: number;
+  note?: string; // Special requests for this item (e.g., "slice into 8 pieces", "jam separated")
 }
 
 // Define the interface for an order
@@ -85,6 +86,7 @@ const itemSchema = new mongoose.Schema<Item>({
   name: { type: String, required: true },
   quantity: { type: Number, required: true },
   price: { type: Number, required: true },
+  note: { type: String, required: false }, // Special requests for this item
 });
 
 // Define the schema for an order

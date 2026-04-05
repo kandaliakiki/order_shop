@@ -56,6 +56,7 @@ import { getTwilioService } from "./lib/services/twilio.service";
 import { calculateOrderStockRequirements } from "./lib/actions/orderStockCalculation.action";
 import { processOrderStockAndNotification } from "./lib/actions/orderStockNotification.action";
 import { processWhatsAppWebhook } from "./lib/actions/whatsappWebhook.action";
+import testingRoutes from "./lib/routes/testing.route";
 
 // Specify the path to your .env.local file
 dotenv.config({ path: ".env.local" });
@@ -80,6 +81,11 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 connectToDB();
+
+if (process.env.ENABLE_TESTING_INTERFACE === "true") {
+  app.use("/api/testing", testingRoutes);
+  console.log(`✅ Testing interface enabled at /api/testing`);
+}
 
 // UNCOMMENT FOR SEEDING DATA
 // connectToDB().then(() => {

@@ -61,6 +61,7 @@ export class OrderGenerationService {
           name: product.name,
           quantity: extractedProduct.quantity,
           price: product.price,
+          note: extractedProduct.itemNote || undefined, // Include special requests if any
         });
       } else {
         // Product not found (shouldn't happen if AI matched correctly)

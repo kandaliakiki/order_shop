@@ -24,7 +24,7 @@ export interface ProcessWhatsAppMessageResult {
 
 /** Structured data from conversational flow; when provided, order is built from this instead of re-parsing message */
 export interface ConversationalCollectedData {
-  products: Array<{ name: string; quantity: number }>;
+  products: Array<{ name: string; quantity: number; note?: string }>;
   deliveryDate?: string;
   deliveryAddress?: string;
   fulfillmentType?: "pickup" | "delivery";
@@ -53,6 +53,7 @@ export async function processWhatsAppMessageForOrder(
           name: p.name,
           quantity: p.quantity,
           confidence: 1,
+          itemNote: p.note,
         })),
         deliveryDate: collectedData.deliveryDate,
         deliveryAddress: collectedData.deliveryAddress,
@@ -173,11 +174,21 @@ export async function processWhatsAppMessageForOrder(
       const messageFormatter = new WhatsAppMessageFormatter();
       const frontendBaseUrl =
         process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
+      
+      // Get items with notes from the order
+      const orderItems = orderResult.order.items?.map((item: any) => ({
+        name: item.name,
+        quantity: item.quantity,
+        note: item.note,
+      }));
+      
       whatsappResponse = messageFormatter.formatCustomerOrderConfirmation({
         orderId: orderResult.order.orderId,
         fulfillmentType: orderResult.order.fulfillmentType,
+        pickupDate: orderResult.order.pickupDate,
         pickupTime: orderResult.order.pickupTime,
         frontendBaseUrl,
+        items: orderItems,
       });
       console.log("✅ Order created without stock checks (skipStockCheck=true)");
     }

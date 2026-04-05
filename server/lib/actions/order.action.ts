@@ -302,7 +302,7 @@ const TAX_RATE = 0.1;
 /** Add items to an existing order (merge by product name, recalc totals). */
 export const addItemsToOrder = async (
   orderId: string,
-  newItems: Array<{ name: string; quantity: number }>
+  newItems: Array<{ name: string; quantity: number; note?: string }>
 ): Promise<{ success: boolean; order?: any; error?: string }> => {
   await connectToDB();
   const id = normalizeOrderId(orderId);
@@ -323,13 +323,13 @@ export const addItemsToOrder = async (
     const existingItems = order.items || [];
     const norm = (s: string) => s.toLowerCase().trim();
     // Ensure existing items have a valid price (look up from products if missing/NaN)
-    const byName = new Map<string, { name: string; quantity: number; price: number }>();
+    const byName = new Map<string, { name: string; quantity: number; price: number; note?: string }>();
     for (const i of existingItems) {
       const price = typeof i.price === "number" && !Number.isNaN(i.price)
         ? i.price
         : findPrice(i.name);
       const numPrice = price != null ? Number(price) : 0;
-      byName.set(norm(i.name), { name: i.name, quantity: i.quantity, price: numPrice });
+      byName.set(norm(i.name), { name: i.name, quantity: i.quantity, price: numPrice, note: i.note });
     }
 
     for (const item of newItems) {
@@ -342,6 +342,10 @@ export const addItemsToOrder = async (
       const existing = byName.get(key);
       if (existing) {
         existing.quantity += item.quantity;
+        // Update note if provided
+        if (item.note) {
+          existing.note = item.note;
+        }
       } else {
         // Use product name from catalog for consistency
         const product = products.find((x) => norm(x.name) === key);
@@ -349,6 +353,7 @@ export const addItemsToOrder = async (
           name: product ? product.name : item.name,
           quantity: item.quantity,
           price,
+          note: item.note,
         });
       }
     }
