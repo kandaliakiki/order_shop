@@ -308,61 +308,12 @@ class ConversationManager {
                         shouldCreateOrder: false,
                     };
                 }
-                // Edit flow: when waiting for "what to add/change?" (add_items, no pendingQuestion), handle "show menu" and "no changes"
-                if (state.orderIntent === "edit_order" &&
-                    state.selectedOrderId &&
-                    state.editMode === "add_items" &&
-                    !state.pendingQuestion) {
-                    if (this.isShowMenuRequest(messageBody)) {
-                        const products = yield (0, product_action_1.fetchProducts)();
-                        const menuList = this.formatMenuList(products.map((p) => ({ name: p.name, price: p.price })));
-                        const order = yield (0, order_action_1.fetchOrderById)(state.selectedOrderId);
-                        const itemsList = ((_b = order === null || order === void 0 ? void 0 : order.items) === null || _b === void 0 ? void 0 : _b.length)
-                            ? "Isi pesanan sekarang:\n" +
-                                order.items
-                                    .map((i) => `• ${i.name}: ${i.quantity} pcs`)
-                                    .join("\n") +
-                                "\n\n"
-                            : "";
-                        const oid = state.selectedOrderId;
-                        const withMenu = `*Daftar menu lengkap:*\n\n${menuList}\n\n——\n\nOke, pesanan *${oid}*.\n\n${itemsList}Mau tambah atau ubah apa? Tulis aja produk + jumlah (misal: Chiffon 2, Cheesecake 1), atau mau hapus item (misal: hapus Cheesecake).`;
-                        state.conversationHistory.push({
-                            role: "assistant",
-                            message: withMenu,
-                            timestamp: new Date(),
-                        });
-                        state.lastMessageId = twilioMessageId;
-                        yield state.save();
-                        return {
-                            success: true,
-                            whatsappResponse: withMenu,
-                            shouldCreateOrder: false,
-                        };
-                    }
-                    // "Done / no changes" in edit add_items is handled by AI intent "done_no_more_changes" in section 4c (no keyword shortcut)
-                }
-                // New order / greeting: when user asks for menu, return full menu list (not just "here is the menu" with no list)
-                if (this.isShowMenuRequest(messageBody) &&
-                    (state.orderIntent !== "edit_order" || !state.selectedOrderId) &&
-                    ((_c = state.pendingQuestion) === null || _c === void 0 ? void 0 : _c.type) !== "order_selection") {
-                    const products = yield (0, product_action_1.fetchProducts)();
-                    const menuList = this.formatMenuList(products.map((p) => ({ name: p.name, price: p.price })));
-                    const menuResponse = `Ini nih menunya:\n\n${menuList}\n\n——\n\nMau pesan apa? Tulis nama + jumlah (misal: Chiffon 2, Cheesecake 1).`;
-                    state.conversationHistory.push({
-                        role: "assistant",
-                        message: menuResponse,
-                        timestamp: new Date(),
-                    });
-                    state.lastMessageId = twilioMessageId;
-                    yield state.save();
-                    return {
-                        success: true,
-                        whatsappResponse: menuResponse,
-                        shouldCreateOrder: false,
-                    };
-                }
+                // Edit flow: when waiting for "what to add/change?" (add_items, no pendingQuestion), handle "show menu" via AI intent detection in main flow
+                // (No early keyword check - let AI detect show_menu intent in the main analysis below)
+                // New order / greeting: menu requests are now handled by AI intent detection in main flow (after line 1133)
+                // (Removed early keyword check to let AI detect show_menu intent naturally)
                 // 2c. Edit: user confirming items (back-and-forth until they say ya/betul)
-                if (((_d = state.pendingQuestion) === null || _d === void 0 ? void 0 : _d.type) === "edit_confirm_items" &&
+                if (((_b = state.pendingQuestion) === null || _b === void 0 ? void 0 : _b.type) === "edit_confirm_items" &&
                     state.selectedOrderId) {
                     const normalized = messageBody.toLowerCase().trim();
                     const confirmed = /^(ya|betul|benar|sudah benar|ok|oke|correct|yes|konfirmasi)$/.test(normalized) ||
@@ -418,9 +369,9 @@ class ConversationManager {
                             shouldCreateOrder: false,
                         };
                     }
-                    if (((_e = analysis.extractedData.products) === null || _e === void 0 ? void 0 : _e.length) && state.selectedOrderId) {
+                    if (((_c = analysis.extractedData.products) === null || _c === void 0 ? void 0 : _c.length) && state.selectedOrderId) {
                         const order = yield (0, order_action_1.fetchOrderById)(state.selectedOrderId);
-                        if ((_f = order === null || order === void 0 ? void 0 : order.items) === null || _f === void 0 ? void 0 : _f.length) {
+                        if ((_d = order === null || order === void 0 ? void 0 : order.items) === null || _d === void 0 ? void 0 : _d.length) {
                             const currentProposed = this.buildCurrentProposedOrderItems(order.items, state.collectedData.products);
                             this.applyEditIntents(analysis.extractedData.products, currentProposed);
                         }
@@ -445,7 +396,7 @@ class ConversationManager {
                     };
                 }
                 // 2c2. Edit: user confirming delivery (sama = apply and save; ubah = ask for new detail)
-                if (((_g = state.pendingQuestion) === null || _g === void 0 ? void 0 : _g.type) === "edit_confirm_delivery" &&
+                if (((_e = state.pendingQuestion) === null || _e === void 0 ? void 0 : _e.type) === "edit_confirm_delivery" &&
                     state.selectedOrderId) {
                     const normalized = messageBody.toLowerCase().trim();
                     const same = /^(sama|tetap|ya|betul|ok|oke|tidak|no)$/.test(normalized) ||
@@ -506,7 +457,7 @@ class ConversationManager {
                         const frontendBaseUrl = process.env.FRONTEND_BASE_URL ||
                             process.env.NEXT_PUBLIC_FRONTEND_URL;
                         const updatedOrder = yield (0, order_action_1.fetchOrderById)(oid);
-                        const orderItems = (_h = updatedOrder === null || updatedOrder === void 0 ? void 0 : updatedOrder.items) === null || _h === void 0 ? void 0 : _h.map((i) => ({
+                        const orderItems = (_f = updatedOrder === null || updatedOrder === void 0 ? void 0 : updatedOrder.items) === null || _f === void 0 ? void 0 : _f.map((i) => ({
                             name: i.name,
                             quantity: i.quantity,
                             note: i.note,
@@ -566,7 +517,7 @@ class ConversationManager {
                     };
                 }
                 // 2c3. After editing: ask add more or change delivery (legacy; new flow uses confirm items -> confirm delivery -> save)
-                if (((_j = state.pendingQuestion) === null || _j === void 0 ? void 0 : _j.type) === "edit_follow_up") {
+                if (((_g = state.pendingQuestion) === null || _g === void 0 ? void 0 : _g.type) === "edit_follow_up") {
                     const normalized = messageBody.toLowerCase().trim();
                     const wantsAdd = /tambah|add/i.test(normalized) ||
                         /^[\d\s\w]+\s+\d+\s*(pcs)?$/i.test(normalized);
@@ -619,7 +570,7 @@ class ConversationManager {
                     }
                 }
                 // 2d. Edit: user sent new delivery details -> update delivery, apply item changes, then send final confirmation
-                if (((_k = state.pendingQuestion) === null || _k === void 0 ? void 0 : _k.type) === "edit_change_delivery" &&
+                if (((_h = state.pendingQuestion) === null || _h === void 0 ? void 0 : _h.type) === "edit_change_delivery" &&
                     state.selectedOrderId) {
                     const oid = (0, order_action_1.normalizeOrderId)(state.selectedOrderId);
                     const analysis = yield this.aiService.analyzeWithContext(messageBody, (yield (0, product_action_1.fetchProducts)()).map((p) => ({
@@ -669,7 +620,7 @@ class ConversationManager {
                     const formatter = new whatsappMessageFormatter_service_1.WhatsAppMessageFormatter();
                     const frontendBaseUrl = process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_FRONTEND_URL;
                     const updatedOrder = yield (0, order_action_1.fetchOrderById)(oid);
-                    const orderItems = (_l = updatedOrder === null || updatedOrder === void 0 ? void 0 : updatedOrder.items) === null || _l === void 0 ? void 0 : _l.map((i) => ({
+                    const orderItems = (_j = updatedOrder === null || updatedOrder === void 0 ? void 0 : updatedOrder.items) === null || _j === void 0 ? void 0 : _j.map((i) => ({
                         name: i.name,
                         quantity: i.quantity,
                         note: i.note,
@@ -707,7 +658,7 @@ class ConversationManager {
                     const m = normalize(mention);
                     return products.filter((p) => p.name.toLowerCase().includes(m));
                 };
-                if (((_m = state.pendingQuestion) === null || _m === void 0 ? void 0 : _m.type) === "product_clarification") {
+                if (((_k = state.pendingQuestion) === null || _k === void 0 ? void 0 : _k.type) === "product_clarification") {
                     const items = yield this.aiService.extractProductPhrasesWithQuantities(messageBody);
                     const stillAmbiguous = [];
                     if (!state.collectedData.products)
@@ -900,9 +851,80 @@ class ConversationManager {
                     role: h.role,
                     message: h.message,
                 })), Object.assign({ collectedData: state.collectedData, missingFields: state.missingFields, userMightIndicateDone: this.isNoChangesRequest(messageBody), cartEditContext: state.orderIntent !== "edit_order" &&
-                        !!((_o = state.collectedData.products) === null || _o === void 0 ? void 0 : _o.length) }, (state.orderIntent === "edit_order" && state.selectedOrderId
+                        !!((_l = state.collectedData.products) === null || _l === void 0 ? void 0 : _l.length) }, (state.orderIntent === "edit_order" && state.selectedOrderId
                     ? { editOrderContext: { orderId: state.selectedOrderId } }
                     : {})));
+                // 4a. Handle show_menu intent - return menu immediately
+                if (analysis.intent === "show_menu") {
+                    const products = yield (0, product_action_1.fetchProducts)();
+                    const menuList = this.formatMenuList(products.map((p) => ({ name: p.name, price: p.price })));
+                    // Handle different contexts for menu display
+                    if (state.orderIntent === "edit_order" &&
+                        state.selectedOrderId &&
+                        state.editMode === "add_items") {
+                        // Edit flow: show menu with current order context
+                        const order = yield (0, order_action_1.fetchOrderById)(state.selectedOrderId);
+                        const itemsList = ((_m = order === null || order === void 0 ? void 0 : order.items) === null || _m === void 0 ? void 0 : _m.length)
+                            ? "Isi pesanan sekarang:\n" +
+                                order.items
+                                    .map((i) => `• ${i.name}: ${i.quantity} pcs`)
+                                    .join("\n") +
+                                "\n\n"
+                            : "";
+                        const oid = state.selectedOrderId;
+                        const withMenu = `*Daftar menu lengkap:*\n\n${menuList}\n\n——\n\nOke, pesanan *${oid}*.\n\n${itemsList}Mau tambah atau ubah apa? Tulis aja produk + jumlah (misal: Chiffon 2, Cheesecake 1), atau mau hapus item (misal: hapus Cheesecake).`;
+                        state.conversationHistory.push({
+                            role: "assistant",
+                            message: withMenu,
+                            timestamp: new Date(),
+                        });
+                        state.lastMessageId = twilioMessageId;
+                        yield state.save();
+                        return {
+                            success: true,
+                            whatsappResponse: withMenu,
+                            shouldCreateOrder: false,
+                        };
+                    }
+                    else if (((_o = state.pendingQuestion) === null || _o === void 0 ? void 0 : _o.type) === "order_selection") {
+                        // Order selection flow: show menu with order list
+                        const list = state.pendingQuestion.orderList || [];
+                        const orderListLines = ["Pesanan kamu:\n"];
+                        list.forEach((o, i) => {
+                            orderListLines.push(`${i + 1}. *${o.orderId}* – ${o.summary}`);
+                        });
+                        orderListLines.push("\nMau edit yang mana? Balas nomor (1, 2, ...) atau ID pesanan (misal O-0501).");
+                        const withMenu = `*Daftar menu lengkap:*\n\n${menuList}\n\n——\n\n${orderListLines.join("\n")}`;
+                        state.conversationHistory.push({
+                            role: "assistant",
+                            message: withMenu,
+                            timestamp: new Date(),
+                        });
+                        state.lastMessageId = twilioMessageId;
+                        yield state.save();
+                        return {
+                            success: true,
+                            whatsappResponse: withMenu,
+                            shouldCreateOrder: false,
+                        };
+                    }
+                    else {
+                        // Normal flow: just show menu
+                        const menuResponse = `Ini nih menunya:\n\n${menuList}\n\n——\n\nMau pesan apa? Tulis nama + jumlah (misal: Chiffon 2, Cheesecake 1).`;
+                        state.conversationHistory.push({
+                            role: "assistant",
+                            message: menuResponse,
+                            timestamp: new Date(),
+                        });
+                        state.lastMessageId = twilioMessageId;
+                        yield state.save();
+                        return {
+                            success: true,
+                            whatsappResponse: menuResponse,
+                            shouldCreateOrder: false,
+                        };
+                    }
+                }
                 // 4b. Let AI decide if the user wants to reset / start over
                 if (analysis.intent === "reset") {
                     state.collectedData = {};
@@ -1200,7 +1222,12 @@ class ConversationManager {
                 }
             }
             catch (error) {
-                console.error("❌ Error in ConversationManager:", error);
+                console.error("❌ Error in ConversationManager:", {
+                    error: error.message,
+                    stack: error.stack,
+                    phoneNumber,
+                    messageBody,
+                });
                 return {
                     success: false,
                     whatsappResponse: "❌ Maaf, ada error. Coba lagi atau hubungi kami langsung ya.",
@@ -1376,28 +1403,8 @@ class ConversationManager {
                     shouldCreateOrder: false,
                 };
             }
-            if (this.isShowMenuRequest(messageBody)) {
-                const products = yield (0, product_action_1.fetchProducts)();
-                const menuList = this.formatMenuList(products.map((p) => ({ name: p.name, price: p.price })));
-                const orderListLines = ["Pesanan kamu:\n"];
-                list.forEach((o, i) => {
-                    orderListLines.push(`${i + 1}. *${o.orderId}* – ${o.summary}`);
-                });
-                orderListLines.push("\nMau edit yang mana? Balas nomor (1, 2, ...) atau ID pesanan (misal O-0501).");
-                const withMenu = `*Daftar menu lengkap:*\n\n${menuList}\n\n——\n\n${orderListLines.join("\n")}`;
-                state.conversationHistory.push({
-                    role: "assistant",
-                    message: withMenu,
-                    timestamp: new Date(),
-                });
-                state.lastMessageId = twilioMessageId;
-                yield state.save();
-                return {
-                    success: true,
-                    whatsappResponse: withMenu,
-                    shouldCreateOrder: false,
-                };
-            }
+            // Menu requests during order selection are now handled by AI intent detection in main flow
+            // (Removed early keyword check to let AI detect show_menu intent naturally)
             const retry = "Pilih pesanan ya: nomor (1, 2, ...) atau ID (misal O-0501).";
             state.conversationHistory.push({
                 role: "assistant",

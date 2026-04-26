@@ -136,8 +136,21 @@ ${messageXml}
         }
         catch (error) {
             console.error("Error processing Twilio webhook:", error);
-            // Still return 200 to Twilio to avoid retries
-            res.status(200).type("text/xml").send("<Response></Response>");
+            console.error("Stack trace:", error === null || error === void 0 ? void 0 : error.stack);
+            // Still return 200 to Twilio to avoid retries, but with user-friendly message
+            const userFriendlyMessage = "Maaf, ada kesalahan. Silakan coba lagi atau hubungi kami langsung.";
+            const escapeXml = (text) => {
+                return text
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&apos;");
+            };
+            res.status(200).type("text/xml").send(`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+<Message>${escapeXml(userFriendlyMessage)}</Message>
+</Response>`);
         }
     });
 }

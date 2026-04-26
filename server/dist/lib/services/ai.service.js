@@ -97,7 +97,10 @@ TUGAS ANDA:
    - itemNote: Permintaan khusus untuk produk tersebut (misal: "potong 8 bagian", "selai pisah", "tanpa gula", "jadi 8 bagian"). Jika pelanggan menyebutkan permintaan khusus seperti "dipotong", "dijadiin", "pisah", "tanpa", dsb., itu adalah itemNote BUKAN quantity. Return null jika tidak ada permintaan khusus.
    - deliveryDate: Tanggal pengiriman (format: YYYY-MM-DD atau null)
    - deliveryAddress: Alamat pengiriman lengkap (atau null)
-   - fulfillmentType: "pickup" jika pelanggan ingin ambil sendiri di toko, atau "delivery" jika ingin dikirim (atau null jika belum jelas)
+   - fulfillmentType: "pickup" atau "delivery" atau null:
+     - "pickup" jika pelanggan mau ambil sendiri di toko. Cari kata/frasa: "di ambil", "diambil", "ambil", "ambil di toko", "pickup", "jemput", "ambil sendiri", "mau ambil"
+     - "delivery" jika pelanggan mau dikirim. Cari kata/frasa: "dikirim", "di kirim", "dikirm", "di antar", "delivery", "kirim ke", "diantar", "mau dikirim"
+     - null jika tidak ada kata pickup/delivery yang jelas
    - pickupTime: Jam pengambilan atau pengiriman, dalam Bahasa Indonesia bebas (contoh: "jam 3 sore") atau null
    
 2. Identifikasi field yang masih kurang:
@@ -136,7 +139,7 @@ RESPOND DENGAN JSON:
     }
   ],
   "suggestedQuestion": "Pertanyaan follow-up dalam Bahasa Indonesia yang ramah",
-  "intent": "reset" | "order" | "done_no_more_changes" | "other"
+  "intent": "reset" | "order" | "done_no_more_changes" | "show_menu" | "other"
 }
 
 RULES:
@@ -150,10 +153,23 @@ RULES:
 - missingFields: List field yang BELUM lengkap (gunakan hanya nilai: "products", "quantities", "deliveryDate", "deliveryAddress", "fulfillmentType", "pickupTime")
 - ambiguousProducts: WAJIB diisi jika ada kata dari pelanggan yang bisa cocok ke >= 2 produk (misal "cake" cocok ke Sweet Cake dan Cheesecake), bahkan jika pada pesan yang sama juga ada produk lain yang sudah jelas.
 - Jika sebuah mention dianggap ambigu, JANGAN memasukkan produk hasil tebakannya ke "extractedData.products" sebelum pelanggan menjawab klarifikasi.
-- suggestedQuestion: Pertanyaan natural dalam Bahasa Indonesia
+- suggestedQuestion: WAJIB berupa PERTANYAAN yang menanyakan field yang kurang.
+  - JANGAN membuat statement/konfirmasi seperti "pesanannya untuk di ambil jam 3 sore ya", "ok sudah kami catat ya"
+  - WAJIB bertanya dengan format pertanyaan: "Jam berapa mau diambil?", "Mau ambil di toko atau dikirim?", "Tanggal kapan?", dll.
+  - Tambahkan contoh jawaban untuk membantu pelanggan: "(misal: jam 3 sore, jam 10 pagi)"
+  - Contoh BENAR untuk pickupTime: "Jam berapa mau diambil? (misal: jam 3 sore, jam 10 pagi)"
+  - Contoh BENAR untuk fulfillmentType: "Mau ambil di toko (pickup) atau dikirim (delivery)?"
+  - Contoh SALAH: "pesanannya untuk jam 3 ya", "ok sudah kami catat", "jadi jam 3 ya"
+  - JANGAN tanya nomor telepon (sudah ada dari WhatsApp)
+  - JANGAN tanya total harga (sistem yang hitung otomatis)
+  - JANGAN tanya nama customer (sudah ada dari WhatsApp)
+  - Hanya tanya tentang produk, jumlah, tanggal, alamat, metode (pickup/delivery), atau jam.
+  - Contoh benar lainnya: "Mau pesan apa lagi?", "Jam berapa mau diambil?", "Alamat pengirimannya mana?"
+  - Contoh salah lainnya: "Nomor teleponnya berapa?", "Totalnya berapa?", "Siapa nama Anda?"
 - intent:
   - "reset" jika pelanggan dengan jelas meminta untuk mengulang / reset / mulai dari awal / batalkan semua pesanan sebelumnya (contoh: "saya mau pesan dari awal lagi", "reset pesanan", "hapus semua pesanan yang sudah dicatat").
   - "done_no_more_changes" jika pelanggan HANYA mengindikasikan bahwa pesanan sudah selesai / tidak ada yang mau ditambah atau diubah / sudah benar (contoh: "sudah", "done", "tidak ada lagi", "sudah benar", "ga ada", "that's it", "udah"). Jangan set ini jika pesan juga berisi produk baru, jumlah, alamat, tanggal, ATAU sinyal penghapusan/pergantian item (misal: "gak jadi", "batalin", "hapus", "ganti jadi").
+  - "show_menu" jika pelanggan bertanya tentang produk yang tersedia / menu / apa yang bisa dipesan / ingin lihat daftar produk (contoh: "menu dong", "ada menu apa?", "ada produk apa saja?", "lihat menu", "bisa pesan apa?", "jual apa?", "ada apa?").
   - "order" jika pesan ini bagian normal dari percakapan pesanan (termasuk bila ada produk/alamat/tanggal).
   - "other" jika pesan bukan tentang pesanan (small talk, pertanyaan lain, dsb).
 
@@ -190,7 +206,7 @@ Return ONLY valid JSON:
             if (this.provider === "gemini") {
                 if (!this.geminiModel)
                     throw new Error("Gemini model not initialized");
-                const result = yield this.geminiModel.generateContent(prompt);
+                const result = yield this.withRetry(() => this.geminiModel.generateContent(prompt), () => ({ response: { text: () => '{"intent": "unclear"}' } }));
                 const text = result.response.text();
                 const jsonMatch = text.match(/\{[\s\S]*\}/);
                 if (!jsonMatch)
@@ -243,7 +259,15 @@ Return ONLY valid JSON:
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.geminiModel)
                 throw new Error("Gemini model not initialized");
-            const result = yield this.geminiModel.generateContent(prompt);
+            const result = yield this.withRetry(() => this.geminiModel.generateContent(prompt), () => ({
+                response: {
+                    text: () => JSON.stringify({
+                        extractedData: { products: [], confidence: 0 },
+                        missingFields: [],
+                        intent: "other",
+                    }),
+                },
+            }));
             const response = result.response;
             const text = response.text();
             const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -377,6 +401,7 @@ Return ONLY valid JSON:
             intent: (raw === null || raw === void 0 ? void 0 : raw.intent) === "reset" ||
                 (raw === null || raw === void 0 ? void 0 : raw.intent) === "order" ||
                 (raw === null || raw === void 0 ? void 0 : raw.intent) === "done_no_more_changes" ||
+                (raw === null || raw === void 0 ? void 0 : raw.intent) === "show_menu" ||
                 (raw === null || raw === void 0 ? void 0 : raw.intent) === "other"
                 ? raw.intent
                 : "order",
@@ -497,7 +522,14 @@ Rules:
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.geminiModel)
                 throw new Error("Gemini model not initialized");
-            const result = yield this.geminiModel.generateContent(prompt);
+            const result = yield this.withRetry(() => this.geminiModel.generateContent(prompt), () => ({
+                response: {
+                    text: () => JSON.stringify({
+                        products: [],
+                        confidence: 0,
+                    }),
+                },
+            }));
             const response = result.response;
             const text = response.text();
             // Parse JSON from response
@@ -571,7 +603,15 @@ Return ONLY valid JSON, no other text.`;
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.geminiModel)
                 throw new Error("Gemini model not initialized");
-            const result = yield this.geminiModel.generateContent(prompt);
+            const result = yield this.withRetry(() => this.geminiModel.generateContent(prompt), () => ({
+                response: {
+                    text: () => JSON.stringify({
+                        dateRange: { start: new Date().toISOString().split('T')[0], end: new Date().toISOString().split('T')[0] },
+                        type: 'single',
+                        interpretation: 'today',
+                    }),
+                },
+            }));
             const response = result.response;
             const text = response.text();
             // Parse JSON from response
@@ -643,7 +683,11 @@ Return ONLY valid JSON, no other text.`;
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.geminiModel)
                 throw new Error("Gemini model not initialized");
-            const result = yield this.geminiModel.generateContent(prompt);
+            const result = yield this.withRetry(() => this.geminiModel.generateContent(prompt), () => ({
+                response: {
+                    text: () => JSON.stringify({ items: [] }),
+                },
+            }));
             const response = result.response;
             const text = response.text();
             const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -716,7 +760,15 @@ Return ONLY valid JSON, no other text.`;
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.geminiModel)
                 throw new Error("Gemini model not initialized");
-            const result = yield this.geminiModel.generateContent(prompt);
+            const result = yield this.withRetry(() => this.geminiModel.generateContent(prompt), () => ({
+                response: {
+                    text: () => JSON.stringify({
+                        ingredientName: "",
+                        quantity: 0,
+                        unit: "pcs",
+                    }),
+                },
+            }));
             const response = result.response;
             const text = response.text();
             const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -783,15 +835,47 @@ Return ONLY valid JSON, no other text.`;
             if (this.dailyRequestCount >= 1500) {
                 throw new Error("Gemini daily rate limit exceeded (1,500 requests/day). Please wait or upgrade to paid tier.");
             }
-            // Check per-minute limit (15 RPM = 1 request every 4 seconds)
+            // Check per-minute limit - conservative 6s interval (10 RPM) to stay safe
             const timeSinceLastRequest = now - this.lastRequestTime;
-            const minInterval = 4000; // 4 seconds = 15 requests per minute
+            const minInterval = 6000; // 6 seconds = ~10 requests per minute (below 15 RPM limit)
             if (timeSinceLastRequest < minInterval) {
                 const waitTime = minInterval - timeSinceLastRequest;
                 yield new Promise((resolve) => setTimeout(resolve, waitTime));
             }
             this.lastRequestTime = Date.now();
             this.dailyRequestCount++;
+        });
+    }
+    /**
+     * Wrap a Gemini API call with exponential backoff retry for 429 errors.
+     * Retries up to maxRetries times with increasing delay.
+     * On final failure, calls fallbackFn instead of throwing.
+     */
+    withRetry(fn_1, fallbackFn_1) {
+        return __awaiter(this, arguments, void 0, function* (fn, fallbackFn, maxRetries = 5) {
+            var _a, _b, _c, _d, _e;
+            for (let attempt = 0; attempt <= maxRetries; attempt++) {
+                try {
+                    return yield fn();
+                }
+                catch (error) {
+                    const is429 = error.status === 429 ||
+                        ((_a = error.message) === null || _a === void 0 ? void 0 : _a.includes("429")) ||
+                        ((_b = error.message) === null || _b === void 0 ? void 0 : _b.includes("Too Many Requests")) ||
+                        ((_c = error.message) === null || _c === void 0 ? void 0 : _c.includes("Resource exhausted")) ||
+                        ((_d = error.message) === null || _d === void 0 ? void 0 : _d.includes("quota"));
+                    if (!is429 || attempt >= maxRetries) {
+                        console.warn(`Gemini API call failed${is429 ? " after " + maxRetries + " retries" : ""}: ${(_e = error.message) === null || _e === void 0 ? void 0 : _e.substring(0, 200)}`);
+                        return fallbackFn();
+                    }
+                    // Exponential backoff: 2s, 4s, 8s, 16s, 32s
+                    let delay = 2000 * Math.pow(2, attempt);
+                    delay = Math.min(delay, 60000); // Clamp to max 60s
+                    console.log(`Gemini 429 rate limit hit (attempt ${attempt + 1}/${maxRetries}). Retrying in ${delay / 1000}s...`);
+                    yield new Promise((resolve) => setTimeout(resolve, delay));
+                }
+            }
+            return fallbackFn();
         });
     }
     /**
@@ -819,7 +903,7 @@ Ingredient: "${ingredientName}"
 Return only the number of days:`;
             if (this.provider === "gemini") {
                 try {
-                    const result = yield this.geminiModel.generateContent(prompt);
+                    const result = yield this.withRetry(() => this.geminiModel.generateContent(prompt), () => ({ response: { text: () => "30" } }));
                     const response = result.response.text();
                     // Extract number from response
                     const days = parseInt(((_a = response.match(/\d+/)) === null || _a === void 0 ? void 0 : _a[0]) || "30");
