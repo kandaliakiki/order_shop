@@ -277,10 +277,7 @@ Return ONLY valid JSON:
 
     if (this.provider === "gemini") {
       if (!this.geminiModel) throw new Error("Gemini model not initialized");
-      const result = await this.withRetry(
-        () => this.geminiModel.generateContent(prompt),
-        () => ({ response: { text: () => '{"intent": "unclear"}' } }),
-      );
+      const result = await this.geminiModel.generateContent(prompt);
       const text = result.response.text();
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) return "unclear";
@@ -334,18 +331,7 @@ Return ONLY valid JSON:
   private async analyzeWithContextGemini(prompt: string): Promise<ConversationAnalysisResult> {
     if (!this.geminiModel) throw new Error("Gemini model not initialized");
 
-    const result = await this.withRetry(
-      () => this.geminiModel.generateContent(prompt),
-      () => ({
-        response: {
-          text: () => JSON.stringify({
-            extractedData: { products: [], confidence: 0 },
-            missingFields: [],
-            intent: "other",
-          }),
-        },
-      }),
-    );
+    const result = await this.geminiModel.generateContent(prompt);
     const response = result.response;
     const text = response.text();
 
@@ -627,17 +613,7 @@ Rules:
   private async analyzeWithGemini(prompt: string): Promise<ExtractedOrderData> {
     if (!this.geminiModel) throw new Error("Gemini model not initialized");
 
-    const result = await this.withRetry(
-      () => this.geminiModel.generateContent(prompt),
-      () => ({
-        response: {
-          text: () => JSON.stringify({
-            products: [],
-            confidence: 0,
-          }),
-        },
-      }),
-    );
+    const result = await this.geminiModel.generateContent(prompt);
     const response = result.response;
     const text = response.text();
 
@@ -720,18 +696,7 @@ Return ONLY valid JSON, no other text.`;
   }> {
     if (!this.geminiModel) throw new Error("Gemini model not initialized");
 
-    const result = await this.withRetry(
-      () => this.geminiModel.generateContent(prompt),
-      () => ({
-        response: {
-          text: () => JSON.stringify({
-            dateRange: { start: new Date().toISOString().split('T')[0], end: new Date().toISOString().split('T')[0] },
-            type: 'single',
-            interpretation: 'today',
-          }),
-        },
-      }),
-    );
+    const result = await this.geminiModel.generateContent(prompt);
     const response = result.response;
     const text = response.text();
 
@@ -822,14 +787,7 @@ Return ONLY valid JSON, no other text.`;
   }> {
     if (!this.geminiModel) throw new Error("Gemini model not initialized");
 
-    const result = await this.withRetry(
-      () => this.geminiModel.generateContent(prompt),
-      () => ({
-        response: {
-          text: () => JSON.stringify({ items: [] }),
-        },
-      }),
-    );
+    const result = await this.geminiModel.generateContent(prompt);
     const response = result.response;
     const text = response.text();
 
@@ -924,18 +882,7 @@ Return ONLY valid JSON, no other text.`;
   }> {
     if (!this.geminiModel) throw new Error("Gemini model not initialized");
 
-    const result = await this.withRetry(
-      () => this.geminiModel.generateContent(prompt),
-      () => ({
-        response: {
-          text: () => JSON.stringify({
-            ingredientName: "",
-            quantity: 0,
-            unit: "pcs",
-          }),
-        },
-      }),
-    );
+    const result = await this.geminiModel.generateContent(prompt);
     const response = result.response;
     const text = response.text();
 
@@ -1015,9 +962,9 @@ Return ONLY valid JSON, no other text.`;
       );
     }
 
-    // Check per-minute limit - conservative 6s interval (10 RPM) to stay safe
+    // Check per-minute limit (15 RPM = 1 request every 4 seconds)
     const timeSinceLastRequest = now - this.lastRequestTime;
-    const minInterval = 6000; // 6 seconds = ~10 requests per minute (below 15 RPM limit)
+    const minInterval = 4000; // 4 seconds = 15 requests per minute
 
     if (timeSinceLastRequest < minInterval) {
       const waitTime = minInterval - timeSinceLastRequest;
@@ -1026,47 +973,6 @@ Return ONLY valid JSON, no other text.`;
 
     this.lastRequestTime = Date.now();
     this.dailyRequestCount++;
-  }
-
-  /**
-   * Wrap a Gemini API call with exponential backoff retry for 429 errors.
-   * Retries up to maxRetries times with increasing delay.
-   * On final failure, calls fallbackFn instead of throwing.
-   */
-  private async withRetry<T>(
-    fn: () => Promise<T>,
-    fallbackFn: () => T,
-    maxRetries: number = 5,
-  ): Promise<T> {
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        return await fn();
-      } catch (error: any) {
-        const is429 =
-          error.status === 429 ||
-          error.message?.includes("429") ||
-          error.message?.includes("Too Many Requests") ||
-          error.message?.includes("Resource exhausted") ||
-          error.message?.includes("quota");
-
-        if (!is429 || attempt >= maxRetries) {
-          console.warn(
-            `Gemini API call failed${is429 ? " after " + maxRetries + " retries" : ""}: ${error.message?.substring(0, 200)}`
-          );
-          return fallbackFn();
-        }
-
-        // Exponential backoff: 2s, 4s, 8s, 16s, 32s
-        let delay = 2000 * Math.pow(2, attempt);
-        delay = Math.min(delay, 60000); // Clamp to max 60s
-
-        console.log(
-          `Gemini 429 rate limit hit (attempt ${attempt + 1}/${maxRetries}). Retrying in ${delay / 1000}s...`
-        );
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
-    }
-    return fallbackFn();
   }
 
   /**
@@ -1094,10 +1000,7 @@ Return only the number of days:`;
 
     if (this.provider === "gemini") {
       try {
-        const result = await this.withRetry(
-          () => this.geminiModel.generateContent(prompt),
-          () => ({ response: { text: () => "30" } }),
-        );
+        const result = await this.geminiModel.generateContent(prompt);
         const response = result.response.text();
         // Extract number from response
         const days = parseInt(response.match(/\d+/)?.[0] || "30");

@@ -9,6 +9,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon ./server.ts",
+    "test:full-flow": "ts-node scripts/full-order-flow.test.ts",
     "conversation:regression": "powershell -ExecutionPolicy Bypass -File ./scripts/conversation-regression.ps1",
     "chatbot:test": "node ./scripts/chatbot-regression.mjs",
     "seed": "ts-node scripts/seedIngredientsAndLots.ts",
